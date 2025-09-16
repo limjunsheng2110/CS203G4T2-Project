@@ -31,3 +31,23 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+# === OS-specific files ===
+.DS_Store
+Thumbs.db
+
+
+# === Environment / Secrets ===
+*.env
+.env
+*.properties.local
+application-dev.properties
+application-prod.properties
+application-*.yml
+application-*.yaml
+
+# === Misc ===
+# Ignore package-lock/yarn.lock if not using npm/yarn
+node_modules/
+npm-debug.log

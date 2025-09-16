@@ -14,3 +14,9 @@ centralize all relevant data—base tariff rates, product classifications, trade
 quota thresholds—into one system. Through a REST API–powered backend and a
 user-friendly interface, users will be able to obtain real-time, accurate tariff calculations with
 minimal friction. 
+
+Contributors
+Lim Junsheng  
+Tiew Yong Chun Ethan  
+Merlin Gan  
+Sim Kay Wee  
