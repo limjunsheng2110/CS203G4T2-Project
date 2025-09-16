@@ -2,8 +2,6 @@ CS205 G4T2 Tariff Project
 =================================================       
 Group members: Merlin Gan Kian Jin, Lim Junsheng, Sim Qi Xun, Tiew Chun Yong Ethan, Sim Kay Wee
 
-
-
 We aim to design and implement TARIFF, a system dedicated to simplifying the process of
 determining import tariffs and additional foreign fees. The platform’s core function will be to
 calculate tariff costs for specific industries or products between different countries at any
