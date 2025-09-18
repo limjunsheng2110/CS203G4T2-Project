@@ -6,7 +6,7 @@ import org.springframework.boot.CommandLineRunner;
 import io.github.cdimascio.dotenv.Dotenv;
 
 @SpringBootApplication
-public class Tariffg4t2Application implements CommandLineRunner {
+public class Tariffg4t2Application{
     private final Dotenv dotenv = Dotenv.load();
 
     public static void main(String[] args) {
@@ -14,10 +14,10 @@ public class Tariffg4t2Application implements CommandLineRunner {
     }
 
 
-    @Override
-    public void run(String... args) throws Exception {
-        System.out.println("db username is " + dotenv.get("DB_USERNAME"));
-        System.out.println("db password is " + dotenv.get("DB_PASSWORD"));
-    }
+//    @Override
+//    public void run(String... args) throws Exception {
+//        System.out.println("db password is " + dotenv.get("DB_PASSWORD"));
+//        System.out.println("db username is " + dotenv.get("DB_USERNAME"));
+//    }
 
 }
