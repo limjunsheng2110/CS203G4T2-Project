@@ -93,6 +93,7 @@
             <artifactId>postgresql</artifactId>
             <version>42.7.1</version> <!-- or latest -->
         </dependency>   
+
     </dependencies>
 
     <build>
