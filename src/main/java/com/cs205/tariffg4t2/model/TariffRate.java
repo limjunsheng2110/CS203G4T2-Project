@@ -44,6 +44,8 @@ public class TariffRate {
     @JoinColumn(name = "hs_code", nullable = false)
     @NotNull(message = "Product is required")
     private Product product;
+
+    private Double productValue;
     
     @DecimalMin(value = "0.0", message = "Base rate must be non-negative")
     @Column(name = "base_rate", precision = 10, scale = 4, nullable = false)

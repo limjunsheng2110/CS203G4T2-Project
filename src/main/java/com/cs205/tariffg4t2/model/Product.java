@@ -15,6 +15,6 @@ public class Product {
     private String hsCode;
     private String description;
     private String category;
-    private String unit;
+    private String unit; // e.g., "kg", "liters", "units"
 
 }
