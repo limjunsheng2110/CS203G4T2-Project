@@ -12,8 +12,10 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Country {
     @Id
-    private String code; //ISO-code
+    private String code; //ISO-code (e.g., "US", "CN", "IN")
     private String name;
     private String region;
     private String currency;
 }
+
+
