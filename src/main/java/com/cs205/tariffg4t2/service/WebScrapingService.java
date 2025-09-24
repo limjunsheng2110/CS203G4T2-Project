@@ -58,6 +58,30 @@ public class WebScrapingService {
     private static final int REQUEST_DELAY_MS = 3000; // 3 seconds between requests
     private static final int MAX_CONTENT_LENGTH = 25000; // Limit content sent to LLM
 
+    //TariffCalculatorService calls this method to get tariff rate
+    public BigDecimal getTariffRate(String homeCountry, String destinationCountry,
+                                    String hsCode, String productCategory) {
+
+        Optional<TariffRate> existingRate = tariffRateRepository
+                .findByHsCodeAndImportingCountryCodeAndExportingCountryCode(hsCode, destinationCountry, homeCountry);
+
+        if (existingRate.isPresent()) {
+            // Get the most recent detail for this rate
+            Optional<TariffRateDetail> latestDetail = tariffRateDetailRepository
+                    .findFirstByTariffRateAndIsActiveTrueOrderByCreatedAtDesc(existingRate.get());
+
+            if (latestDetail.isPresent()) {
+                return latestDetail.get().getFinalRate();
+            } else {
+                return existingRate.get().getBaseRate();
+            }
+        }
+
+        // If not found, return a default rate
+        logger.warn("No tariff rate found for HS code {} from {} to {}", hsCode, homeCountry, destinationCountry);
+        return new BigDecimal("5.0"); // Default 5% tariff for testing
+    }
+
     /**
      * Scrape all URLs that are due for scraping
      */
@@ -589,31 +613,6 @@ public class WebScrapingService {
         return scrapingRepositoryJob.save(scrapingJob);
     }
 
-    /**
-     * Get tariff rate for calculation purposes
-     */
-    public BigDecimal getTariffRate(String homeCountry, String destinationCountry,
-                                     String hsCode, String productCategory) {
-
-        Optional<TariffRate> existingRate = tariffRateRepository
-                .findByHsCodeAndImportingCountryCodeAndExportingCountryCode(hsCode, destinationCountry, homeCountry);
-
-        if (existingRate.isPresent()) {
-            // Get the most recent detail for this rate
-            Optional<TariffRateDetail> latestDetail = tariffRateDetailRepository
-                    .findFirstByTariffRateAndIsActiveTrueOrderByCreatedAtDesc(existingRate.get());
-
-            if (latestDetail.isPresent()) {
-                return latestDetail.get().getFinalRate();
-            } else {
-                return existingRate.get().getBaseRate();
-            }
-        }
-
-        // If not found, return a default rate
-        logger.warn("No tariff rate found for HS code {} from {} to {}", hsCode, homeCountry, destinationCountry);
-        return new BigDecimal("5.0"); // Default 5% tariff for testing
-    }
 
     /**
      * Test LLM extraction with sample content

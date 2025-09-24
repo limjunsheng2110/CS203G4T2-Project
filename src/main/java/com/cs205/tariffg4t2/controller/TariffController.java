@@ -25,9 +25,6 @@ public class TariffController {
     @Autowired
     private TariffCalculatorService tariffService;
 
-    @Autowired
-    private WebScrapingService webScrapingService;
-
     @GetMapping("/calculate")
     public ResponseEntity<TariffCalculationResponse> calculateTariff(
             @RequestParam String homeCountry,
@@ -48,6 +45,7 @@ public class TariffController {
                     .tradeAgreement(tradeAgreement)
                     .build();
 
+
             // Calculate tariff (validation is handled in the service layer)
             TariffCalculationResult result = tariffService.calculateTariff(request);
 
@@ -63,27 +61,5 @@ public class TariffController {
     }
 
 
-    /**
-     * Test scraping the specific UK tariff URL
-     */
-    @PostMapping("/test-uk-scraping")
-    public ResponseEntity<Map<String, Object>> testUKScraping() {
-        try {
-            String testUrl = "https://www.trade-tariff.service.gov.uk/subheadings/0201100000-80?day=24&month=9&year=2025";
 
-            ScrapingJob job = webScrapingService.scrapeUKTariffUrl(testUrl);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", job.getStatus());
-            response.put("recordsExtracted", job.getRecordsExtracted());
-            response.put("jobId", job.getId());
-            response.put("errorMessage", job.getErrorMessage());
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(error);
-        }
-    }
 }
