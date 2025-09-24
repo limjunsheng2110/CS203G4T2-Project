@@ -44,6 +44,7 @@ Thumbs.db
 *.properties.local
 application-dev.properties
 application-prod.properties
+src/main/resources/application-local.properties
 application-*.yml
 application-*.yaml
 set-env.sh
