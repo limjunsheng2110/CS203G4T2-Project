@@ -54,7 +54,7 @@ public class WebScrapingService {
     
     // Configuration
     private static final int REQUEST_DELAY_MS = 3000; // 3 seconds between requests
-    private static final int MAX_CONTENT_LENGTH = 50000; // Limit content sent to LLM
+    private static final int MAX_CONTENT_LENGTH = 25000; // Limit content sent to LLM
     
     /**
      * Scrape all URLs that are due for scraping
@@ -166,13 +166,14 @@ public class WebScrapingService {
      * Extract structured data using LLM
      */
     private String extractDataWithLLM(String webContent, String siteIdentifier) throws Exception {
-        // Prepare the prompt for the LLM
-        String prompt = buildExtractionPrompt(webContent, siteIdentifier);
+        // Truncate content to stay within token limits (save ~2000 tokens for prompt and response)
+        String truncatedContent = truncateContent(webContent, 3000);
+        String prompt = buildExtractionPrompt(truncatedContent, siteIdentifier);
         
         // Create request payload for OpenAI API
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", "gpt-4");
-        requestBody.put("max_tokens", 2000);
+        requestBody.put("max_tokens", 1000);
         requestBody.put("temperature", 0.1); // Low temperature for consistent extraction
         
         Map<String, String> message = new HashMap<>();
@@ -283,22 +284,51 @@ public class WebScrapingService {
         
         return recordsExtracted;
     }
-    
-    /**
-     * Extract JSON from LLM response (handles cases where LLM adds explanation text)
-     */
-    private String extractJsonFromResponse(String response) {
-        // Look for JSON pattern
-        Pattern jsonPattern = Pattern.compile("\\{[\\s\\S]*\\}", Pattern.MULTILINE);
-        Matcher matcher = jsonPattern.matcher(response);
-        
-        if (matcher.find()) {
-            return matcher.group();
-        }
-        
-        // If no JSON found, assume the entire response is JSON
-        return response;
-    }
+
+   private String extractJsonFromResponse(String response) {
+       // Look for JSON pattern
+       Pattern jsonPattern = Pattern.compile("\\{[\\s\\S]*\\}", Pattern.MULTILINE);
+       Matcher matcher = jsonPattern.matcher(response);
+       
+       if (matcher.find()) {
+           return matcher.group();
+       }
+       
+       // If no JSON found, assume the entire response is JSON
+       return response;
+   }
+   
+   /**
+    * Truncate content to stay within OpenAI token limits
+    */
+   private String truncateContent(String content, int maxTokens) {
+       if (content == null || content.isEmpty()) {
+           return content;
+       }
+       
+       // Rough estimate: 1 token ≈ 4 characters
+       // Leave some buffer for prompt overhead
+       int maxChars = maxTokens * 3; // Conservative estimate
+       
+       if (content.length() <= maxChars) {
+           return content;
+       }
+       
+       // Truncate and add indicator
+       String truncated = content.substring(0, maxChars);
+       
+       // Try to cut at a reasonable boundary (end of line, paragraph, etc.)
+       int lastNewline = truncated.lastIndexOf('\n');
+       int lastParagraph = truncated.lastIndexOf("\n\n");
+       
+       if (lastParagraph > maxChars * 0.8) {
+           truncated = content.substring(0, lastParagraph);
+       } else if (lastNewline > maxChars * 0.8) {
+           truncated = content.substring(0, lastNewline);
+       }
+       
+       return truncated + "\n\n[Content truncated to fit token limits...]";
+   }
     
     /**
      * Save or update tariff data with additional information
