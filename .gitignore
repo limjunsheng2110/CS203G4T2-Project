@@ -46,6 +46,7 @@ application-dev.properties
 application-prod.properties
 application-*.yml
 application-*.yaml
+set-env.sh
 
 # === Misc ===
 # Ignore package-lock/yarn.lock if not using npm/yarn
