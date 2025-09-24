@@ -4,7 +4,7 @@ import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
 import com.cs205.tariffg4t2.dto.response.TariffCalculationResponse;
 import com.cs205.tariffg4t2.dto.response.TariffCalculationResult;
 import com.cs205.tariffg4t2.model.api.ScrapingJob;
-import com.cs205.tariffg4t2.service.TariffCalculatorService;
+import com.cs205.tariffg4t2.service.tariffLogic.TariffCalculatorService;
 import com.cs205.tariffg4t2.service.WebScrapingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
