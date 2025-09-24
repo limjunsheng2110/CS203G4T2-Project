@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -23,8 +24,17 @@ public class TariffCalculatorService {
     @Autowired
     private TariffCacheService tariffCacheService;
 
+    @Autowired
+    private TariffValidationService tariffValidationService;
+
     public TariffCalculationResult calculateTariff(TariffCalculationRequest request) {
         
+        // Step 0: Validate input
+        List<String> validationErrors = tariffValidationService.validateTariffRequest(request);
+        if (!validationErrors.isEmpty()) {
+            throw new IllegalArgumentException("Validation errors: " + String.join(", ", validationErrors));
+        }
+
         // Step 1: Get the tariff rate (from cache or scraping)
         BigDecimal tariffRate = getTariffRate(request);
         
@@ -51,7 +61,7 @@ public class TariffCalculatorService {
         return TariffCalculationResult.builder()
                 .homeCountry(request.getHomeCountry())
                 .destinationCountry(request.getDestinationCountry())
-                .productCategory(request.getProductCategory())
+                .productName(request.getProductName())
                 .productValue(request.getProductValue())
                 .tariffRate(adjustedRate)
                 .tariffAmount(tariffAmount)
@@ -85,26 +95,23 @@ public class TariffCalculatorService {
                 request.getHomeCountry(),
                 request.getDestinationCountry(),
                 request.getHsCode(),
-                request.getProductCategory()
+                request.getProductName()
             );
             
         } catch (Exception e) {
             // Log the error and return fallback rate
             System.err.println("Failed to scrape tariff rate: " + e.getMessage());
-            return getFallbackTariffRate(request.getProductCategory());
+            return getFallbackTariffRate(request.getProductName());
         }
     }
 
-    private BigDecimal getFallbackTariffRate(String productCategory) {
+    private BigDecimal getFallbackTariffRate(String productName) {
         // Fallback rates based on common product categories
         Map<String, BigDecimal> fallbackRates = Map.of(
-            "Electronics", new BigDecimal("15.0"),
-            "Textiles", new BigDecimal("12.5"),
-            "Automotive", new BigDecimal("8.0"),
-            "Agriculture", new BigDecimal("20.0"),
-            "Machinery", new BigDecimal("10.0")
+            "Beef", new BigDecimal("15.0"),
+            "Chicken", new BigDecimal("5.0")
         );
         
-        return fallbackRates.getOrDefault(productCategory, new BigDecimal("10.0"));
+        return fallbackRates.getOrDefault(productName, new BigDecimal("10.0"));
     }
 }

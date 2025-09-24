@@ -35,7 +35,7 @@ public class TariffCacheService {
             request.getHomeCountry(),
             request.getDestinationCountry(),
             request.getHsCode() != null ? request.getHsCode() : "GENERAL",
-            request.getProductCategory()
+            request.getProductName()
         );
     }
 

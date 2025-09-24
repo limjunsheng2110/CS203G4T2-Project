@@ -722,7 +722,7 @@ public class WebScrapingService {
                         TargetUrl newUrl = new TargetUrl();
                         newUrl.setUrl(urlString);
                         newUrl.setSiteIdentifier("uk_trade_tariff");
-                        newUrl.setScrapingFrequency("DAILY");
+                        newUrl.setScrapeFrequency("DAILY");
                         newUrl.setActive(true);
                         return targetUrlRepository.save(newUrl);
                     });
@@ -753,7 +753,7 @@ public class WebScrapingService {
                         TargetUrl newUrl = new TargetUrl();
                         newUrl.setUrl(urlString);
                         newUrl.setSiteIdentifier("uk_trade_tariff");
-                        newUrl.setScrapingFrequency("DAILY");
+                        newUrl.setScrapeFrequency("DAILY");
                         newUrl.setActive(true);
                         return targetUrlRepository.save(newUrl);
                     });

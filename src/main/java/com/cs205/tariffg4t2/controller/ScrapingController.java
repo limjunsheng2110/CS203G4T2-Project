@@ -30,7 +30,7 @@ public class ScrapingController {
     
     @PostMapping("/urls")
     public TargetUrl addUrl(@RequestBody TargetUrl targetUrl) {
-        targetUrl.setIsActive(true);
+        targetUrl.setActive(true);
         targetUrl.setCreatedAt(LocalDateTime.now());
         return targetUrlRepository.save(targetUrl);
     }

@@ -32,62 +32,36 @@ public class TariffController {
     public ResponseEntity<TariffCalculationResponse> calculateTariff(
             @RequestParam String homeCountry,
             @RequestParam String destinationCountry,
-            @RequestParam String productCategory,
+            @RequestParam String productName,
             @RequestParam BigDecimal productValue,
             @RequestParam(required = false) String hsCode,
             @RequestParam(required = false) String tradeAgreement) {
 
         try {
-            // Validate input parameters
-            ResponseEntity<TariffCalculationResponse> validationError = validateInputParameters(
-                    homeCountry, destinationCountry, productCategory, productValue);
-            if (validationError != null) {
-                return validationError;
-            }
-
             // Create calculation request
             TariffCalculationRequest request = TariffCalculationRequest.builder()
                     .homeCountry(homeCountry.trim().toUpperCase())
                     .destinationCountry(destinationCountry.trim().toUpperCase())
-                    .productCategory(productCategory)
+                    .productName(productName.trim())
                     .productValue(productValue)
                     .hsCode(hsCode)
                     .tradeAgreement(tradeAgreement)
                     .build();
 
-            // Calculate tariff
+            // Calculate tariff (validation is handled in the service layer)
             TariffCalculationResult result = tariffService.calculateTariff(request);
 
             return ResponseEntity.ok(new TariffCalculationResponse("Success", result));
 
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new TariffCalculationResponse(e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .body(new TariffCalculationResponse("Internal server error", null));
         }
     }
 
-
-    private ResponseEntity<TariffCalculationResponse> validateInputParameters(
-            String homeCountry, String destinationCountry, String productCategory, BigDecimal productValue) {
-
-        if (homeCountry == null || homeCountry.trim().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(new TariffCalculationResponse("Home country is required", null));
-        }
-
-        if (destinationCountry == null || destinationCountry.trim().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(new TariffCalculationResponse("Destination country is required", null));
-        }
-
-        if (productCategory == null || productCategory.trim().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(new TariffCalculationResponse("Product category is required", null));
-        }
-
-
-        return null; // No validation errors
-    }
 
     /**
      * Test scraping the specific UK tariff URL
@@ -104,31 +78,6 @@ public class TariffController {
             response.put("recordsExtracted", job.getRecordsExtracted());
             response.put("jobId", job.getId());
             response.put("errorMessage", job.getErrorMessage());
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(500).body(error);
-        }
-    }
-
-    /**
-     * Test scraping with full content logging
-     */
-    @PostMapping("/test-uk-scraping-full")
-    public ResponseEntity<Map<String, Object>> testUKScrapingWithFullLogging() {
-        try {
-            String testUrl = "https://www.trade-tariff.service.gov.uk/subheadings/0201100000-80?day=24&month=9&year=2025";
-
-            ScrapingJob job = webScrapingService.scrapeUKTariffUrlWithFullLogging(testUrl);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", job.getStatus());
-            response.put("recordsExtracted", job.getRecordsExtracted());
-            response.put("jobId", job.getId());
-            response.put("errorMessage", job.getErrorMessage());
-            response.put("message", "Check server logs for full content details");
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
