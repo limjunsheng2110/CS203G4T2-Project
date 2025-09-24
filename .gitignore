@@ -50,4 +50,4 @@ application-*.yaml
 # === Misc ===
 # Ignore package-lock/yarn.lock if not using npm/yarn
 node_modules/
-npm-debug.log
+npm-debug.logsrc/main/resources/application.properties
