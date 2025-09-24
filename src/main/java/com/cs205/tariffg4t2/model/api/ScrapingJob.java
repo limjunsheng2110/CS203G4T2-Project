@@ -1,51 +1,33 @@
 package com.cs205.tariffg4t2.model.api;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ScrapingJob {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_url_id")
     private TargetUrl targetUrl;
 
+    private String status;
+
     private LocalDateTime startTime;
+
     private LocalDateTime endTime;
 
-    @Column(length = 50) // Reasonable length for status
-    private String status; // SUCCESS, FAILED, IN_PROGRESS
+    private Integer recordsExtracted;
 
-    private int recordsExtracted;
-
-    @Column(columnDefinition = "TEXT") // This allows unlimited length
     private String errorMessage;
-
-    // Constructors
-    public ScrapingJob() {}
-
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public TargetUrl getTargetUrl() { return targetUrl; }
-    public void setTargetUrl(TargetUrl targetUrl) { this.targetUrl = targetUrl; }
-
-    public LocalDateTime getStartTime() { return startTime; }
-    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
-
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public int getRecordsExtracted() { return recordsExtracted; }
-    public void setRecordsExtracted(int recordsExtracted) { this.recordsExtracted = recordsExtracted; }
-
-    public String getErrorMessage() { return errorMessage; }
-    public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
 }
