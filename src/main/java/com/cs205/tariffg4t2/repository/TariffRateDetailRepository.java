@@ -1,4 +1,4 @@
-package com.cs205.tariffg4t2.service;
+package com.cs205.tariffg4t2.repository;
 
 import com.cs205.tariffg4t2.model.api.TariffRateDetail;
 import com.cs205.tariffg4t2.model.api.TariffRate;

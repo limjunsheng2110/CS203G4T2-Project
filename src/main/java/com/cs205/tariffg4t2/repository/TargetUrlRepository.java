@@ -18,6 +18,9 @@ public interface TargetUrlRepository extends JpaRepository<TargetUrl, Long> {
     // Find URLs by site identifier
     Optional<TargetUrl> findBySiteIdentifier(String siteIdentifier);
     
+    // Find URL by exact URL string
+    Optional<TargetUrl> findByUrl(String url);
+
     // Find URLs that need scraping (based on frequency and last scraped time)
     @Query("SELECT t FROM TargetUrl t WHERE t.isActive = true AND " +
            "(t.lastScraped IS NULL OR " +

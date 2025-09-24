@@ -1,10 +1,16 @@
 package com.cs205.tariffg4t2.model.api;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@Data
+@AllArgsConstructor
 @Table(name = "tariff_rate_details")
 public class TariffRateDetail {
     
@@ -36,8 +42,8 @@ public class TariffRateDetail {
     private String dataSource; // e.g., "singapore_customs", "manual_entry"
     
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
-    
+    private LocalDateTime createdAt = LocalDateTime.now();
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
@@ -79,44 +85,4 @@ public class TariffRateDetail {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-    
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    
-    public TariffRate getTariffRate() { return tariffRate; }
-    public void setTariffRate(TariffRate tariffRate) { this.tariffRate = tariffRate; }
-    
-    public BigDecimal getFinalRate() { return finalRate; }
-    public void setFinalRate(BigDecimal finalRate) { this.finalRate = finalRate; }
-    
-    public LocalDateTime getEffectiveDate() { return effectiveDate; }
-    public void setEffectiveDate(LocalDateTime effectiveDate) { this.effectiveDate = effectiveDate; }
-    
-    public LocalDateTime getExpiryDate() { return expiryDate; }
-    public void setExpiryDate(LocalDateTime expiryDate) { this.expiryDate = expiryDate; }
-    
-    public Long getTradeAgreementId() { return tradeAgreementId; }
-    public void setTradeAgreementId(Long tradeAgreementId) { this.tradeAgreementId = tradeAgreementId; }
-    
-    public String getDataSource() { return dataSource; }
-    public void setDataSource(String dataSource) { this.dataSource = dataSource; }
-    
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-    
-    public ScrapingJob getScraping() { return scraping; }
-    public void setScraping(ScrapingJob scraping) { this.scraping = scraping; }
-    
-    public BigDecimal getConfidenceScore() { return confidenceScore; }
-    public void setConfidenceScore(BigDecimal confidenceScore) { this.confidenceScore = confidenceScore; }
-    
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
-    
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
 }

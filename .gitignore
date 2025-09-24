@@ -41,7 +41,7 @@ Thumbs.db
 # === Environment / Secrets ===
 *.env
 .env
-env.*
+env.ps1
 *.properties.local
 application-dev.properties
 application-prod.properties

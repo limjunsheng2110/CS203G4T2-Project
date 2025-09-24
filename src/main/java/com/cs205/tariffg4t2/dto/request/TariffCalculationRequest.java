@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 public class TariffCalculationRequest {
     private String homeCountry;
     private String destinationCountry;
-    private String productCategory;
+    private String productName;
     private BigDecimal productValue;
     private String hsCode;
     private String tradeAgreement;

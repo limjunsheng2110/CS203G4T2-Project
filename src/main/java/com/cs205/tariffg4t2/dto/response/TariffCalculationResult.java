@@ -17,7 +17,7 @@ public class TariffCalculationResult {
     //additional fields tarrifRate, tariffAmount, totalCost, currency, tradeAgreement, calculationDate
     private String homeCountry;
     private String destinationCountry;
-    private String productCategory;
+    private String productName;
     private BigDecimal productValue;
     private BigDecimal tariffRate;
     private BigDecimal tariffAmount;
