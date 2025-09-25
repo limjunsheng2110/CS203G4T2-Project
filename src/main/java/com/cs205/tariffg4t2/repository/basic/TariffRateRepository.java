@@ -1,4 +1,4 @@
-package com.cs205.tariffg4t2.repository;
+package com.cs205.tariffg4t2.repository.basic;
 
 import com.cs205.tariffg4t2.model.basic.TariffRate;
 import org.springframework.data.jpa.repository.JpaRepository;

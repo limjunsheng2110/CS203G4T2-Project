@@ -2,9 +2,11 @@ package com.cs205.tariffg4t2.service.data;
 
 import com.cs205.tariffg4t2.model.basic.TariffRate;
 import com.cs205.tariffg4t2.model.web.TargetUrl;
-import com.cs205.tariffg4t2.model.web.TariffRateDetail;
+import com.cs205.tariffg4t2.model.basic.TariffRateDetail;
 import com.cs205.tariffg4t2.model.web.ScrapingJob;
 import com.cs205.tariffg4t2.repository.*;
+import com.cs205.tariffg4t2.repository.basic.TariffRateDetailRepository;
+import com.cs205.tariffg4t2.repository.basic.TariffRateRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
