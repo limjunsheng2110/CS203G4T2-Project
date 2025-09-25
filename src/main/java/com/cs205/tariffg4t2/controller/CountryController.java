@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.controller;
 
-import com.cs205.tariffg4t2.model.Country;
+import com.cs205.tariffg4t2.model.basic.Country;
 import com.cs205.tariffg4t2.service.CountryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

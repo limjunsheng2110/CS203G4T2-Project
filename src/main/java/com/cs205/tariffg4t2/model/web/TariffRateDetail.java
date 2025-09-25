@@ -1,9 +1,9 @@
-package com.cs205.tariffg4t2.model.api;
+package com.cs205.tariffg4t2.model.web;
 
+import com.cs205.tariffg4t2.model.basic.TariffRate;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

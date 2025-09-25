@@ -1,4 +1,4 @@
-package com.cs205.tariffg4t2.model;
+package com.cs205.tariffg4t2.model.basic;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

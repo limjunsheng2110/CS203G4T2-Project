@@ -1,5 +1,7 @@
-package com.cs205.tariffg4t2.model;
+package com.cs205.tariffg4t2.model.web;
 
+import com.cs205.tariffg4t2.model.basic.Country;
+import com.cs205.tariffg4t2.model.basic.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
