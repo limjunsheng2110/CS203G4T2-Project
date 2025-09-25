@@ -1,8 +1,8 @@
 package com.cs205.tariffg4t2.repository;
 
-import com.cs205.tariffg4t2.model.api.TariffRateDetail;
-import com.cs205.tariffg4t2.model.api.TariffRate;
-import com.cs205.tariffg4t2.model.api.ScrapingJob;
+import com.cs205.tariffg4t2.model.web.TariffRateDetail;
+import com.cs205.tariffg4t2.model.basic.TariffRate;
+import com.cs205.tariffg4t2.model.web.ScrapingJob;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

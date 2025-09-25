@@ -1,5 +1,6 @@
-package com.cs205.tariffg4t2.model;
+package com.cs205.tariffg4t2.model.basic;
 
+import com.cs205.tariffg4t2.model.web.SearchHistory;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

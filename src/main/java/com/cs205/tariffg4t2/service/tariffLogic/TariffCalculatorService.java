@@ -2,7 +2,7 @@ package com.cs205.tariffg4t2.service.tariffLogic;
 
 import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
 import com.cs205.tariffg4t2.dto.response.TariffCalculationResult;
-import com.cs205.tariffg4t2.service.WebScrapingService;
+import com.cs205.tariffg4t2.service.data.WebScrapingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -72,6 +72,8 @@ public class TariffCalculatorService {
                 .build();
     }
 
+
+    //This checks whether or not the tariff rate is in cache. If not, then it will just call the web scraping service to get the rate.
     private BigDecimal getTariffRate(TariffCalculationRequest request) {
         // Check cache first
         BigDecimal cachedRate = tariffCacheService.getCachedRate(request);
@@ -97,7 +99,7 @@ public class TariffCalculatorService {
                 request.getHsCode(),
                 request.getProductName()
             );
-            
+
         } catch (Exception e) {
             // Log the error and return fallback rate
             System.err.println("Failed to scrape tariff rate: " + e.getMessage());

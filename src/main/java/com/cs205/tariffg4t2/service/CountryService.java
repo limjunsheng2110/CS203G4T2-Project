@@ -1,8 +1,8 @@
 package com.cs205.tariffg4t2.service;
 
 
-import com.cs205.tariffg4t2.model.Country;
-import com.cs205.tariffg4t2.model.api.CountryAPI;
+import com.cs205.tariffg4t2.model.basic.Country;
+import com.cs205.tariffg4t2.model.CountryAPI;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.RestClientException;

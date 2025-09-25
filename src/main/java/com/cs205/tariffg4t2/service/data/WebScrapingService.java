@@ -1,6 +1,9 @@
-package com.cs205.tariffg4t2.service;
+package com.cs205.tariffg4t2.service.data;
 
-import com.cs205.tariffg4t2.model.api.*;
+import com.cs205.tariffg4t2.model.basic.TariffRate;
+import com.cs205.tariffg4t2.model.web.TargetUrl;
+import com.cs205.tariffg4t2.model.web.TariffRateDetail;
+import com.cs205.tariffg4t2.model.web.ScrapingJob;
 import com.cs205.tariffg4t2.repository.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,6 +60,30 @@ public class WebScrapingService {
     // Configuration
     private static final int REQUEST_DELAY_MS = 3000; // 3 seconds between requests
     private static final int MAX_CONTENT_LENGTH = 25000; // Limit content sent to LLM
+
+    //TariffCalculatorService calls this method to get tariff rate
+    public BigDecimal getTariffRate(String homeCountry, String destinationCountry,
+                                    String hsCode, String productCategory) {
+
+        Optional<TariffRate> existingRate = tariffRateRepository
+                .findByHsCodeAndImportingCountryCodeAndExportingCountryCode(hsCode, destinationCountry, homeCountry);
+
+        if (existingRate.isPresent()) {
+            // Get the most recent detail for this rate
+            Optional<TariffRateDetail> latestDetail = tariffRateDetailRepository
+                    .findFirstByTariffRateAndIsActiveTrueOrderByCreatedAtDesc(existingRate.get());
+
+            if (latestDetail.isPresent()) {
+                return latestDetail.get().getFinalRate();
+            } else {
+                return existingRate.get().getBaseRate();
+            }
+        }
+
+        // If not found, return a default rate
+        logger.warn("No tariff rate found for HS code {} from {} to {}", hsCode, homeCountry, destinationCountry);
+        return new BigDecimal("5.0"); // Default 5% tariff for testing
+    }
 
     /**
      * Scrape all URLs that are due for scraping
@@ -589,31 +616,6 @@ public class WebScrapingService {
         return scrapingRepositoryJob.save(scrapingJob);
     }
 
-    /**
-     * Get tariff rate for calculation purposes
-     */
-    public BigDecimal getTariffRate(String homeCountry, String destinationCountry,
-                                     String hsCode, String productCategory) {
-
-        Optional<TariffRate> existingRate = tariffRateRepository
-                .findByHsCodeAndImportingCountryCodeAndExportingCountryCode(hsCode, destinationCountry, homeCountry);
-
-        if (existingRate.isPresent()) {
-            // Get the most recent detail for this rate
-            Optional<TariffRateDetail> latestDetail = tariffRateDetailRepository
-                    .findFirstByTariffRateAndIsActiveTrueOrderByCreatedAtDesc(existingRate.get());
-
-            if (latestDetail.isPresent()) {
-                return latestDetail.get().getFinalRate();
-            } else {
-                return existingRate.get().getBaseRate();
-            }
-        }
-
-        // If not found, return a default rate
-        logger.warn("No tariff rate found for HS code {} from {} to {}", hsCode, homeCountry, destinationCountry);
-        return new BigDecimal("5.0"); // Default 5% tariff for testing
-    }
 
     /**
      * Test LLM extraction with sample content

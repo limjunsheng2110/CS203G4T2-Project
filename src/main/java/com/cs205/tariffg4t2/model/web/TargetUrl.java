@@ -1,4 +1,4 @@
-package com.cs205.tariffg4t2.model.api;
+package com.cs205.tariffg4t2.model.web;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;

@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.repository;
 
-import com.cs205.tariffg4t2.model.api.TargetUrl;
+import com.cs205.tariffg4t2.model.web.TargetUrl;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
