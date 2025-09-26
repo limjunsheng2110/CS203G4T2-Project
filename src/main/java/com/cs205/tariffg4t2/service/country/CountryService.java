@@ -4,9 +4,9 @@ package com.cs205.tariffg4t2.service.country;
 import com.cs205.tariffg4t2.model.basic.Country;
 import com.cs205.tariffg4t2.model.CountryAPI;
 import com.cs205.tariffg4t2.repository.basic.CountryRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.RestClientException;
@@ -14,8 +14,10 @@ import org.springframework.web.client.RestClientException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class CountryService {
 
@@ -29,6 +31,8 @@ public class CountryService {
         this.restTemplate = new RestTemplate();
     }
 
+
+    //API get all countries
     public List<Country> getAllCountries() {
         try {
             CountryAPI[] apiResponses = restTemplate.getForObject(
@@ -54,30 +58,26 @@ public class CountryService {
         return countryRepository.findAll();
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public String populateCountriesDatabase() {
-        // Get countries from API
         List<Country> countriesFromApi = getAllCountries();
 
-        int savedCount = 0;
-        int updatedCount = 0;
+        // Use batch operations instead of individual saves
+        List<Country> existingCountries = countryRepository.findAll();
+        Set<String> existingCodes = existingCountries.stream()
+                .map(Country::getCode)
+                .collect(Collectors.toSet());
 
-        for (Country country : countriesFromApi) {
-            // Check if country already exists
-            if (countryRepository.existsById(country.getCode())) {
-                countryRepository.save(country); // Update existing
-                updatedCount++;
-            } else {
-                countryRepository.save(country); // Insert new
-                savedCount++;
-            }
-        }
+        List<Country> newCountries = countriesFromApi.stream()
+                .filter(country -> !existingCodes.contains(country.getCode()))
+                .collect(Collectors.toList());
 
-        return String.format("Database population completed. New: %d, Updated: %d",
-                savedCount, updatedCount);
+        List<Country> savedCountries = countryRepository.saveAll(newCountries);
+
+        return String.format("Database population completed. New: %d", savedCountries.size());
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public String populateCountriesDatabaseBatch() {
         // Clear existing data first (optional)
         countryRepository.deleteAll();
@@ -85,19 +85,10 @@ public class CountryService {
         // Get countries from API
         List<Country> countriesFromApi = getAllCountries();
 
-        // Save in smaller batches
-        int batchSize = 50;
-        int totalSaved = 0;
+        // Save all at once - let Spring handle the batching
+        List<Country> savedCountries = countryRepository.saveAll(countriesFromApi);
 
-        for (int i = 0; i < countriesFromApi.size(); i += batchSize) {
-            int end = Math.min(i + batchSize, countriesFromApi.size());
-            List<Country> batch = countriesFromApi.subList(i, end);
-
-            List<Country> saved = countryRepository.saveAll(batch);
-            totalSaved += saved.size();
-        }
-
-        return "Successfully populated database with " + totalSaved + " countries using batch method";
+        return "Successfully populated database with " + savedCountries.size() + " countries using batch method";
     }
 
     public long getCountriesCount() {

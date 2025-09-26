@@ -16,25 +16,11 @@ public class CountryController {
     @Autowired
     private CountryService countryService;
 
-    // Get countries from API
-    @GetMapping("/all")
-    public ResponseEntity<?> getAllCountries() {
-        try {
-            List<Country> countries = countryService.getAllCountries();
-            return ResponseEntity.ok(countries);
-        } catch (Exception e) {
-            System.err.println("Error in getAllCountries: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error fetching countries: " + e.getMessage());
-        }
-    }
-
     // Get countries from database
-    @GetMapping("/db/all")
+    @GetMapping("/all")
     public ResponseEntity<?> getAllCountriesFromDatabase() {
         try {
-            List<Country> countries = countryService.getAllCountriesFromDatabase();
+                List<Country> countries = countryService.getAllCountriesFromDatabase();
             return ResponseEntity.ok(countries);
         } catch (Exception e) {
             System.err.println("Error in getAllCountriesFromDatabase: " + e.getMessage());
@@ -44,19 +30,38 @@ public class CountryController {
         }
     }
 
-    // Populate database with countries from API
-    @PostMapping("/populate")
-    public ResponseEntity<?> populateCountriesDatabase() {
+    @GetMapping("/{code}")
+    public ResponseEntity<?> getCountryByCode(@PathVariable String code) {
         try {
-            String result = countryService.populateCountriesDatabase();
-            return ResponseEntity.ok(result);
+            Country country = countryService.getCountryByCode(code);
+            if (country == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Country not found: " + code);
+            }
+            return ResponseEntity.ok(country);
         } catch (Exception e) {
-            System.err.println("Error in populateCountriesDatabase: " + e.getMessage());
+            System.err.println("Error in getCountryByCode: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error populating database: " + e.getMessage());
+                    .body("Error fetching country: " + e.getMessage());
         }
     }
+
+
+    //---------------------API Fetching and Non-CRUD endpoints---------------------//
+
+//    @GetMapping("/api-all")
+//    public ResponseEntity<?> getAllCountries() {
+//        try {
+//            List<Country> countries = countryService.getAllCountries();
+//            return ResponseEntity.ok(countries);
+//        } catch (Exception e) {
+//            System.err.println("Error in getAllCountries: " + e.getMessage());
+//            e.printStackTrace();
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body("Error fetching countries: " + e.getMessage());
+//        }
+//    }
 
     // Alternative populate method with batch processing
     @PostMapping("/populate-batch")
@@ -86,40 +91,6 @@ public class CountryController {
         }
     }
 
-    // Get count of countries in database
-    @GetMapping("/db/count")
-    public ResponseEntity<?> getCountriesCount() {
-        try {
-            long count = countryService.getCountriesCount();
-            return ResponseEntity.ok("Countries in database: " + count);
-        } catch (Exception e) {
-            System.err.println("Error in getCountriesCount: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error getting count: " + e.getMessage());
-        }
-    }
 
-    @GetMapping("/{code}")
-    public ResponseEntity<?> getCountryByCode(@PathVariable String code) {
-        try {
-            Country country = countryService.getCountryByCode(code);
-            if (country == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Country not found: " + code);
-            }
-            return ResponseEntity.ok(country);
-        } catch (Exception e) {
-            System.err.println("Error in getCountryByCode: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error fetching country: " + e.getMessage());
-        }
-    }
 
-    // to test endpoint to see raw API response
-    @GetMapping("/test-raw")
-    public String testRawApi() {
-        return "API integration is working! Try /api/countries or /api/countries/US";
-    }
 }
