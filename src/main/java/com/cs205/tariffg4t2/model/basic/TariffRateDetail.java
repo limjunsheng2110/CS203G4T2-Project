@@ -4,12 +4,14 @@ import com.cs205.tariffg4t2.model.web.ScrapingJob;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "tariff_rate_details")
 public class TariffRateDetail {
@@ -61,18 +63,7 @@ public class TariffRateDetail {
     
     @Column(name = "is_active")
     private Boolean isActive = true;
-    
-    // Constructors
-    public TariffRateDetail() {}
-    
-    public TariffRateDetail(TariffRate tariffRate, BigDecimal finalRate, String dataSource) {
-        this.tariffRate = tariffRate;
-        this.finalRate = finalRate;
-        this.dataSource = dataSource;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-        this.isActive = true;
-    }
+
     
     // Lifecycle methods
     @PrePersist

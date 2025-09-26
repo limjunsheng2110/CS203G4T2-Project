@@ -32,7 +32,7 @@ public class TariffRate {
     private BigDecimal baseRate;
 
     @Column(name = "unit")
-    private String unit;
+    private String unit; //kg, liters, units, etc.
 
     @OneToMany(mappedBy = "tariffRate", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TariffRateDetail> details;
