@@ -54,79 +54,50 @@ public class CountryService {
         return countryRepository.findAll();
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public String populateCountriesDatabase() {
-        try {
-            // Get countries from API
-            List<Country> countriesFromApi = getAllCountries();
+        // Get countries from API
+        List<Country> countriesFromApi = getAllCountries();
 
-            int savedCount = 0;
-            int updatedCount = 0;
-            int errorCount = 0;
+        int savedCount = 0;
+        int updatedCount = 0;
 
-            for (Country country : countriesFromApi) {
-                try {
-                    // Check if country already exists
-                    if (countryRepository.existsById(country.getCode())) {
-                        countryRepository.save(country); // Update existing
-                        updatedCount++;
-                    } else {
-                        countryRepository.save(country); // Insert new
-                        savedCount++;
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error saving country " + country.getCode() + ": " + e.getMessage());
-                    errorCount++;
-                }
+        for (Country country : countriesFromApi) {
+            // Check if country already exists
+            if (countryRepository.existsById(country.getCode())) {
+                countryRepository.save(country); // Update existing
+                updatedCount++;
+            } else {
+                countryRepository.save(country); // Insert new
+                savedCount++;
             }
-
-            return String.format("Database population completed. New: %d, Updated: %d, Errors: %d",
-                    savedCount, updatedCount, errorCount);
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to populate countries database: " + e.getMessage(), e);
         }
+
+        return String.format("Database population completed. New: %d, Updated: %d",
+                savedCount, updatedCount);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public String populateCountriesDatabaseBatch() {
-        try {
-            // Clear existing data first (optional)
-            countryRepository.deleteAll();
+        // Clear existing data first (optional)
+        countryRepository.deleteAll();
 
-            // Get countries from API
-            List<Country> countriesFromApi = getAllCountries();
+        // Get countries from API
+        List<Country> countriesFromApi = getAllCountries();
 
-            // Save in smaller batches
-            int batchSize = 50;
-            int totalSaved = 0;
+        // Save in smaller batches
+        int batchSize = 50;
+        int totalSaved = 0;
 
-            for (int i = 0; i < countriesFromApi.size(); i += batchSize) {
-                int end = Math.min(i + batchSize, countriesFromApi.size());
-                List<Country> batch = countriesFromApi.subList(i, end);
+        for (int i = 0; i < countriesFromApi.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, countriesFromApi.size());
+            List<Country> batch = countriesFromApi.subList(i, end);
 
-                try {
-                    List<Country> saved = countryRepository.saveAll(batch);
-                    totalSaved += saved.size();
-                } catch (Exception e) {
-                    System.err.println("Error saving batch " + (i/batchSize + 1) + ": " + e.getMessage());
-                    // Try to save individually in this batch
-                    for (Country country : batch) {
-                        try {
-                            countryRepository.save(country);
-                            totalSaved++;
-                        } catch (Exception ex) {
-                            System.err.println("Error saving individual country " + country.getCode());
-                        }
-                    }
-                }
-            }
-
-            return "Successfully populated database with " + totalSaved + " countries using batch method";
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to populate countries database: " + e.getMessage(), e);
+            List<Country> saved = countryRepository.saveAll(batch);
+            totalSaved += saved.size();
         }
+
+        return "Successfully populated database with " + totalSaved + " countries using batch method";
     }
 
     public long getCountriesCount() {
