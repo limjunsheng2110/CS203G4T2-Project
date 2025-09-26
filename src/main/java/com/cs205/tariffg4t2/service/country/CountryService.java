@@ -170,4 +170,53 @@ public class CountryService {
             return "Unknown";
         }
     }
+
+    public boolean deleteCountryByCode(String code) {
+        if (code == null || code.isEmpty()) {
+            throw new IllegalArgumentException("Country code cannot be null or empty");
+        }
+        if (!countryRepository.existsByCodeIgnoreCase(code)) {
+            return false; // Country not found
+        }
+        Country country = countryRepository.findByCodeIgnoreCase(code).orElse(null);
+        assert country != null;
+        countryRepository.delete(country);
+        return true;
+    }
+
+
+    public Country createCountry(String code, String name, String region, String currency) {
+        if (code == null || code.isEmpty() || name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Country code and name cannot be null or empty");
+        }
+        if (countryRepository.existsByCodeIgnoreCase(code)) {
+            throw new IllegalArgumentException("Country with code " + code + " already exists");
+        }
+
+        Country country = new Country(code.toUpperCase(), name, region != null ? region : "Unknown", currency != null ? currency : "Unknown");
+        return countryRepository.save(country);
+    }
+
+    public Country updateCountry(String code, String name, String region, String currency) {
+        if (code == null || code.isEmpty()) {
+            throw new IllegalArgumentException("Country code cannot be null or empty");
+        }
+        Country country = countryRepository.findByCodeIgnoreCase(code).orElse(null);
+        if (country == null) {
+            return null; // Country not found
+        }
+        if (name != null && !name.isEmpty()) {
+            country.setName(name);
+        }
+        if (region != null && !region.isEmpty()) {
+            country.setRegion(region);
+        }
+        if (currency != null && !currency.isEmpty()) {
+            country.setCurrency(currency);
+        }
+        return countryRepository.save(country);
+    }
+
+
+
 }

@@ -30,6 +30,49 @@ public class CountryController {
         }
     }
 
+    //CREATE
+    @PostMapping("/add")
+    public ResponseEntity<?> addCountry(
+            @RequestParam String code,
+            @RequestParam String name,
+            @RequestParam String region,
+            @RequestParam String currency
+    ) {
+        try {
+            Country newCountry = countryService.createCountry(code, name, region, currency);
+            return ResponseEntity.status(HttpStatus.CREATED).body(newCountry);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid input: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error in addCountry: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error adding country: " + e.getMessage());
+        }
+    }
+
+
+    //DELETE
+    @DeleteMapping("/delete/{code}")
+    public ResponseEntity<?> deleteCountryByCode(@PathVariable String code) {
+        try {
+            boolean deleted = countryService.deleteCountryByCode(code);
+            if (!deleted) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Country not found: " + code);
+            }
+            return ResponseEntity.ok("Country deleted: " + code);
+        } catch (Exception e) {
+            System.err.println("Error in deleteCountryByCode: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error deleting country: " + e.getMessage());
+        }
+    }
+
+
+    //READ
     @GetMapping("/{code}")
     public ResponseEntity<?> getCountryByCode(@PathVariable String code) {
         try {
@@ -45,6 +88,28 @@ public class CountryController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error fetching country: " + e.getMessage());
         }
+    }
+
+    //UPDATE
+    @PutMapping("/update/{code}")
+    public ResponseEntity<?> updateCountry(
+            @PathVariable String code,
+            @RequestParam String name,
+            @RequestParam String region,
+            @RequestParam String currency
+    ) {
+        try {
+            Country updatedCountry = countryService.updateCountry(code, name, region, currency);
+            if (updatedCountry == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Country not found: " + code);
+            }
+            return ResponseEntity.ok(updatedCountry);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid input: " + e.getMessage());
+        }
+
     }
 
 
