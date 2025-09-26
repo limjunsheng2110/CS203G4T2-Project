@@ -1,8 +1,6 @@
 package com.cs205.tariffg4t2.model.basic;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,13 +9,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "countries")
 public class Country {
-    @Id
-    private String code; //ISO-code (e.g., "US", "CN", "IN")
-    private String name;
-    private String region;
-    private String currency;
     
+    @Id
+    @Column(name = "country_code", length = 10)
+    private String countryCode;
+    
+    @Column(name = "country_name", length = 100)  
+    private String countryName;
 }
-
-

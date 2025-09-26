@@ -1,4 +1,4 @@
-package com.cs205.tariffg4t2.model;
+package com.cs205.tariffg4t2.model.web;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
