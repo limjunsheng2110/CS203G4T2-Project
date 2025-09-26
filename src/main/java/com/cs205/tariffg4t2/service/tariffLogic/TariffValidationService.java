@@ -1,59 +1,81 @@
 package com.cs205.tariffg4t2.service.tariffLogic;
 
 import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
+import com.cs205.tariffg4t2.repository.basic.CountryRepository;
+import com.cs205.tariffg4t2.model.basic.Country;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class TariffValidationService {
 
+    @Autowired
+    private CountryRepository countryRepository;
+
+
     public List<String> validateTariffRequest(TariffCalculationRequest request) {
         List<String> errors = new ArrayList<>();
 
-        if (request.getHomeCountry() == null || request.getHomeCountry().trim().isEmpty()) {
-            errors.add("Home country is required");
-        }
-
-        if (request.getDestinationCountry() == null || request.getDestinationCountry().trim().isEmpty()) {
-            errors.add("Destination country is required");
-        }
-
-        if (request.getProductName() == null || request.getProductName().trim().isEmpty()) {
-            errors.add("Product name is required");
-        }
-
+        // required fields
+        if (isBlank(request.getHomeCountry())) errors.add("Home country is required");
+        if (isBlank(request.getDestinationCountry())) errors.add("Destination country is required");
+        if (isBlank(request.getProductName())) errors.add("Product name is required");
         if (request.getProductValue() == null || request.getProductValue().compareTo(BigDecimal.ZERO) <= 0) {
             errors.add("Product value must be greater than zero");
         }
 
-        // Validate country codes (ISO 3166-1 alpha-3)
-        if (request.getHomeCountry() != null && !isValidCountryCode(request.getHomeCountry())) {
-            errors.add("Invalid home country code format");
+        // Short-circuit if requireds already failed
+        if (!errors.isEmpty()) return errors;
+
+        // Resolve + normalize countries to alpha-2
+        Optional<String> homeCode = resolveToAlpha2(request.getHomeCountry());
+        Optional<String> destCode = resolveToAlpha2(request.getDestinationCountry());
+
+        if (homeCode.isEmpty()) {
+            errors.add("Unknown home country (not found by code or name)");
+        } else {
+            request.setHomeCountry(homeCode.get());  // normalize to alpha-2
         }
 
-        if (request.getDestinationCountry() != null && !isValidCountryCode(request.getDestinationCountry())) {
-            errors.add("Invalid destination country code format");
+        if (destCode.isEmpty()) {
+            errors.add("Unknown destination country (not found by code or name)");
+        } else {
+            request.setDestinationCountry(destCode.get()); // normalize to alpha-2
         }
 
-        // Validate HS code format if provided
-        if (request.getHsCode() != null && !isValidHsCode(request.getHsCode())) {
-            errors.add("Invalid HS code format");
+        // HS code (optional): keep your old rule if you like
+        if (request.getHsCode() != null && !request.getHsCode().isBlank()) {
+            if (!request.getHsCode().matches("^\\d{6,10}$")) {
+                errors.add("Invalid HS code format: must be 6 to 10 digits");
+            }
         }
 
         return errors;
     }
 
-    private boolean isValidCountryCode(String countryCode) {
-        // Basic validation for 3-letter country codes
-        return countryCode.matches("^[A-Z]{3}$");
+    /** Try to resolve user input to an alpha-2 country code using DB. */
+    private Optional<String> resolveToAlpha2(String input) {
+        if (isBlank(input)) return Optional.empty();
+
+        String s = input.trim();
+
+        // Case 1: looks like alpha-2 code => check DB by code
+        if (s.matches("(?i)^[A-Z]{2}$")) {
+            System.out.println("Looking up country by code: " + s);
+            return countryRepository.findByCodeIgnoreCase(s).map(Country::getCode);
+        }
+
+        // Case 2: treat as full name => check DB by name (case-insensitive exact match)
+        return countryRepository.findByNameIgnoreCase(s).map(Country::getCode);
     }
 
-    private boolean isValidHsCode(String hsCode) {
-        // Basic validation for HS codes (6-10 digits)
-        return hsCode.matches("^\\d{6,10}$");
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 
     public boolean isValidRequest(TariffCalculationRequest request) {

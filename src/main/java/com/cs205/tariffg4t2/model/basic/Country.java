@@ -16,6 +16,7 @@ public class Country {
     private String name;
     private String region;
     private String currency;
+    
 }
 
 
