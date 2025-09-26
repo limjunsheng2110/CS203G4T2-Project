@@ -1,0 +1,22 @@
+:root { font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #0b0b0c; color: #eaeaea; }
+
+.app-shell { min-height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; }
+.topbar { display:flex; align-items:center; gap:1rem; padding: 12px 20px; border-bottom: 1px solid #222; background: #111; }
+.brand { font-weight: 700; letter-spacing: 0.3px; color: #fff; text-decoration: none; }
+.topbar nav a { color: #c9c9c9; margin-right: 12px; text-decoration: none; }
+.topbar nav a.active { color: #fff; font-weight: 600; }
+.container { max-width: 880px; margin: 0 auto; padding: 24px; }
+.card { background: #141414; border: 1px solid #242424; border-radius: 12px; padding: 20px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+label { font-size: 0.95rem; color: #cfcfcf; }
+input, select, button { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #2b2b2b; background: #0f0f0f; color: #eaeaea; }
+button { cursor: pointer; border-color: #3a3a3a; }
+button.primary { background: #2563eb; border-color: transparent; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.table th, .table td { border-bottom: 1px solid #242424; padding: 8px 6px; text-align: left; }
+.footer { border-top: 1px solid #222; padding: 12px 20px; background: #111; color: #a7a7a7; }
+.notice { color: #8ab4f8; font-size: 0.9rem; }
+.error { color: #ff6b6b; font-size: 0.95rem; }
