@@ -84,17 +84,12 @@ public class CountryService {
 
     public Country getCountryByCode(String code) {
         try {
-            String url = "https://restcountries.com/v3.1/alpha/" + code;
-            CountryAPI[] apiResponses = restTemplate.getForObject(
-                    url,
-                    CountryAPI[].class
-            );
-
-            if (apiResponses == null || apiResponses.length == 0) {
-                return null;
+            Country c = countryRepository.findByCountryCodeIgnoreCase(code).orElse(null);
+            if (c == null) {
+                throw new RuntimeException("Country not found in database: " + code);
+            } else {
+                return c;
             }
-
-            return mapToCountry(apiResponses[0]);
 
         } catch (RestClientException e) {
             throw new RuntimeException("Failed to fetch country: " + code, e);
