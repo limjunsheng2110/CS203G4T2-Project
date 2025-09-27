@@ -205,7 +205,7 @@ public class WebScrapingService {
                         exportingCountry,
                         rate,
                         "ad valorem",
-scrapingJob,
+                        scrapingJob,
                         tariffData.getType(),
                         String.format("Year: %s, Source: Python AI Scraper", tariffData.getYear())
                 );
