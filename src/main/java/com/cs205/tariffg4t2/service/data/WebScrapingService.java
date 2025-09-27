@@ -161,6 +161,7 @@ public class WebScrapingService {
     /**
      * Process tariff data from Python microservice
      */
+
     private int processTariffData(List<TariffDataDTO> tariffDataList, ScrapingJob scrapingJob) {
         int recordsProcessed = 0;
 

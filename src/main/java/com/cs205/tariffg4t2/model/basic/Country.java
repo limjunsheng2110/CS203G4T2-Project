@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "countries")
 public class Country {
-    
     @Id
     @Column(name = "country_code", length = 10)
     private String countryCode;
