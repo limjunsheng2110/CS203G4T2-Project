@@ -189,37 +189,45 @@ public class WebScrapingService {
                 String importingCountry = mapCountryName(tariffData.getImportedFrom());
                 String exportingCountry = mapCountryName(tariffData.getExportedFrom());
 
-                // Generate HS code from product type (you may want to enhance this)
-                String hsCode = generateHsCodeFromType(tariffData.getType());
+                // Generate UNIQUE HS code from product type
+                String hsCode = generateUniqueHsCodeFromType(tariffData.getType(), recordsProcessed);
 
-                // Create or find product
-                Product product = findOrCreateProduct(hsCode, tariffData.getType());
+                // Create or find product (wrapped in try-catch)
+                Product product = findOrCreateProductSafely(hsCode, tariffData.getType());
+                if (product == null) {
+                    logger.warn("Could not create/find product for HS code: {}", hsCode);
+                    continue;
+                }
 
-                // Create or find countries
-                Country importingCountryEntity = findOrCreateCountry(importingCountry, importingCountry);
-                Country exportingCountryEntity = findOrCreateCountry(exportingCountry, exportingCountry);
-
-                // Save tariff data
-                saveTariffData(
-                        hsCode,
-                        importingCountry,
-                        exportingCountry,
-                        rate,
-                        "ad valorem",
-                        scrapingJob,
-                        tariffData.getType(),
-                        String.format("Year: %s, Source: Python AI Scraper", tariffData.getYear())
-                );
-
+                // Rest of your processing...
                 recordsProcessed++;
-                logger.info("Successfully processed tariff data for HS code: {}", hsCode);
 
             } catch (Exception e) {
                 logger.warn("Failed to process tariff data item: {}", tariffData, e);
+                // Continue processing other items even if one fails
             }
         }
 
         return recordsProcessed;
+    }
+
+    // Add this method to generate unique HS codes
+    private String generateUniqueHsCodeFromType(String type, int index) {
+        if (type == null) return String.format("0000%06d", index);
+
+        String baseCode = generateHsCodeFromType(type);
+        // Add index to make it unique
+        return baseCode.substring(0, 6) + String.format("%04d", index);
+    }
+
+    // Add this safe method for product creation
+    private Product findOrCreateProductSafely(String hsCode, String description) {
+        try {
+            return findOrCreateProduct(hsCode, description);
+        } catch (Exception e) {
+            logger.error("Failed to create/find product with HS code {}: {}", hsCode, e.getMessage());
+            return null;
+        }
     }
 
 

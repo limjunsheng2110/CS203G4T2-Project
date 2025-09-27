@@ -34,12 +34,10 @@ public class CountryController {
     @PostMapping("/add")
     public ResponseEntity<?> addCountry(
             @RequestParam String code,
-            @RequestParam String name,
-            @RequestParam String region,
-            @RequestParam String currency
+            @RequestParam String name
     ) {
         try {
-            Country newCountry = countryService.createCountry(code, name, region, currency);
+            Country newCountry = countryService.createCountry(code, name);
             return ResponseEntity.status(HttpStatus.CREATED).body(newCountry);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -94,12 +92,10 @@ public class CountryController {
     @PutMapping("/update/{code}")
     public ResponseEntity<?> updateCountry(
             @PathVariable String code,
-            @RequestParam String name,
-            @RequestParam String region,
-            @RequestParam String currency
+            @RequestParam String name
     ) {
         try {
-            Country updatedCountry = countryService.updateCountry(code, name, region, currency);
+            Country updatedCountry = countryService.updateCountry(code, name);
             if (updatedCountry == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Country not found: " + code);

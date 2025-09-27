@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "countries")
+@Table(name = "country")
 public class Country {
     @Id
     @Column(name = "country_code", length = 10)
@@ -17,4 +17,5 @@ public class Country {
     
     @Column(name = "country_name", length = 100)  
     private String countryName;
+
 }

@@ -58,24 +58,6 @@ public class CountryService {
         return countryRepository.findAll();
     }
 
-    @Transactional
-    public String populateCountriesDatabase() {
-        List<Country> countriesFromApi = getAllCountries();
-
-        // Use batch operations instead of individual saves
-        List<Country> existingCountries = countryRepository.findAll();
-        Set<String> existingCodes = existingCountries.stream()
-                .map(Country::getCountryCode)
-                .collect(Collectors.toSet());
-
-        List<Country> newCountries = countriesFromApi.stream()
-                .filter(country -> !existingCodes.contains(country.getCountryCode()))
-                .collect(Collectors.toList());
-
-        List<Country> savedCountries = countryRepository.saveAll(newCountries);
-
-        return String.format("Database population completed. New: %d", savedCountries.size());
-    }
 
     @Transactional
     public String populateCountriesDatabaseBatch() {
@@ -173,44 +155,40 @@ public class CountryService {
         if (code == null || code.isEmpty()) {
             throw new IllegalArgumentException("Country code cannot be null or empty");
         }
-        if (!countryRepository.existsByCodeIgnoreCase(code)) {
+        if (!countryRepository.existsByCountryCodeIgnoreCase(code)) {
             return false; // Country not found
         }
-        Country country = countryRepository.findByCodeIgnoreCase(code).orElse(null);
+        Country country = countryRepository.findByCountryCode(code).orElse(null);
         assert country != null;
         countryRepository.delete(country);
         return true;
     }
 
 
-    public Country createCountry(String code, String name, String region, String currency) {
+    public Country createCountry(String code, String name) {
         if (code == null || code.isEmpty() || name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Country code and name cannot be null or empty");
         }
-        if (countryRepository.existsByCodeIgnoreCase(code)) {
+        if (countryRepository.existsByCountryCode(code)) {
             throw new IllegalArgumentException("Country with code " + code + " already exists");
         }
 
-        Country country = new Country(code.toUpperCase(), name, region != null ? region : "Unknown", currency != null ? currency : "Unknown");
+        Country country = new Country(code.toUpperCase(), name);
         return countryRepository.save(country);
     }
 
-    public Country updateCountry(String code, String name, String region, String currency) {
+    public Country updateCountry(String code, String name) {
         if (code == null || code.isEmpty()) {
             throw new IllegalArgumentException("Country code cannot be null or empty");
         }
-        Country country = countryRepository.findByCodeIgnoreCase(code).orElse(null);
+
+        //SELECT * FROM COUNTRIES WHERE COUNTRY_CODE = CODE (case insensitive);
+        Country country = countryRepository.findByCountryCodeIgnoreCase(code).orElse(null);
         if (country == null) {
             return null; // Country not found
         }
         if (name != null && !name.isEmpty()) {
-            country.setName(name);
-        }
-        if (region != null && !region.isEmpty()) {
-            country.setRegion(region);
-        }
-        if (currency != null && !currency.isEmpty()) {
-            country.setCurrency(currency);
+            country.setCountryName(name);
         }
         return countryRepository.save(country);
     }
