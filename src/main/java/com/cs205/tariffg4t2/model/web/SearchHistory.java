@@ -54,8 +54,8 @@ public class SearchHistory {
         this.importingCountry = importingCountry;
         this.exportingCountry = exportingCountry;
         this.searchQuery = String.format("%s -> %s %s", 
-            exportingCountry.getName(), 
-            importingCountry.getName(), 
+            exportingCountry.getCountryName(), 
+            importingCountry.getCountryName(), 
             hsCode != null ? hsCode : "general"
         );
     }

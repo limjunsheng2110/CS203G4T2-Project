@@ -67,11 +67,11 @@ public class TariffValidationService {
         // Case 1: looks like alpha-2 code => check DB by code
         if (s.matches("(?i)^[A-Z]{2}$")) {
             System.out.println("Looking up country by code: " + s);
-            return countryRepository.findByCodeIgnoreCase(s).map(Country::getCode);
+            return countryRepository.findByCountryCodeIgnoreCase(s).map(Country::getCountryCode);
         }
 
         // Case 2: treat as full name => check DB by name (case-insensitive exact match)
-        return countryRepository.findByNameIgnoreCase(s).map(Country::getCode);
+        return countryRepository.findByCountryNameIgnoreCase(s).map(Country::getCountryCode);
     }
 
     private boolean isBlank(String s) {

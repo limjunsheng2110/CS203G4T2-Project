@@ -2,7 +2,7 @@ package com.cs205.tariffg4t2.service.country;
 
 
 import com.cs205.tariffg4t2.model.basic.Country;
-import com.cs205.tariffg4t2.model.CountryAPI;
+import com.cs205.tariffg4t2.model.web.CountryAPI;
 import com.cs205.tariffg4t2.repository.basic.CountryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,11 +65,11 @@ public class CountryService {
         // Use batch operations instead of individual saves
         List<Country> existingCountries = countryRepository.findAll();
         Set<String> existingCodes = existingCountries.stream()
-                .map(Country::getCode)
+                .map(Country::getCountryCode)
                 .collect(Collectors.toSet());
 
         List<Country> newCountries = countriesFromApi.stream()
-                .filter(country -> !existingCodes.contains(country.getCode()))
+                .filter(country -> !existingCodes.contains(country.getCountryCode()))
                 .collect(Collectors.toList());
 
         List<Country> savedCountries = countryRepository.saveAll(newCountries);
@@ -130,16 +130,14 @@ public class CountryService {
     private Country mapToCountry(CountryAPI apiResponse) {
         try {
             String code = apiResponse.getCode() != null ? apiResponse.getCode() : "UNKNOWN";
-            String name = (apiResponse.getName() != null && apiResponse.getName().getCommon() != null) ?
-                    apiResponse.getName().getCommon() : "Unknown";
-            String region = apiResponse.getRegion() != null ? apiResponse.getRegion() : "Unknown";
-            String currency = extractFirstCurrency(apiResponse.getCurrencies());
-
-            return new Country(code, name, region, currency);
+            String name = (apiResponse.getName() != null && apiResponse.getName().getCommon() != null) 
+                ? apiResponse.getName().getCommon() : "Unknown";
+            
+            return new Country(code, name);
+            
         } catch (Exception e) {
             System.err.println("Error mapping country: " + e.getMessage());
-            // Return a default country object instead of failing
-            return new Country("ERR", "Error Country", "Unknown", "Unknown");
+            return new Country("ERR", "Error Country");
         }
     }
 

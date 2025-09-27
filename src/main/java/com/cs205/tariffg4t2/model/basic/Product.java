@@ -1,7 +1,6 @@
 package com.cs205.tariffg4t2.model.basic;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,11 +9,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "products")
 public class Product {
+    
     @Id
+    @Column(name = "hs_code", length = 20)
     private String hsCode;
+    
+    @Column(name = "description", length = 500)
     private String description;
+    
+    @Column(name = "category", length = 100)
     private String category;
+    
+    @Column(name = "unit", length = 50)
     private String unit; // e.g., "kg", "liters", "units"
-
 }
