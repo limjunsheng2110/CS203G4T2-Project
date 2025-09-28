@@ -1,4 +1,4 @@
-package com.cs205.tariffg4t2.service.country;
+package com.cs205.tariffg4t2.service.basic;
 
 
 import com.cs205.tariffg4t2.model.basic.Country;
@@ -14,7 +14,6 @@ import org.springframework.web.client.RestClientException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -153,6 +152,7 @@ public class CountryService {
         if (!countryRepository.existsByCountryCodeIgnoreCase(code)) {
             return false; // Country not found
         }
+
         Country country = countryRepository.findByCountryCode(code).orElse(null);
         assert country != null;
         countryRepository.delete(country);

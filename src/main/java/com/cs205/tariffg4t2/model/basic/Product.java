@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "products")
+@Table(name = "product")
 public class Product {
     
     @Id
@@ -19,9 +19,9 @@ public class Product {
     @Column(name = "description", length = 500)
     private String description;
     
-    @Column(name = "category", length = 100)
+    @Column(name = "category", length = 100, nullable = true)
     private String category;
     
-    @Column(name = "unit", length = 50)
+    @Column(name = "unit", length = 50, nullable = true)
     private String unit; // e.g., "kg", "liters", "units"
 }
