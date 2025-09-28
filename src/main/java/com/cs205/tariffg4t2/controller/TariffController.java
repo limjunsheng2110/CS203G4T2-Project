@@ -26,6 +26,11 @@ public class TariffController {
             @RequestParam String destinationCountry,
             @RequestParam String productName,
             @RequestParam BigDecimal productValue,
+            @RequestParam BigDecimal quantity,
+            @RequestParam String unit,
+            @RequestParam(required = false) String shippingRateType,
+            @RequestParam(required = false) BigDecimal shippingRate,
+            @RequestParam(required = false) String shippingMode,
             @RequestParam(required = false) String hsCode,
             @RequestParam(required = false) String tradeAgreement) {
 
@@ -36,6 +41,11 @@ public class TariffController {
                     .destinationCountry(destinationCountry.trim().toUpperCase())
                     .productName(productName.trim())
                     .productValue(productValue)
+                    .quantity(quantity)
+                    .unit(unit.trim())
+                    .shippingRateType(shippingRateType != null ? TariffCalculationRequest.ShippingRateType.valueOf(shippingRateType.trim().toUpperCase()) : null)
+                    .shippingRate(shippingRate)
+                    .shippingMode(shippingMode != null ? TariffCalculationRequest.ShippingMode.valueOf(shippingMode.trim().toUpperCase()) : null)
                     .hsCode(hsCode)
                     .tradeAgreement(tradeAgreement)
                     .build();

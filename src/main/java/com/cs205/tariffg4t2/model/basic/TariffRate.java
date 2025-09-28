@@ -15,6 +15,8 @@ import java.util.List;
 @Table(name = "tariff_rates")
 public class TariffRate {
 
+    public enum TariffType { AD_VALOREM, SPECIFIC }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,4 +38,14 @@ public class TariffRate {
 
     @OneToMany(mappedBy = "tariffRate", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TariffRateDetail> details;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tariff_type", nullable = false)
+    private TariffType tariffType = TariffType.AD_VALOREM;
+
+    @Column(name = "ad_valorem_rate", precision = 12, scale = 6)
+    private BigDecimal adValoremRate;  
+
+    @Column(name = "specific_rate_amount", precision = 18, scale = 6)
+    private BigDecimal specificRateAmount;
 }
