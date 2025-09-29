@@ -8,7 +8,7 @@ import java.time.LocalDate;
 @Table(name = "shipping_rates")
 public class ShippingRate {
 
-    public enum ShippingMode { SEA, AIR, LAND }
+    // public enum ShippingMode { SEA, AIR, LAND }
     public enum ShippingRateType { FLAT, PER_WEIGHT }
 
     @Id
@@ -22,9 +22,11 @@ public class ShippingRate {
     @Column(name = "exporting_country_code", nullable = false)
     private String exportingCountryCode;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "mode", nullable = false)
-    private ShippingMode mode = ShippingMode.SEA;
+    // @Enumerated(EnumType.STRING)
+    // @Column(name = "mode", nullable = false)
+    // private ShippingMode mode = ShippingMode.SEA;
+    @Column(name = "shipping_mode")
+    private String shippingMode; 
 
     @Enumerated(EnumType.STRING)
     @Column(name = "rate_type", nullable = false)

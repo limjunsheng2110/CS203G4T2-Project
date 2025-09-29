@@ -24,18 +24,7 @@ public class TariffCalculationResult {
     private BigDecimal productValue;
     private BigDecimal quantity;
     private String unit;
-    private BigDecimal adValoremRate;
-    private BigDecimal specificRateAmount;
-    private String specificRateUnit;
     private BigDecimal tariffAmount;
-    private BigDecimal totalCost;
-    private String currency;
-    private String tradeAgreement;
+    private BigDecimal shippingCost;
     private LocalDateTime calculationDate;
-    private TariffType tariffType;
-
-    // Costs
-    private BigDecimal dutyAmount;           // computed duty
-    private BigDecimal shippingCost;         // computed shipping
-    private BigDecimal additionalCost;            // duty + shipping (v1 scope)
 }

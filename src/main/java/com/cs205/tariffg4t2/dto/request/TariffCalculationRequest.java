@@ -19,8 +19,7 @@ import jakarta.validation.constraints.DecimalMin;
 
 public class TariffCalculationRequest {
 
-    public enum ShippingMode { SEA, AIR, LAND }
-    public enum ShippingRateType { FLAT, PER_WEIGHT }
+    // public enum ShippingMode { SEA, AIR, LAND }
 
     private String homeCountry;
     private String destinationCountry;
@@ -31,9 +30,5 @@ public class TariffCalculationRequest {
     private BigDecimal quantity;
     // Unit used by SPECIFIC tariff (e.g., "kg", "pieces").
     private String unit;
-
-    private ShippingMode shippingMode;               // optional metadata
-    private ShippingRateType shippingRateType;       // FLAT or PER_WEIGHT
-    @DecimalMin(value = "0.0", inclusive = true, message = "shippingRate must be >= 0")
-    private BigDecimal shippingRate;                 // If FLAT -> total; If PER_WEIGHT -> per unit
+    private String shippingMode;               // optional metadata
 }

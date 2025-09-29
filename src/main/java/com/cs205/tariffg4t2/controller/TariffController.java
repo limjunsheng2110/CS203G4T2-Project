@@ -28,11 +28,8 @@ public class TariffController {
             @RequestParam BigDecimal productValue,
             @RequestParam BigDecimal quantity,
             @RequestParam String unit,
-            @RequestParam(required = false) String shippingRateType,
-            @RequestParam(required = false) BigDecimal shippingRate,
             @RequestParam(required = false) String shippingMode,
-            @RequestParam(required = false) String hsCode,
-            @RequestParam(required = false) String tradeAgreement) {
+            @RequestParam(required = false) String hsCode) {
 
         try {
             // Create calculation request
@@ -43,11 +40,8 @@ public class TariffController {
                     .productValue(productValue)
                     .quantity(quantity)
                     .unit(unit.trim())
-                    .shippingRateType(shippingRateType != null ? TariffCalculationRequest.ShippingRateType.valueOf(shippingRateType.trim().toUpperCase()) : null)
-                    .shippingRate(shippingRate)
-                    .shippingMode(shippingMode != null ? TariffCalculationRequest.ShippingMode.valueOf(shippingMode.trim().toUpperCase()) : null)
+                    .shippingMode(shippingMode.trim())
                     .hsCode(hsCode)
-                    .tradeAgreement(tradeAgreement)
                     .build();
 
 

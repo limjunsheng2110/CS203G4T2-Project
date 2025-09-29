@@ -9,7 +9,7 @@ import java.util.Set;
 @Service
 public class TariffFTAService {
 
-    /** Apply FTA preference to an ad-valorem (percentage) rate. */
+    /** Apply FTA preference. */
     public BigDecimal applyTradeAgreementDiscount(BigDecimal basePercent, 
                                                   String homeCountry, 
                                                   String destinationCountry) {
@@ -19,20 +19,6 @@ public class TariffFTAService {
         BigDecimal factor = discountFactorFor(agreement);
 
         BigDecimal adjusted = basePercent.multiply(factor);
-        if (adjusted.compareTo(BigDecimal.ZERO) < 0) adjusted = BigDecimal.ZERO;
-        return adjusted.setScale(4, RoundingMode.HALF_UP);
-    }
-
-    /** Apply FTA preference to a specific (per-unit) rate. */
-    public BigDecimal applyTradeAgreementDiscountOnSpecific(BigDecimal perUnitRate,
-                                                            String homeCountry,
-                                                            String destinationCountry) {
-        if (perUnitRate == null) return null;
-
-        String agreement = getApplicableTradeAgreement(homeCountry, destinationCountry);
-        BigDecimal factor = discountFactorFor(agreement);
-
-        BigDecimal adjusted = perUnitRate.multiply(factor);
         if (adjusted.compareTo(BigDecimal.ZERO) < 0) adjusted = BigDecimal.ZERO;
         return adjusted.setScale(4, RoundingMode.HALF_UP);
     }
@@ -60,10 +46,10 @@ public class TariffFTAService {
         switch (agreement) {
             case "USMCA":
             // Example simplification: 50% off the base rate (ad-valorem or specific).
-            return new BigDecimal("0.50");
+            return new BigDecimal(0.50);
         case "EU Trade Agreement":
             // Example simplification: 30% off.
-            return new BigDecimal("0.70");
+            return new BigDecimal(0.70);
         case "WTO Most Favored Nation":
             // Example simplification: 10% off.
             return new BigDecimal(0.9);
