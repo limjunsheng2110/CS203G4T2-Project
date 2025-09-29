@@ -1,3 +1,4 @@
+
 package com.cs205.tariffg4t2.model.basic;
 
 import jakarta.persistence.*;
@@ -14,6 +15,8 @@ import java.util.List;
 @AllArgsConstructor
 @Table(name = "tariff_rates")
 public class TariffRate {
+
+    public enum TariffType { AD_VALOREM, SPECIFIC }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,6 +37,13 @@ public class TariffRate {
     @Column(name = "unit")
     private String unit; //kg, liters, units, etc.
 
-    @OneToMany(mappedBy = "tariffRate", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TariffRateDetail> details;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tariff_type", nullable = false)
+    private TariffType tariffType = TariffType.AD_VALOREM;
+
+    @Column(name = "ad_valorem_rate", precision = 12, scale = 6, columnDefinition = "DECIMAL(12,6)", nullable = true)
+    private BigDecimal adValoremRate;
+
+    @Column(name = "specific_rate_amount", precision = 18, scale = 6)
+    private BigDecimal specificRateAmount;
 }
