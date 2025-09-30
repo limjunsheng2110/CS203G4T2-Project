@@ -50,7 +50,24 @@ application-*.yml
 application-*.yaml
 set-env.sh
 
-# === Misc ===
-# Ignore package-lock/yarn.lock if not using npm/yarn
-node_modules/
-npm-debug.logsrc/main/resources/application.properties
+# Frontend - Logs
+frontend/logs
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# Frontend - Dependencies
+frontend/node_modules
+
+# Frontend - Build output
+frontend/dist
+frontend/dist-ssr
+frontend/*.local
+
+# Frontend - Environment variables
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
