@@ -15,14 +15,18 @@ import java.time.LocalDateTime;
 public class TariffCalculationResult {
     //difference between TariffCalculationResult and TariffCalculationResponse is
     //additional fields tarrifRate, tariffAmount, totalCost, currency, tradeAgreement, calculationDate
+
+    public enum TariffType { AD_VALOREM, SPECIFIC }
+
     private String homeCountry;
     private String destinationCountry;
     private String productName;
     private BigDecimal productValue;
-    private BigDecimal tariffRate;
+    private BigDecimal quantity;
+    private String unit;
     private BigDecimal tariffAmount;
+    private BigDecimal shippingCost;
     private BigDecimal totalCost;
-    private String currency;
-    private String tradeAgreement;
+    private String TariffType;
     private LocalDateTime calculationDate;
 }

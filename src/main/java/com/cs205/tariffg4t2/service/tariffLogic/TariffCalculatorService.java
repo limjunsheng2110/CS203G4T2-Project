@@ -2,120 +2,83 @@ package com.cs205.tariffg4t2.service.tariffLogic;
 
 import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
 import com.cs205.tariffg4t2.dto.response.TariffCalculationResult;
-import com.cs205.tariffg4t2.service.data.WebScrapingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class TariffCalculatorService {
 
     @Autowired
-    private WebScrapingService webScrapingService;
+    private TariffRateService tariffRateService;
 
     @Autowired
     private TariffFTAService tariffFTAService;
 
     @Autowired
-    private TariffCacheService tariffCacheService;
-
-    @Autowired
-    private TariffValidationService tariffValidationService;
+    private ShippingCostService shippingCostService;
 
     public TariffCalculationResult calculateTariff(TariffCalculationRequest request) {
-        
-        // Step 0: Validate input
-        List<String> validationErrors = tariffValidationService.validateTariffRequest(request);
-        if (!validationErrors.isEmpty()) {
-            throw new IllegalArgumentException("Validation errors: " + String.join(", ", validationErrors));
+        // Validate input
+        validateRequest(request);
+
+        // Determine tariff type (Ad Valorem or Specific)
+        boolean hasProductValue = request.getProductValue() != null;
+        boolean hasQuantityAndUnit = request.getQuantity() != null && request.getUnit() != null;
+
+        if (!hasProductValue && !hasQuantityAndUnit) {
+            throw new IllegalArgumentException("Provide either productValue or quantity and unit.");
         }
 
-        // Step 1: Get the tariff rate (from cache or scraping)
-        BigDecimal tariffRate = getTariffRate(request);
-        
-        // Step 2: Apply trade agreement adjustments
-        BigDecimal adjustedRate = tariffFTAService.applyTradeAgreementDiscount(
-            tariffRate,
-            request.getHomeCountry(), 
-            request.getDestinationCountry()
-        );
-        
-        // Step 3: Calculate amounts
-        BigDecimal tariffAmount = request.getProductValue()
-                .multiply(adjustedRate)
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        
-        BigDecimal totalCost = request.getProductValue().add(tariffAmount);
-        
-        // Step 4: Determine which trade agreement was applied
-        String tradeAgreement = tariffFTAService.getApplicableTradeAgreement(
-            request.getHomeCountry(),
-            request.getDestinationCountry()
-        );
+        // Initialize result variables
+        BigDecimal dutyAmount = BigDecimal.ZERO;
+        BigDecimal additionalCost = BigDecimal.ZERO;
+        BigDecimal totalCost = BigDecimal.ZERO;
+        String tariffType = null;
 
-        //Step Additional
-        
+        // Determine calculation type: Ad Valorem or Specific
+        if (hasProductValue) {
+            // Ad Valorem calculation
+            dutyAmount = tariffRateService.calculateAdValoremRate(request);
+            dutyAmount = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
+            totalCost = request.getProductValue().multiply(dutyAmount).add(request.getProductValue());
+            tariffType = "AD_VALOREM";
+        } else if (hasQuantityAndUnit) {
+            // Specific calculation
+            dutyAmount = tariffRateService.calculateSpecificRate(request);
+            dutyAmount = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
+            additionalCost = shippingCostService.calculateShippingCost(request);
+            totalCost = request.getQuantity().multiply(dutyAmount).add(request.getProductValue()).add(additionalCost);
+            tariffType = "SPECIFIC";
+        }
+
+        // Apply FTA discount (if applicable)
+        // BigDecimal finalRate = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
+
+        // Build and return result
         return TariffCalculationResult.builder()
                 .homeCountry(request.getHomeCountry())
                 .destinationCountry(request.getDestinationCountry())
                 .productName(request.getProductName())
                 .productValue(request.getProductValue())
-                .tariffRate(adjustedRate)
-                .tariffAmount(tariffAmount)
-                .totalCost(totalCost)
-                .currency("USD")
-                .tradeAgreement(tradeAgreement)
+                .quantity(request.getQuantity())
+                .unit(request.getUnit())
+                .tariffAmount(dutyAmount.setScale(2, RoundingMode.HALF_UP))
+                .shippingCost(additionalCost)
+                .totalCost(totalCost.setScale(2, RoundingMode.HALF_UP))
                 .calculationDate(LocalDateTime.now())
+                .TariffType(tariffType)
                 .build();
     }
 
-
-    //This checks whether or not the tariff rate is in cache. If not, then it will just call the web scraping service to get the rate.
-    private BigDecimal getTariffRate(TariffCalculationRequest request) {
-        // Check cache first
-        BigDecimal cachedRate = tariffCacheService.getCachedRate(request);
-        if (cachedRate != null) {
-            return cachedRate;
+    private void validateRequest(TariffCalculationRequest request) {
+        // Simple validation for missing fields, assuming they must have either productValue or quantity/unit
+        if (request.getProductValue() == null && (request.getQuantity() == null || request.getUnit() == null)) {
+            throw new IllegalArgumentException("Either productValue or quantity and unit must be provided.");
         }
-        
-        // Cache miss or expired - get fresh data
-        BigDecimal rate = fetchTariffRate(request);
-        
-        // Cache the result
-        tariffCacheService.cacheRate(request, rate);
-
-        return rate;
-    }
-
-    private BigDecimal fetchTariffRate(TariffCalculationRequest request) {
-        try {
-            // Delegate actual scraping to the dedicated service
-            return webScrapingService.getTariffRate(
-                request.getHomeCountry(),
-                request.getDestinationCountry(),
-                request.getHsCode(),
-                request.getProductName()
-            );
-
-        } catch (Exception e) {
-            // Log the error and return fallback rate
-            System.err.println("Failed to scrape tariff rate: " + e.getMessage());
-            return getFallbackTariffRate(request.getProductName());
-        }
-    }
-
-    private BigDecimal getFallbackTariffRate(String productName) {
-        // Fallback rates based on common product categories
-        Map<String, BigDecimal> fallbackRates = Map.of(
-            "Beef", new BigDecimal("15.0"),
-            "Chicken", new BigDecimal("5.0")
-        );
-        
-        return fallbackRates.getOrDefault(productName, new BigDecimal("10.0"));
     }
 }
+

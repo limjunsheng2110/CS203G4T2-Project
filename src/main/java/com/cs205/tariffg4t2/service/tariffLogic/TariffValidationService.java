@@ -55,6 +55,21 @@ public class TariffValidationService {
             }
         }
 
+        boolean hasValue = request.getProductValue() != null && request.getProductValue().compareTo(BigDecimal.ZERO) > 0;
+        boolean hasQty   = request.getQuantity() != null && request.getQuantity().compareTo(BigDecimal.ZERO) > 0;
+        boolean hasUnit  = request.getUnit() != null && !request.getUnit().isBlank();
+
+        if (!hasValue && !(hasQty && hasUnit)) {
+            errors.add("Provide either productValue > 0, or (quantity > 0 and unit).");
+        }
+
+        if (!hasValue && hasQty && !hasUnit) {
+            errors.add("Provide either productValue > 0, or (quantity > 0 and unit).");
+        }
+        if (!hasValue && hasUnit && !hasQty) {
+            errors.add("Provide either productValue > 0, or (quantity > 0 and unit).");
+        }
+
         return errors;
     }
 

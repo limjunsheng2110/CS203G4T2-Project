@@ -37,6 +37,10 @@ public class TariffRate {
     @Column(name = "unit")
     private String unit; //kg, liters, units, etc.
 
+
+    @OneToMany(mappedBy = "tariffRate", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TariffRateDetail> details;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "tariff_type", nullable = false)
     private TariffType tariffType = TariffType.AD_VALOREM;
