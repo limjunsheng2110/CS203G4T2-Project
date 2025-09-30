@@ -20,9 +20,8 @@ public class TariffCalculationRequest {
 
     // public enum ShippingMode { SEA, AIR, LAND }
 
-    private String homeCountry;
-    private String destinationCountry;
-    private String productName;
+    private String importingCountry;
+    private String exportingCountry;
     private BigDecimal productValue;
     private String hsCode;
     private BigDecimal quantity;

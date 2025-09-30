@@ -32,10 +32,9 @@ public class TariffCacheService {
 
     private String buildCacheAdValoremKey(TariffCalculationRequest request) {
         return String.format("%s_%s_%s_%s",
-            request.getHomeCountry(),
-            request.getDestinationCountry(),
-            request.getHsCode() != null ? request.getHsCode() : "GENERAL",
-            request.getProductName()
+            request.getImportingCountry(),
+            request.getExportingCountry(),
+            request.getHsCode() != null ? request.getHsCode() : "GENERAL"
         );
     }
 
@@ -57,10 +56,9 @@ public class TariffCacheService {
     private String buildCacheSpecificKey(TariffCalculationRequest request) {
         // Prefix to avoid any overlap with ad valorem keys, and include unit since rate is currency-per-unit
         return String.format("SPEC_%s_%s_%s_%s_%s",
-            request.getHomeCountry(),
-            request.getDestinationCountry(),
+            request.getImportingCountry(),
+            request.getExportingCountry(),
             request.getHsCode() != null ? request.getHsCode() : "GENERAL",
-            request.getProductName(),
             request.getUnit() != null ? request.getUnit() : "UNITLESS"
         );
     }

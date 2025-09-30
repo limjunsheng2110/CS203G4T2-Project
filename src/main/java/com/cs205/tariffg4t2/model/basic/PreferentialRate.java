@@ -37,12 +37,4 @@ public class PreferentialRate {
     @Column(name = "preferential_rate", nullable = false, precision = 5, scale = 4)
     private BigDecimal preferentialRate; // e.g., 0.05 for 5%
 
-    @Column(name = "quota", precision = 15, scale = 2)
-    private BigDecimal quota; // optional, e.g., 100,000 tons
-
-    @Column(name = "quota_unit", length = 50)
-    private String quotaUnit; // e.g., "tons", "units", "liters"
-
-    @Column(name = "condition", length = 1000)
-    private String condition; // optional text: e.g., "fresh beef only, processed excluded"
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -21,18 +22,12 @@ public class TradeAgreement {
     private String name; // "USMCA", "CPTPP", etc.
 
     @Column(nullable = false)
-    private String type;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "trade_agreement_countries",
-        joinColumns = @JoinColumn(name = "trade_agreement_id"),
-        inverseJoinColumns = @JoinColumn(name = "country_id")
-    )
-    private Set<Country> memberCountries;
-
-    @Column(nullable = false)
     private LocalDate effectiveDate;
 
+    @Column(nullable = false)
     private LocalDate expiryDate;
+
+    @OneToMany(mappedBy = "tradeAgreement", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PreferentialRate> preferentialRates = new HashSet<>();
+
 }

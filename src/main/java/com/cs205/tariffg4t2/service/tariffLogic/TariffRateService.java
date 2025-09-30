@@ -26,8 +26,8 @@ public class TariffRateService {
         // Get the tariff rate entity based on request parameters
         Optional<TariffRate> tariffRateOptional = tariffRateCRUDService.getTariffRateByDetails(
             request.getHsCode(),
-            request.getDestinationCountry(),
-            request.getHomeCountry()
+            request.getImportingCountry(),
+            request.getExportingCountry()
         );
 
         if (tariffRateOptional.isEmpty()) {

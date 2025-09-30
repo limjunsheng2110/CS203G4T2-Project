@@ -22,9 +22,8 @@ public class TariffController {
 
     @GetMapping("/calculate")
     public ResponseEntity<TariffCalculationResponse> calculateTariff(
-            @RequestParam String homeCountry,
-            @RequestParam String destinationCountry,
-            @RequestParam String productName,
+            @RequestParam String importingCountry,
+            @RequestParam String exportingCountry,
             @RequestParam(required = false) BigDecimal productValue,
             @RequestParam(required = false) BigDecimal quantity,
             @RequestParam(required = false) String unit,
@@ -34,9 +33,8 @@ public class TariffController {
         try {
             // Create calculation request
             TariffCalculationRequest request = TariffCalculationRequest.builder()
-                    .homeCountry(homeCountry.trim().toUpperCase())
-                    .destinationCountry(destinationCountry.trim().toUpperCase())
-                    .productName(productName.trim())
+                    .importingCountry(importingCountry.trim().toUpperCase())
+                    .exportingCountry(exportingCountry.trim().toUpperCase())
                     .productValue(productValue)
                     .quantity(quantity)
                     .unit(unit.trim())

@@ -22,9 +22,8 @@ public class TariffValidationService {
         List<String> errors = new ArrayList<>();
 
         // required fields
-        if (isBlank(request.getHomeCountry())) errors.add("Home country is required");
-        if (isBlank(request.getDestinationCountry())) errors.add("Destination country is required");
-        if (isBlank(request.getProductName())) errors.add("Product name is required");
+        if (isBlank(request.getImportingCountry())) errors.add("Importing country is required");
+        if (isBlank(request.getExportingCountry())) errors.add("Exporting country is required");
         if (request.getProductValue() == null || request.getProductValue().compareTo(BigDecimal.ZERO) <= 0) {
             errors.add("Product value must be greater than zero");
         }
@@ -33,19 +32,19 @@ public class TariffValidationService {
         if (!errors.isEmpty()) return errors;
 
         // Resolve + normalize countries to alpha-2
-        Optional<String> homeCode = resolveToAlpha2(request.getHomeCountry());
-        Optional<String> destCode = resolveToAlpha2(request.getDestinationCountry());
+        Optional<String> importCode = resolveToAlpha2(request.getImportingCountry());
+        Optional<String> exportCode = resolveToAlpha2(request.getExportingCountry());
 
-        if (homeCode.isEmpty()) {
+        if (importCode.isEmpty()) {
             errors.add("Unknown home country (not found by code or name)");
         } else {
-            request.setHomeCountry(homeCode.get());  // normalize to alpha-2
+            request.setImportingCountry(importCode.get());  // normalize to alpha-2
         }
 
-        if (destCode.isEmpty()) {
+        if (exportCode.isEmpty()) {
             errors.add("Unknown destination country (not found by code or name)");
         } else {
-            request.setDestinationCountry(destCode.get()); // normalize to alpha-2
+            request.setExportingCountry(exportCode.get()); // normalize to alpha-2
         }
 
         // HS code (optional): keep your old rule if you like

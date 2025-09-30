@@ -18,9 +18,9 @@ public class TariffCalculationResult {
 
     public enum TariffType { AD_VALOREM, SPECIFIC }
 
-    private String homeCountry;
-    private String destinationCountry;
-    private String productName;
+    private String importingCountry;
+    private String exportingCountry;
+    private String hsCode;
     private BigDecimal productValue;
     private BigDecimal quantity;
     private String unit;

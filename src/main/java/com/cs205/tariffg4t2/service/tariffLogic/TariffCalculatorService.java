@@ -25,8 +25,13 @@ public class TariffCalculatorService {
     TariffValidationService tariffValidationService;
 
     public TariffCalculationResult calculateTariff(TariffCalculationRequest request) {
+
+        System.out.println("Received tariff calculation request: " + request);
+
         // First validate the request using TariffValidationService
         tariffValidationService.validateTariffRequest(request);
+
+        System.out.println("Request validated successfully.");
 
         //then call TariffRateService to calculate based on ad valorem or specific
         //it should return an amount.
@@ -34,12 +39,24 @@ public class TariffCalculatorService {
         BigDecimal dutyAmount;
         dutyAmount = tariffRateService.calculateTariffAmount(request);
 
-        // Apply FTA discount, so preferential rates. Call TariffFTAService
-        dutyAmount = tariffFTAService.applyTradeAgreementDiscount(request, dutyAmount);
+        System.out.println("Initial calculated duty amount: " + dutyAmount);
+
+        // get preferential rate from TariffFTAService
+        BigDecimal preferentialRate = tariffFTAService.applyTradeAgreementDiscount(request, dutyAmount);
+
+        if (preferentialRate != null) {
+            dutyAmount = request.getProductValue().multiply(preferentialRate).setScale(2, RoundingMode.HALF_UP);
+        }
+
+
+        System.out.println("Discounted duty amount after FTA: " + dutyAmount);
 
         // Calculate shipping cost using ShippingCostService, return amount
         BigDecimal shippingCost = shippingCostService.calculateShippingCost(request);
 
+        System.out.println("Calculated shipping cost: " + shippingCost);
+        System.out.println("Calculated duty amount: " + dutyAmount);
+        System.out.println("Product value: " + request.getProductValue());
 
         //Total Cost = product value + duty amount + shipping cost
         BigDecimal totalCost = request.getProductValue().add(dutyAmount).add(shippingCost);
@@ -47,10 +64,10 @@ public class TariffCalculatorService {
         // Build and return result
 
         return TariffCalculationResult.builder()
-                .homeCountry(request.getHomeCountry())
-                .destinationCountry(request.getDestinationCountry())
-                .productName(request.getProductName())
+                .importingCountry(request.getImportingCountry())
+                .exportingCountry(request.getExportingCountry())
                 .productValue(request.getProductValue())
+                .hsCode(request.getHsCode())
                 .quantity(request.getQuantity())
                 .unit(request.getUnit())
                 .tariffAmount(dutyAmount.setScale(2, RoundingMode.HALF_UP))
