@@ -68,8 +68,8 @@ Year: (extract from content or infer from context or URL)
 Imported from(country): (if not found, infer from the URL if possible)
 Exported from(country): (if not found, infer from the URL if possible)
 Tariff rate: (must be numeric, e.g., '0.00%', '7.5%')
-
-Only output fields if tariff rate is numeric. Skip entries without valid rates.
+/;'[
+    meric. Skip entries without valid rates.
 
 Webpage URL: {url}
 Webpage content:

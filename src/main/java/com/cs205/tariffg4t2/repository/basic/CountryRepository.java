@@ -4,10 +4,10 @@ import com.cs205.tariffg4t2.model.basic.Country;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
-import java.lang.Long;
+
 
 @Repository
-public interface CountryRepository extends JpaRepository<Country, Long> {
+public interface CountryRepository extends JpaRepository<Country, String> { // CountryCode is String
     
     // These methods must match your entity field names exactly
     boolean existsByCountryCodeIgnoreCase(String countryCode);
