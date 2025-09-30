@@ -36,22 +36,27 @@ public class TariffCalculatorService {
         // Initialize result variables
         BigDecimal dutyAmount = BigDecimal.ZERO;
         BigDecimal additionalCost = BigDecimal.ZERO;
+        BigDecimal totalCost = BigDecimal.ZERO;
         String tariffType = null;
 
         // Determine calculation type: Ad Valorem or Specific
         if (hasProductValue) {
             // Ad Valorem calculation
             dutyAmount = tariffRateService.calculateAdValoremRate(request);
+            dutyAmount = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
+            totalCost = request.getProductValue().multiply(dutyAmount).add(request.getProductValue());
             tariffType = "AD_VALOREM";
         } else if (hasQuantityAndUnit) {
             // Specific calculation
             dutyAmount = tariffRateService.calculateSpecificRate(request);
+            dutyAmount = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
             additionalCost = shippingCostService.calculateShippingCost(request);
+            totalCost = request.getQuantity().multiply(dutyAmount).add(request.getProductValue()).add(additionalCost);
             tariffType = "SPECIFIC";
         }
 
         // Apply FTA discount (if applicable)
-        BigDecimal finalRate = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
+        // BigDecimal finalRate = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
 
         // Build and return result
         return TariffCalculationResult.builder()
@@ -61,9 +66,11 @@ public class TariffCalculatorService {
                 .productValue(request.getProductValue())
                 .quantity(request.getQuantity())
                 .unit(request.getUnit())
-                .tariffAmount(finalRate)
+                .tariffAmount(dutyAmount.setScale(2, RoundingMode.HALF_UP))
                 .shippingCost(additionalCost)
+                .totalCost(totalCost.setScale(2, RoundingMode.HALF_UP))
                 .calculationDate(LocalDateTime.now())
+                .TariffType(tariffType)
                 .build();
     }
 

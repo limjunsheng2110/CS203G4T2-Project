@@ -19,6 +19,7 @@ public class TariffRateService {
     public BigDecimal calculateAdValoremRate(TariffCalculationRequest request) {
         BigDecimal rate = tariffCacheService.getCachedAdValoremRate(request);
         if (rate == null) {
+            // should call on webscraper to get real rate
             rate = BigDecimal.valueOf(0.3);
             tariffCacheService.cacheAdValoremRate(request, rate);
         }
@@ -28,7 +29,8 @@ public class TariffRateService {
     public BigDecimal calculateSpecificRate(TariffCalculationRequest request) {
         BigDecimal ratePerUnit = tariffCacheService.getCachedSpecificRate(request);
         if (ratePerUnit == null) {
-            ratePerUnit = BigDecimal.valueOf(0.3);
+            // should call on webscraper to get real rate
+            ratePerUnit = BigDecimal.valueOf(1);
             tariffCacheService.cacheSpecificRate(request, ratePerUnit);
         }
         return ratePerUnit.multiply(request.getQuantity());

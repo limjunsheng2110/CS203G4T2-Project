@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-import com.cs205.tariffg4t2.model.basic.ShippingRate.ShippingMode;
-import com.cs205.tariffg4t2.model.basic.ShippingRate.ShippingRateType;
+// import com.cs205.tariffg4t2.model.basic.ShippingRate.ShippingMode;
 
 import jakarta.validation.constraints.DecimalMin;
 
@@ -30,5 +29,5 @@ public class TariffCalculationRequest {
     private BigDecimal quantity;
     // Unit used by SPECIFIC tariff (e.g., "kg", "pieces").
     private String unit;
-    private String shippingMode;               // optional metadata
+    private String shippingMode;
 }

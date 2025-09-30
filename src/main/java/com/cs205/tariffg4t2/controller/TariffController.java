@@ -25,9 +25,9 @@ public class TariffController {
             @RequestParam String homeCountry,
             @RequestParam String destinationCountry,
             @RequestParam String productName,
-            @RequestParam BigDecimal productValue,
-            @RequestParam BigDecimal quantity,
-            @RequestParam String unit,
+            @RequestParam(required = false) BigDecimal productValue,
+            @RequestParam(required = false) BigDecimal quantity,
+            @RequestParam(required = false) String unit,
             @RequestParam(required = false) String shippingMode,
             @RequestParam(required = false) String hsCode) {
 

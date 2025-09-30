@@ -26,5 +26,7 @@ public class TariffCalculationResult {
     private String unit;
     private BigDecimal tariffAmount;
     private BigDecimal shippingCost;
+    private BigDecimal totalCost;
+    private String TariffType;
     private LocalDateTime calculationDate;
 }

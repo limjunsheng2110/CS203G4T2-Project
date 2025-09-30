@@ -24,7 +24,8 @@ public class ShippingCostService {
                 shippingMultiplier = BigDecimal.valueOf(1.0); // Sea shipping multiplier
                 break;
             default:
-                throw new IllegalArgumentException("Invalid shipping mode");
+                shippingMultiplier = BigDecimal.valueOf(1.5); // default to Air shipping multiplier
+                request.setShippingMode("air");
         }
 
         shippingAmount = request.getQuantity();
