@@ -25,7 +25,6 @@ public class TariffCalculationRequest {
     private String productName;
     private BigDecimal productValue;
     private String hsCode;
-    private String tradeAgreement;
     private BigDecimal quantity;
     // Unit used by SPECIFIC tariff (e.g., "kg", "pieces").
     private String unit;

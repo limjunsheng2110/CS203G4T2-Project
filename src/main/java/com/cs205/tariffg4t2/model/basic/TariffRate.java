@@ -50,4 +50,8 @@ public class TariffRate {
 
     @Column(name = "specific_rate_amount", precision = 18, scale = 6)
     private BigDecimal specificRateAmount;
+
+    @Column(name = "specific_rate_unit")
+    private String specificRateUnit; // per kg, per liter, per unit, etc.
+
 }

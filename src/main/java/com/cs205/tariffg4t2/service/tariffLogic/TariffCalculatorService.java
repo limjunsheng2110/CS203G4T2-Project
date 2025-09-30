@@ -21,44 +21,31 @@ public class TariffCalculatorService {
     @Autowired
     private ShippingCostService shippingCostService;
 
+    @Autowired
+    TariffValidationService tariffValidationService;
+
     public TariffCalculationResult calculateTariff(TariffCalculationRequest request) {
-        // Validate input
-        validateRequest(request);
+        // First validate the request using TariffValidationService
+        tariffValidationService.validateTariffRequest(request);
 
-        // Determine tariff type (Ad Valorem or Specific)
-        boolean hasProductValue = request.getProductValue() != null;
-        boolean hasQuantityAndUnit = request.getQuantity() != null && request.getUnit() != null;
+        //then call TariffRateService to calculate based on ad valorem or specific
+        //it should return an amount.
 
-        if (!hasProductValue && !hasQuantityAndUnit) {
-            throw new IllegalArgumentException("Provide either productValue or quantity and unit.");
-        }
+        BigDecimal dutyAmount;
+        dutyAmount = tariffRateService.calculateTariffAmount(request);
 
-        // Initialize result variables
-        BigDecimal dutyAmount = BigDecimal.ZERO;
-        BigDecimal additionalCost = BigDecimal.ZERO;
-        BigDecimal totalCost = BigDecimal.ZERO;
-        String tariffType = null;
+        // Apply FTA discount, so preferential rates. Call TariffFTAService
+        dutyAmount = tariffFTAService.applyTradeAgreementDiscount(request, dutyAmount);
 
-        // Determine calculation type: Ad Valorem or Specific
-        if (hasProductValue) {
-            // Ad Valorem calculation
-            dutyAmount = tariffRateService.calculateAdValoremRate(request);
-            dutyAmount = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
-            totalCost = request.getProductValue().multiply(dutyAmount).add(request.getProductValue());
-            tariffType = "AD_VALOREM";
-        } else if (hasQuantityAndUnit) {
-            // Specific calculation
-            dutyAmount = tariffRateService.calculateSpecificRate(request);
-            dutyAmount = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
-            additionalCost = shippingCostService.calculateShippingCost(request);
-            totalCost = request.getQuantity().multiply(dutyAmount).add(request.getProductValue()).add(additionalCost);
-            tariffType = "SPECIFIC";
-        }
+        // Calculate shipping cost using ShippingCostService, return amount
+        BigDecimal shippingCost = shippingCostService.calculateShippingCost(request);
 
-        // Apply FTA discount (if applicable)
-        // BigDecimal finalRate = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
+
+        //Total Cost = product value + duty amount + shipping cost
+        BigDecimal totalCost = request.getProductValue().add(dutyAmount).add(shippingCost);
 
         // Build and return result
+
         return TariffCalculationResult.builder()
                 .homeCountry(request.getHomeCountry())
                 .destinationCountry(request.getDestinationCountry())
@@ -67,18 +54,11 @@ public class TariffCalculatorService {
                 .quantity(request.getQuantity())
                 .unit(request.getUnit())
                 .tariffAmount(dutyAmount.setScale(2, RoundingMode.HALF_UP))
-                .shippingCost(additionalCost)
+                .shippingCost(shippingCost.setScale(2, RoundingMode.HALF_UP))
                 .totalCost(totalCost.setScale(2, RoundingMode.HALF_UP))
                 .calculationDate(LocalDateTime.now())
-                .TariffType(tariffType)
                 .build();
     }
 
-    private void validateRequest(TariffCalculationRequest request) {
-        // Simple validation for missing fields, assuming they must have either productValue or quantity/unit
-        if (request.getProductValue() == null && (request.getQuantity() == null || request.getUnit() == null)) {
-            throw new IllegalArgumentException("Either productValue or quantity and unit must be provided.");
-        }
-    }
 }
 

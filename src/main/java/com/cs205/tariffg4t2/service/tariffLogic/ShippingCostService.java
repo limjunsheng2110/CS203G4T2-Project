@@ -13,6 +13,7 @@ public class ShippingCostService {
         BigDecimal shippingMultiplier;
         BigDecimal shippingAmount;
 
+        // Determine shipping multiplier based on mode
         switch (request.getShippingMode()) {
             case "air":
                 shippingMultiplier = BigDecimal.valueOf(1.5); // Air shipping multiplier
