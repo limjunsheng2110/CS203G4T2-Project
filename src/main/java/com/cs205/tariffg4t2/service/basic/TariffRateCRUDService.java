@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class TariffRateService {
+public class TariffRateCRUDService {
 
     @Autowired
     private TariffRateRepository tariffRateRepository;

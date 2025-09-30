@@ -2,7 +2,7 @@ package com.cs205.tariffg4t2.controller;
 
 import com.cs205.tariffg4t2.dto.TariffRateDTO;
 import com.cs205.tariffg4t2.model.basic.TariffRate;
-import com.cs205.tariffg4t2.service.basic.TariffRateService;
+import com.cs205.tariffg4t2.service.basic.TariffRateCRUDService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,7 @@ import java.util.Optional;
 public class TariffRateController {
 
     @Autowired
-    private TariffRateService tariffRateService;
+    private TariffRateCRUDService tariffRateService;
 
     @PostMapping
     public ResponseEntity<TariffRate> createTariffRate(@RequestBody TariffRateDTO tariffRateDto) {
