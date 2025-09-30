@@ -20,12 +20,10 @@ public class TariffCalculationRequest {
 
     // public enum ShippingMode { SEA, AIR, LAND }
 
-    private String homeCountry;
-    private String destinationCountry;
-    private String productName;
+    private String importingCountry;
+    private String exportingCountry;
     private BigDecimal productValue;
     private String hsCode;
-    private String tradeAgreement;
     private BigDecimal quantity;
     // Unit used by SPECIFIC tariff (e.g., "kg", "pieces").
     private String unit;

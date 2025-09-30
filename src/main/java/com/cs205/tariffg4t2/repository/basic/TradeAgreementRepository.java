@@ -12,17 +12,5 @@ import java.util.Optional;
 
 @Repository
 public interface TradeAgreementRepository extends JpaRepository<TradeAgreement, Long> {
-
     Optional<TradeAgreement> findByName(String name);
-
-    List<TradeAgreement> findByType(String type);
-
-    @Query("SELECT ta FROM TradeAgreement ta WHERE ta.effectiveDate <= :date AND (ta.expiryDate IS NULL OR ta.expiryDate >= :date)")
-    List<TradeAgreement> findActiveAgreements(@Param("date") LocalDate date);
-
-    @Query("SELECT ta FROM TradeAgreement ta JOIN ta.memberCountries c WHERE c.countryCode = :countryCode")
-    List<TradeAgreement> findByMemberCountry(@Param("countryCode") String countryCode);
-
-    @Query("SELECT ta FROM TradeAgreement ta WHERE SIZE(ta.memberCountries) >= :minMembers")
-    List<TradeAgreement> findByMinimumMemberCount(@Param("minMembers") int minMembers);
 }
