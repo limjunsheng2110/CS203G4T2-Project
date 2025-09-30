@@ -52,7 +52,7 @@ public class TariffRateDetail {
     // Scraping metadata
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "scraping_id")
-    private ScrapingJob scraping; // Link to the scraping job that found this rate
+    private ScrapingJob scraping; // Link to the scaping job that found this rate
     
     // Additional metadata
     @Column(name = "confidence_score", precision = 3, scale = 2)
