@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.dto.response;
 
-public class ScraperResponse {
+public class ScraperResponseDTO {
     private String sourceCountry;
     private String destinationCountry;
     private String product;

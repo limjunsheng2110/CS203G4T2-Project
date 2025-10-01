@@ -1,4 +1,4 @@
-package com.cs205.tariffg4t2.dto;
+package com.cs205.tariffg4t2.dto.basic;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

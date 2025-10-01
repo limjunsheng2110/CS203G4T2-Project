@@ -1,7 +1,7 @@
 package com.cs205.tariffg4t2.service.basic;
 
 import com.cs205.tariffg4t2.dto.request.UserRequestDTO;
-import com.cs205.tariffg4t2.dto.UserDTO;
+import com.cs205.tariffg4t2.dto.basic.UserDTO;
 import com.cs205.tariffg4t2.model.basic.User;
 import com.cs205.tariffg4t2.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

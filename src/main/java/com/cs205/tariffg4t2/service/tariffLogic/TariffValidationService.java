@@ -28,6 +28,17 @@ public class TariffValidationService {
             errors.add("Product value must be greater than zero");
         }
 
+        if (request.getWeight() == null || request.getWeight().compareTo(BigDecimal.ZERO) <= 0) {
+            errors.add("Weight must be greater than zero");
+        }
+
+        if (isBlank(request.getShippingMode())) errors.add("Shipping mode is required");
+        if (request.getHeads() == null || request.getHeads() < 0) {
+            errors.add("Heads must be zero or a positive integer");
+        }
+
+
+
         // Short-circuit if requireds already failed
         if (!errors.isEmpty()) return errors;
 
@@ -55,17 +66,9 @@ public class TariffValidationService {
         }
 
         boolean hasValue = request.getProductValue() != null && request.getProductValue().compareTo(BigDecimal.ZERO) > 0;
-        boolean hasQty   = request.getQuantity() != null && request.getQuantity().compareTo(BigDecimal.ZERO) > 0;
-        boolean hasUnit  = request.getUnit() != null && !request.getUnit().isBlank();
+        boolean hasQty   = request.getWeight() != null && request.getWeight().compareTo(BigDecimal.ZERO) > 0;
 
-        if (!hasValue && !(hasQty && hasUnit)) {
-            errors.add("Provide either productValue > 0, or (quantity > 0 and unit).");
-        }
-
-        if (!hasValue && hasQty && !hasUnit) {
-            errors.add("Provide either productValue > 0, or (quantity > 0 and unit).");
-        }
-        if (!hasValue && hasUnit && !hasQty) {
+        if (!hasValue && !hasQty) {
             errors.add("Provide either productValue > 0, or (quantity > 0 and unit).");
         }
 

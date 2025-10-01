@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.controller.rates;
 
-import com.cs205.tariffg4t2.dto.PreferentialRateDTO;
+import com.cs205.tariffg4t2.dto.basic.PreferentialRateDTO;
 import com.cs205.tariffg4t2.service.basic.PreferentialRateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TariffCalculationResponseDTO {
     private String message;
-    private TariffCalculationResult data;
+    private TariffCalculationResultDTO data;
 }
