@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TradeAgreementDto {
+public class TradeAgreementDTO {
 
     @NotBlank(message = "Name cannot be blank")
     private String name;

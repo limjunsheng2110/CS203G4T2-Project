@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PreferentialRateDto {
+public class PreferentialRateDTO {
 
     @NotNull(message = "Trade agreement ID cannot be null")
     private Long tradeAgreementId;

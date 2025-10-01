@@ -1,6 +1,6 @@
-package com.cs205.tariffg4t2.controller;
+package com.cs205.tariffg4t2.controller.rates;
 
-import com.cs205.tariffg4t2.dto.PreferentialRateDto;
+import com.cs205.tariffg4t2.dto.PreferentialRateDTO;
 import com.cs205.tariffg4t2.service.basic.PreferentialRateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +16,8 @@ public class PreferentialRateController {
     private final PreferentialRateService preferentialRateService;
 
     @PostMapping
-    public ResponseEntity<PreferentialRateDto> createPreferentialRate(@Valid @RequestBody PreferentialRateDto preferentialRateDto) {
-        PreferentialRateDto createdRate = preferentialRateService.createPreferentialRate(preferentialRateDto);
+    public ResponseEntity<PreferentialRateDTO> createPreferentialRate(@Valid @RequestBody PreferentialRateDTO preferentialRateDto) {
+        PreferentialRateDTO createdRate = preferentialRateService.createPreferentialRate(preferentialRateDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRate);
     }
 }

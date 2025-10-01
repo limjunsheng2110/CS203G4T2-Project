@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.service.basic;
 
-import com.cs205.tariffg4t2.dto.PreferentialRateDto;
+import com.cs205.tariffg4t2.dto.PreferentialRateDTO;
 import com.cs205.tariffg4t2.model.basic.PreferentialRate;
 import com.cs205.tariffg4t2.model.basic.TradeAgreement;
 import com.cs205.tariffg4t2.model.basic.Product;
@@ -25,7 +25,7 @@ public class PreferentialRateService {
     private final ProductRepository productRepository;
     private final CountryRepository countryRepository;
 
-    public PreferentialRateDto createPreferentialRate(PreferentialRateDto dto) {
+    public PreferentialRateDTO createPreferentialRate(PreferentialRateDTO dto) {
         validatePreferentialRateDto(dto);
 
         // Fetch related entities
@@ -52,7 +52,7 @@ public class PreferentialRateService {
         PreferentialRate savedRate = preferentialRateRepository.save(preferentialRate);
 
         // Convert entity back to DTO
-        PreferentialRateDto result = new PreferentialRateDto();
+        PreferentialRateDTO result = new PreferentialRateDTO();
         result.setTradeAgreementId(savedRate.getTradeAgreement().getId());
         result.setHsCode(savedRate.getProduct().getHsCode());
         result.setOriginCountryId(savedRate.getOriginCountry().getCountryCode());
@@ -62,7 +62,7 @@ public class PreferentialRateService {
         return result;
     }
 
-    private void validatePreferentialRateDto(PreferentialRateDto dto) {
+    private void validatePreferentialRateDto(PreferentialRateDTO dto) {
         if (dto.getTradeAgreementId() == null) {
             throw new RuntimeException("Trade agreement ID cannot be null");
         }

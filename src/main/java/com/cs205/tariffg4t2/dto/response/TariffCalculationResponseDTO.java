@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TariffCalculationResponse {
+public class TariffCalculationResponseDTO {
     private String message;
     private TariffCalculationResult data;
 }
