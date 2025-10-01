@@ -9,14 +9,13 @@ import java.math.BigDecimal;
 
 // import com.cs205.tariffg4t2.model.basic.ShippingRate.ShippingMode;
 
-import jakarta.validation.constraints.DecimalMin;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class TariffCalculationRequest {
+public class TariffCalculationRequestDTO {
 
     // public enum ShippingMode { SEA, AIR, LAND }
 

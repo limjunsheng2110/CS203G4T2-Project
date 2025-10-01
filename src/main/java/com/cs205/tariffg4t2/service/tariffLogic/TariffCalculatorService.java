@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.service.tariffLogic;
 
-import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
+import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 import com.cs205.tariffg4t2.dto.response.TariffCalculationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,7 @@ public class TariffCalculatorService {
     @Autowired
     TariffValidationService tariffValidationService;
 
-    public TariffCalculationResult calculateTariff(TariffCalculationRequest request) {
+    public TariffCalculationResult calculateTariff(TariffCalculationRequestDTO request) {
 
         System.out.println("Received tariff calculation request: " + request);
 

@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.service.basic;
 
-import com.cs205.tariffg4t2.dto.request.TradeAgreementDto;
+import com.cs205.tariffg4t2.dto.request.TradeAgreementDTO;
 import com.cs205.tariffg4t2.model.basic.TradeAgreement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ public class TradeAgreementService {
     private final TradeAgreementRepository tradeAgreementRepository;
 
     @Transactional(readOnly = true)
-    public List<TradeAgreementDto> getAllTradeAgreements() {
+    public List<TradeAgreementDTO> getAllTradeAgreements() {
         return tradeAgreementRepository.findAll()
                 .stream()
                 .map(this::convertEntityToDto)
@@ -26,20 +26,20 @@ public class TradeAgreementService {
     }
 
     @Transactional(readOnly = true)
-    public TradeAgreementDto getTradeAgreementById(Long id) {
+    public TradeAgreementDTO getTradeAgreementById(Long id) {
         TradeAgreement tradeAgreement = tradeAgreementRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trade agreement not found with id: " + id));
         return convertEntityToDto(tradeAgreement);
     }
 
     @Transactional(readOnly = true)
-    public TradeAgreementDto getTradeAgreementByName(String name) {
+    public TradeAgreementDTO getTradeAgreementByName(String name) {
         TradeAgreement tradeAgreement = tradeAgreementRepository.findByName(name)
                 .orElseThrow(() -> new RuntimeException("Trade agreement not found with name: " + name));
         return convertEntityToDto(tradeAgreement);
     }
 
-    public TradeAgreementDto createTradeAgreement(TradeAgreementDto tradeAgreementDto) {
+    public TradeAgreementDTO createTradeAgreement(TradeAgreementDTO tradeAgreementDto) {
         validateTradeAgreementDto(tradeAgreementDto);
 
         // Check if name already exists
@@ -52,7 +52,7 @@ public class TradeAgreementService {
         return convertEntityToDto(savedAgreement);
     }
 
-    public TradeAgreementDto updateTradeAgreement(Long id, TradeAgreementDto tradeAgreementDto) {
+    public TradeAgreementDTO updateTradeAgreement(Long id, TradeAgreementDTO tradeAgreementDto) {
         validateTradeAgreementDto(tradeAgreementDto);
 
         TradeAgreement existingAgreement = tradeAgreementRepository.findById(id)
@@ -79,15 +79,15 @@ public class TradeAgreementService {
         tradeAgreementRepository.deleteById(id);
     }
 
-    private TradeAgreementDto convertEntityToDto(TradeAgreement entity) {
-        TradeAgreementDto dto = new TradeAgreementDto();
+    private TradeAgreementDTO convertEntityToDto(TradeAgreement entity) {
+        TradeAgreementDTO dto = new TradeAgreementDTO();
         dto.setName(entity.getName());
         dto.setEffectiveDate(entity.getEffectiveDate());
         dto.setExpiryDate(entity.getExpiryDate());
         return dto;
     }
 
-    private TradeAgreement convertDtoToEntity(TradeAgreementDto dto) {
+    private TradeAgreement convertDtoToEntity(TradeAgreementDTO dto) {
         TradeAgreement entity = new TradeAgreement();
         entity.setName(dto.getName());
         entity.setEffectiveDate(dto.getEffectiveDate());
@@ -95,7 +95,7 @@ public class TradeAgreementService {
         return entity;
     }
 
-    private void validateTradeAgreementDto(TradeAgreementDto dto) {
+    private void validateTradeAgreementDto(TradeAgreementDTO dto) {
         if (dto.getName() == null || dto.getName().trim().isEmpty()) {
             throw new RuntimeException("Trade agreement name cannot be null or empty");
         }

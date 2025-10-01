@@ -4,7 +4,7 @@ import com.cs205.tariffg4t2.service.basic.ShippingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
+import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 
 import java.math.BigDecimal;
 
@@ -14,7 +14,7 @@ public class ShippingCostService {
     @Autowired
     private ShippingService shippingService;
 
-    public BigDecimal calculateShippingCost(TariffCalculationRequest request) {
+    public BigDecimal calculateShippingCost(TariffCalculationRequestDTO request) {
 
 
         //find shippingCost using the ShippingCost Entity

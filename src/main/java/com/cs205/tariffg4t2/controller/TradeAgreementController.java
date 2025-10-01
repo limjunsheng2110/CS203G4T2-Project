@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.controller;
 
-import com.cs205.tariffg4t2.dto.request.TradeAgreementDto;
+import com.cs205.tariffg4t2.dto.request.TradeAgreementDTO;
 import com.cs205.tariffg4t2.service.basic.TradeAgreementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,34 +18,34 @@ public class TradeAgreementController {
     private final TradeAgreementService tradeAgreementService;
 
     @GetMapping
-    public ResponseEntity<List<TradeAgreementDto>> getAllTradeAgreements() {
-        List<TradeAgreementDto> agreements = tradeAgreementService.getAllTradeAgreements();
+    public ResponseEntity<List<TradeAgreementDTO>> getAllTradeAgreements() {
+        List<TradeAgreementDTO> agreements = tradeAgreementService.getAllTradeAgreements();
         return ResponseEntity.ok(agreements);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TradeAgreementDto> getTradeAgreementById(@PathVariable Long id) {
-        TradeAgreementDto agreement = tradeAgreementService.getTradeAgreementById(id);
+    public ResponseEntity<TradeAgreementDTO> getTradeAgreementById(@PathVariable Long id) {
+        TradeAgreementDTO agreement = tradeAgreementService.getTradeAgreementById(id);
         return ResponseEntity.ok(agreement);
     }
 
     @GetMapping("/name/{name}")
-    public ResponseEntity<TradeAgreementDto> getTradeAgreementByName(@PathVariable String name) {
-        TradeAgreementDto agreement = tradeAgreementService.getTradeAgreementByName(name);
+    public ResponseEntity<TradeAgreementDTO> getTradeAgreementByName(@PathVariable String name) {
+        TradeAgreementDTO agreement = tradeAgreementService.getTradeAgreementByName(name);
         return ResponseEntity.ok(agreement);
     }
 
     @PostMapping
-    public ResponseEntity<TradeAgreementDto> createTradeAgreement(@Valid @RequestBody TradeAgreementDto tradeAgreementDto) {
-        TradeAgreementDto createdAgreement = tradeAgreementService.createTradeAgreement(tradeAgreementDto);
+    public ResponseEntity<TradeAgreementDTO> createTradeAgreement(@Valid @RequestBody TradeAgreementDTO tradeAgreementDto) {
+        TradeAgreementDTO createdAgreement = tradeAgreementService.createTradeAgreement(tradeAgreementDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdAgreement);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TradeAgreementDto> updateTradeAgreement(
+    public ResponseEntity<TradeAgreementDTO> updateTradeAgreement(
             @PathVariable Long id,
-            @Valid @RequestBody TradeAgreementDto tradeAgreementDto) {
-        TradeAgreementDto updatedAgreement = tradeAgreementService.updateTradeAgreement(id, tradeAgreementDto);
+            @Valid @RequestBody TradeAgreementDTO tradeAgreementDto) {
+        TradeAgreementDTO updatedAgreement = tradeAgreementService.updateTradeAgreement(id, tradeAgreementDto);
         return ResponseEntity.ok(updatedAgreement);
     }
 

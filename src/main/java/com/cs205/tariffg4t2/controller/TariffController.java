@@ -1,7 +1,7 @@
 package com.cs205.tariffg4t2.controller;
 
-import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
-import com.cs205.tariffg4t2.dto.response.TariffCalculationResponse;
+import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
+import com.cs205.tariffg4t2.dto.response.TariffCalculationResponseDTO;
 import com.cs205.tariffg4t2.dto.response.TariffCalculationResult;
 import com.cs205.tariffg4t2.service.tariffLogic.TariffCalculatorService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ public class TariffController {
     private TariffCalculatorService tariffService;
 
     @GetMapping("/calculate")
-    public ResponseEntity<TariffCalculationResponse> calculateTariff(
+    public ResponseEntity<TariffCalculationResponseDTO> calculateTariff(
             @RequestParam String importingCountry,
             @RequestParam String exportingCountry,
             @RequestParam(required = false) BigDecimal productValue,
@@ -32,7 +32,7 @@ public class TariffController {
 
         try {
             // Create calculation request
-            TariffCalculationRequest request = TariffCalculationRequest.builder()
+            TariffCalculationRequestDTO request = TariffCalculationRequestDTO.builder()
                     .importingCountry(importingCountry.trim().toUpperCase())
                     .exportingCountry(exportingCountry.trim().toUpperCase())
                     .productValue(productValue)
@@ -46,14 +46,14 @@ public class TariffController {
             // Calculate tariff (validation is handled in the service layer)
             TariffCalculationResult result = tariffService.calculateTariff(request);
 
-            return ResponseEntity.ok(new TariffCalculationResponse("Success", result));
+            return ResponseEntity.ok(new TariffCalculationResponseDTO("Success", result));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                    .body(new TariffCalculationResponse(e.getMessage(), null));
+                    .body(new TariffCalculationResponseDTO(e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
-                    .body(new TariffCalculationResponse("Internal server error", null));
+                    .body(new TariffCalculationResponseDTO("Internal server error", null));
         }
     }
 

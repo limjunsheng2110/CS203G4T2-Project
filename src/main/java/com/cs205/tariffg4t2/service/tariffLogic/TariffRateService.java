@@ -2,7 +2,7 @@ package com.cs205.tariffg4t2.service.tariffLogic;
 
 import com.cs205.tariffg4t2.service.basic.TariffRateCRUDService;
 import com.cs205.tariffg4t2.service.data.WebScrapingService;
-import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
+import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 import com.cs205.tariffg4t2.model.basic.TariffRate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ public class TariffRateService {
     @Autowired
     private TariffRateCRUDService tariffRateCRUDService;
 
-    public BigDecimal calculateTariffAmount(TariffCalculationRequest request) {
+    public BigDecimal calculateTariffAmount(TariffCalculationRequestDTO request) {
         // Get the tariff rate entity based on request parameters
         Optional<TariffRate> tariffRateOptional = tariffRateCRUDService.getTariffRateByDetails(
             request.getHsCode(),

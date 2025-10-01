@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.service.tariffLogic;
 
-import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
+import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 import com.cs205.tariffg4t2.repository.basic.CountryRepository;
 import com.cs205.tariffg4t2.model.basic.Country;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ public class TariffValidationService {
     private CountryRepository countryRepository;
 
 
-    public List<String> validateTariffRequest(TariffCalculationRequest request) {
+    public List<String> validateTariffRequest(TariffCalculationRequestDTO request) {
         List<String> errors = new ArrayList<>();
 
         // required fields
@@ -92,7 +92,7 @@ public class TariffValidationService {
         return s == null || s.trim().isEmpty();
     }
 
-    public boolean isValidRequest(TariffCalculationRequest request) {
+    public boolean isValidRequest(TariffCalculationRequestDTO request) {
         return validateTariffRequest(request).isEmpty();
     }
 }
