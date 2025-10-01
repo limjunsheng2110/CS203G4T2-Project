@@ -1,9 +1,11 @@
 package com.cs205.tariffg4t2.service.tariffLogic;
 
 import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
-import com.cs205.tariffg4t2.dto.response.TariffCalculationResult;
+import com.cs205.tariffg4t2.dto.response.TariffCalculationResultDTO;
+import com.cs205.tariffg4t2.model.basic.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.cs205.tariffg4t2.service.basic.ProductService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,8 +25,10 @@ public class TariffCalculatorService {
 
     @Autowired
     TariffValidationService tariffValidationService;
+    @Autowired
+    private ProductService productService;
 
-    public TariffCalculationResult calculateTariff(TariffCalculationRequestDTO request) {
+    public TariffCalculationResultDTO calculateTariff(TariffCalculationRequestDTO request) {
 
         System.out.println("Received tariff calculation request: " + request);
 
@@ -63,13 +67,18 @@ public class TariffCalculatorService {
 
         // Build and return result
 
-        return TariffCalculationResult.builder()
+        //get product description from tariffRateService
+        Product product = productService.getProductByHsCode(request.getHsCode());
+        String productDescription = (product != null) ? product.getDescription() : "N/A";
+
+        return TariffCalculationResultDTO.builder()
                 .importingCountry(request.getImportingCountry())
                 .exportingCountry(request.getExportingCountry())
                 .productValue(request.getProductValue())
+                .productDescription(productDescription)
                 .hsCode(request.getHsCode())
-                .quantity(request.getQuantity())
-                .unit(request.getUnit())
+                .quantity(request.getWeight())
+                .heads(request.getHeads())
                 .tariffAmount(dutyAmount.setScale(2, RoundingMode.HALF_UP))
                 .shippingCost(shippingCost.setScale(2, RoundingMode.HALF_UP))
                 .totalCost(totalCost.setScale(2, RoundingMode.HALF_UP))

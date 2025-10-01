@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.service.data;
 
-import com.cs205.tariffg4t2.dto.TariffDataDTO;
+import com.cs205.tariffg4t2.dto.basic.TariffDataDTO;
 import com.cs205.tariffg4t2.model.basic.*;
 import com.cs205.tariffg4t2.model.web.*;
 import com.cs205.tariffg4t2.repository.*;

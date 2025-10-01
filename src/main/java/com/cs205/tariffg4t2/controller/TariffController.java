@@ -2,7 +2,7 @@ package com.cs205.tariffg4t2.controller;
 
 import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 import com.cs205.tariffg4t2.dto.response.TariffCalculationResponseDTO;
-import com.cs205.tariffg4t2.dto.response.TariffCalculationResult;
+import com.cs205.tariffg4t2.dto.response.TariffCalculationResultDTO;
 import com.cs205.tariffg4t2.service.tariffLogic.TariffCalculatorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,11 +24,11 @@ public class TariffController {
     public ResponseEntity<TariffCalculationResponseDTO> calculateTariff(
             @RequestParam String importingCountry,
             @RequestParam String exportingCountry,
-            @RequestParam(required = false) BigDecimal productValue,
-            @RequestParam(required = false) BigDecimal quantity,
-            @RequestParam(required = false) String unit,
-            @RequestParam(required = false) String shippingMode,
-            @RequestParam(required = false) String hsCode) {
+            @RequestParam BigDecimal productValue,
+            @RequestParam BigDecimal weight,
+            @RequestParam String shippingMode,
+            @RequestParam Integer heads,
+            @RequestParam String hsCode) {
 
         try {
             // Create calculation request
@@ -36,15 +36,15 @@ public class TariffController {
                     .importingCountry(importingCountry.trim().toUpperCase())
                     .exportingCountry(exportingCountry.trim().toUpperCase())
                     .productValue(productValue)
-                    .quantity(quantity)
-                    .unit(unit.trim())
+                    .weight(weight)
+                    .heads(heads)
                     .shippingMode(shippingMode.trim())
                     .hsCode(hsCode)
                     .build();
 
 
             // Calculate tariff (validation is handled in the service layer)
-            TariffCalculationResult result = tariffService.calculateTariff(request);
+            TariffCalculationResultDTO result = tariffService.calculateTariff(request);
 
             return ResponseEntity.ok(new TariffCalculationResponseDTO("Success", result));
 

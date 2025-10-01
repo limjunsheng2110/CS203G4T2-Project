@@ -8,11 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class TariffRateService {
 
+
+    //This needs s
     @Autowired
     private TariffCacheService tariffCacheService;
 
@@ -38,20 +41,24 @@ public class TariffRateService {
         System.out.println("Found tariff rate: " + tariffRate);
 
         // Calculate based on tariff type
-        if (tariffRate.getTariffType() == TariffRate.TariffType.AD_VALOREM) {
+        if (Objects.equals(tariffRate.getTariffType(), "AD_VALOREM")) {
             // Ad Valorem: rate * product value
             BigDecimal rate = tariffRate.getAdValoremRate();
             if (rate == null) {
                 throw new RuntimeException("Ad valorem rate is null");
             }
             return rate.multiply(request.getProductValue());
-        } else if (tariffRate.getTariffType() == TariffRate.TariffType.SPECIFIC) {
+            // Note: rate is expected to be in decimal form (e.g., 0.05 for 5%)
+        } else if (Objects.equals(tariffRate.getTariffType(), "SPECIFIC")) {
             // Specific: specific rate amount per unit * quantity
             BigDecimal ratePerUnit = tariffRate.getSpecificRateAmount();
-            if (ratePerUnit == null || request.getQuantity() == null) {
+            if (ratePerUnit == null || request.getWeight() == null) {
                 throw new RuntimeException("Specific rate amount or quantity is null");
             }
-            return ratePerUnit.multiply(request.getQuantity());
+
+            //calculation : just multiply rate per unit by weight and return
+
+            return ratePerUnit.multiply((BigDecimal.valueOf(request.getHeads())));
         } else {
             throw new RuntimeException("Unknown tariff type: " + tariffRate.getTariffType());
         }

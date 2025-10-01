@@ -23,8 +23,7 @@ public class TariffCalculationRequestDTO {
     private String exportingCountry;
     private BigDecimal productValue;
     private String hsCode;
-    private BigDecimal quantity;
-    // Unit used by SPECIFIC tariff (e.g., "kg", "pieces").
-    private String unit;
+    private Integer heads;
+    private BigDecimal weight;
     private String shippingMode;
 }

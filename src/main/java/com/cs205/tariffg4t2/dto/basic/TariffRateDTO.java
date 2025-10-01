@@ -1,4 +1,4 @@
-package com.cs205.tariffg4t2.dto;
+package com.cs205.tariffg4t2.dto.basic;
 
 import com.cs205.tariffg4t2.model.basic.TariffRate;
 import lombok.AllArgsConstructor;
@@ -17,7 +17,7 @@ public class TariffRateDTO {
     private String exportingCountryCode;
     private BigDecimal baseRate;
     private String unit;
-    private TariffRate.TariffType tariffType = TariffRate.TariffType.AD_VALOREM;
+    private String TariffType;
     private BigDecimal adValoremRate;
     private BigDecimal specificRateAmount;
 }

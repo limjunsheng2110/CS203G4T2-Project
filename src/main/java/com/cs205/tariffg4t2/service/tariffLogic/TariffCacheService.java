@@ -58,8 +58,7 @@ public class TariffCacheService {
         return String.format("SPEC_%s_%s_%s_%s_%s",
             request.getImportingCountry(),
             request.getExportingCountry(),
-            request.getHsCode() != null ? request.getHsCode() : "GENERAL",
-            request.getUnit() != null ? request.getUnit() : "UNITLESS"
+            request.getHsCode() != null ? request.getHsCode() : "GENERAL"
         );
     }
 

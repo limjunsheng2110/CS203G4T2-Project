@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.service.basic;
 
-import com.cs205.tariffg4t2.dto.PreferentialRateDTO;
+import com.cs205.tariffg4t2.dto.basic.PreferentialRateDTO;
 import com.cs205.tariffg4t2.model.basic.PreferentialRate;
 import com.cs205.tariffg4t2.model.basic.TradeAgreement;
 import com.cs205.tariffg4t2.model.basic.Product;
@@ -26,6 +26,7 @@ public class PreferentialRateService {
     private final CountryRepository countryRepository;
 
     public PreferentialRateDTO createPreferentialRate(PreferentialRateDTO dto) {
+        // Validate input DTO
         validatePreferentialRateDto(dto);
 
         // Fetch related entities
@@ -62,6 +63,9 @@ public class PreferentialRateService {
         return result;
     }
 
+    // Basic validation logic
+
+
     private void validatePreferentialRateDto(PreferentialRateDTO dto) {
         if (dto.getTradeAgreementId() == null) {
             throw new RuntimeException("Trade agreement ID cannot be null");
@@ -83,6 +87,8 @@ public class PreferentialRateService {
         }
     }
 
+
+    // Fetch preferential rate based on origin, destination, and HS code (USED IN TARIFF LOGIC)
     public BigDecimal getPreferentialRate(String originCountryCode, String destinationCountryCode, String hsCode) {
         PreferentialRate rate = preferentialRateRepository
                 .findCustomPreferentialRate(originCountryCode, destinationCountryCode, hsCode)

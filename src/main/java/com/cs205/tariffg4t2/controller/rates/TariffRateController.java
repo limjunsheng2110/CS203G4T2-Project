@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.controller.rates;
 
-import com.cs205.tariffg4t2.dto.TariffRateDTO;
+import com.cs205.tariffg4t2.dto.basic.TariffRateDTO;
 import com.cs205.tariffg4t2.model.basic.TariffRate;
 import com.cs205.tariffg4t2.service.basic.TariffRateCRUDService;
 import org.springframework.beans.factory.annotation.Autowired;

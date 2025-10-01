@@ -1,4 +1,4 @@
-package com.cs205.tariffg4t2.dto;
+package com.cs205.tariffg4t2.dto.basic;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
