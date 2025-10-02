@@ -29,4 +29,9 @@ public class TariffCalculationResultDTO {
     private String TariffType;
     private LocalDateTime calculationDate;
     private String tradeAgreement;
+    private BigDecimal shippingRate;
+    private BigDecimal adValoremRate;
+    private BigDecimal specificRate;
+    private BigDecimal adValoremPreferentialRate;
+    private BigDecimal specificPreferentialRate;
 }

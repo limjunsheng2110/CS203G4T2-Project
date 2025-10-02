@@ -39,25 +39,31 @@ public class PreferentialRateService {
         if (dto.getImportingCountryCode() == null) {
             throw new RuntimeException("Destination country ID cannot be null");
         }
-        if (dto.getPreferentialRate() == null) {
+        if (dto.getAdValoremPreferentialRate() == null) {
             throw new RuntimeException("Preferential rate cannot be null");
         }
-        if (dto.getPreferentialRate().compareTo(java.math.BigDecimal.ZERO) < 0) {
+        if (dto.getAdValoremPreferentialRate().compareTo(java.math.BigDecimal.ZERO) < 0) {
             throw new RuntimeException("Preferential rate cannot be negative");
         }
     }
 
 
     // Fetch preferential rate based on origin, destination, and HS code (USED IN TARIFF LOGIC)
-    public BigDecimal getPreferentialRate(String importingCountryCode, String exportingCountryCode, String hsCode) {
+    public BigDecimal getAdValoremPreferentialRate(String importingCountryCode, String exportingCountryCode, String hsCode) {
         PreferentialRate rate = preferentialRateRepository
-                .findCustomPreferentialRate(importingCountryCode, exportingCountryCode, hsCode)
+                .findCustomAdValoremPreferentialRate(importingCountryCode, exportingCountryCode, hsCode)
                 .orElse(null);
 
-        return rate != null ? rate.getPreferentialRate() : null;
+        return rate != null ? rate.getAdValoremPreferentialRate() : null;
     }
 
-    public Optional<PreferentialRate> findPreferentialRate(String importingCountryCode, String exportingCountryCode, String hsCode) {
-        return preferentialRateRepository.findCustomPreferentialRate(importingCountryCode, exportingCountryCode, hsCode);
+    public BigDecimal getSpecificPreferentialRate(String importingCountryCode, String exportingCountryCode, String hsCode) {
+        PreferentialRate rate = preferentialRateRepository
+                .findCustomAdValoremPreferentialRate(importingCountryCode, exportingCountryCode, hsCode)
+                .orElse(null);
+
+        return rate != null ? rate.getSpecificPreferentialRate() : null;
     }
+
+
 }

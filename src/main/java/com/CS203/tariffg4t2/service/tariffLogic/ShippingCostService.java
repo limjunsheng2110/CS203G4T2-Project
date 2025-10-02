@@ -54,7 +54,8 @@ public class ShippingCostService {
             return shippingCost.setScale(2, BigDecimal.ROUND_HALF_UP);
         }
 
-        // Calculate shipping cost based on product value
+        // Calculate shipping cost based on WEIGHT only for air and sea
+        //air and sea is simpler, just rate * weight
         BigDecimal shippingCost = shippingCostRate.multiply(request.getWeight());
         return shippingCost.setScale(2, BigDecimal.ROUND_HALF_UP);
     }

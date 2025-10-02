@@ -3,14 +3,15 @@ package com.CS203.tariffg4t2.service.tariffLogic;
 import com.CS203.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 import com.CS203.tariffg4t2.dto.response.TariffCalculationResultDTO;
 import com.CS203.tariffg4t2.model.basic.Product;
+import com.CS203.tariffg4t2.model.basic.TariffRate;
+import com.CS203.tariffg4t2.service.basic.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.CS203.tariffg4t2.service.basic.ProductService;
-import com.CS203.tariffg4t2.service.basic.TradeAgreementService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class TariffCalculatorService {
@@ -26,11 +27,21 @@ public class TariffCalculatorService {
 
     @Autowired
     TariffValidationService tariffValidationService;
+
     @Autowired
     private ProductService productService;
 
     @Autowired
+    private PreferentialRateService preferentialRateService;
+
+    @Autowired
     private TradeAgreementService tradeAgreementService;
+
+    @Autowired
+    private TariffRateCRUDService tariffRateCRUDService;
+
+    @Autowired
+    private ShippingService shippingService;
 
     public TariffCalculationResultDTO calculateTariff(TariffCalculationRequestDTO request) {
 
@@ -83,6 +94,43 @@ public class TariffCalculatorService {
                 request.getImportingCountry(),
                 request.getHsCode());
 
+        // Fetch tariff rate details for TariffType
+        Optional<TariffRate> tariffRateOptional = tariffRateCRUDService.getTariffRateByDetails(
+                request.getHsCode(),
+                request.getImportingCountry(),
+                request.getExportingCountry()
+        );
+
+        if (tariffRateOptional.isEmpty()) {
+            throw new RuntimeException("No tariff rate found for the given parameters");
+        }
+
+        TariffRate tariffRate = tariffRateOptional.get();
+
+        BigDecimal adValoremRate = tariffRate.getAdValoremRate();
+        BigDecimal specificRate = tariffRate.getSpecificRateAmount();
+
+        // Fetch preferential rates
+        BigDecimal adValoremPreferentialRate = preferentialRateService.getAdValoremPreferentialRate(
+                request.getImportingCountry(),
+                request.getExportingCountry(),
+                request.getHsCode()
+        );
+
+        BigDecimal specificPreferentialRate = preferentialRateService.getSpecificPreferentialRate(
+                request.getImportingCountry(),
+                request.getExportingCountry(),
+                request.getHsCode()
+        );
+
+
+        // Re-fetch shipping cost rate for record (not strictly needed here)
+
+        BigDecimal shippingCostRate = shippingService.getShippingRate(
+                request.getShippingMode(), request.getImportingCountry(), request.getExportingCountry());
+
+        String tariffType = tariffRate.getTariffType();
+
         return TariffCalculationResultDTO.builder()
                 .importingCountry(request.getImportingCountry())
                 .exportingCountry(request.getExportingCountry())
@@ -91,11 +139,17 @@ public class TariffCalculatorService {
                 .hsCode(request.getHsCode())
                 .quantity(request.getWeight())
                 .heads(request.getHeads())
+                .TariffType(tariffType)
                 .tariffAmount(dutyAmount.setScale(2, RoundingMode.HALF_UP))
                 .shippingCost(shippingCost.setScale(2, RoundingMode.HALF_UP))
                 .totalCost(totalCost.setScale(2, RoundingMode.HALF_UP))
                 .tradeAgreement(tradeAgreementName)
                 .calculationDate(LocalDateTime.now())
+                .adValoremRate(adValoremRate)
+                .specificRate(specificRate)
+                .adValoremPreferentialRate(adValoremPreferentialRate)
+                .specificPreferentialRate(specificPreferentialRate)
+                .shippingRate(shippingCostRate)
                 .build();
     }
 

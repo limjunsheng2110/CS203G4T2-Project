@@ -15,7 +15,7 @@ public interface PreferentialRateRepository extends JpaRepository<PreferentialRa
            "WHERE pr.importingCountry.countryCode = :importingCountryCode " +
            "AND pr.exportingCountry.countryCode = :exportingCountryCode " +
            "AND pr.product.hsCode = :hsCode")
-    Optional<PreferentialRate> findCustomPreferentialRate(
+    Optional<PreferentialRate> findCustomAdValoremPreferentialRate(
             @Param("importingCountryCode") String importingCountryCode,
             @Param("exportingCountryCode") String exportingCountryCode,
             @Param("hsCode") String hsCode);

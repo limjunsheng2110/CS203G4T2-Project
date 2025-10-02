@@ -26,8 +26,12 @@ public class PreferentialRateDTO {
     @NotNull(message = "Destination country ID cannot be null")
     private String exportingCountryCode;
 
-    @NotNull(message = "Preferential rate cannot be null")
-    @PositiveOrZero(message = "Preferential rate must be zero or positive")
-    private BigDecimal preferentialRate;
+    @NotNull(message = "Ad Valorem Preferential rate cannot be null")
+    @PositiveOrZero(message = "Ad Valorem Preferential rate must be zero or positive")
+    private BigDecimal adValoremPreferentialRate;
+
+    @NotNull(message = "Specific Preferential rate cannot be null")
+    @PositiveOrZero(message = "Specific Preferential rate must be zero or positive")
+    private BigDecimal specificPreferentialRate;
 }
 

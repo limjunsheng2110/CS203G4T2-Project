@@ -34,7 +34,10 @@ public class PreferentialRate {
     @JoinColumn(name = "exporting_country", nullable = false)
     private Country exportingCountry;
 
-    @Column(name = "preferential_rate", nullable = false, precision = 5, scale = 4)
-    private BigDecimal preferentialRate; // e.g., 0.05 for 5%
+    @Column(name = "advalorem_preferential_rate", nullable = false, precision = 5, scale = 4)
+    private BigDecimal adValoremPreferentialRate; // e.g., 0.05 for 5%
+
+    @Column(name = "specific_preferential_rate", nullable = true, precision = 5, scale = 4)
+    private BigDecimal specificPreferentialRate; // e.g., 0.05 for 5 cents per unit
 
 }
