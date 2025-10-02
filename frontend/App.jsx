@@ -1,9 +1,12 @@
+// frontend/App.jsx
+
 import React, { useState } from 'react';
+import HomePage from './components/HomePage';
 import DetailPage from './components/DetailPage';
 import ResultsPage from './components/ResultsPage';
 
 const App = () => {
-  const [currentPage, setCurrentPage] = useState('detail');
+  const [currentPage, setCurrentPage] = useState('home');
   const [theme, setTheme] = useState('light');
   const [formData, setFormData] = useState({
     importCountry: '',
@@ -24,6 +27,10 @@ const App = () => {
     }));
   };
 
+  const handleGetStarted = () => {
+    setCurrentPage('detail');
+  };
+
   const handleSearch = () => {
     setCurrentPage('results');
   };
@@ -35,6 +42,16 @@ const App = () => {
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
+
+  if (currentPage === 'home') {
+    return (
+      <HomePage
+        onGetStarted={handleGetStarted}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
+    );
+  }
 
   return currentPage === 'detail' ? (
     <DetailPage
