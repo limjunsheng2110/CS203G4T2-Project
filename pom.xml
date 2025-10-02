@@ -10,7 +10,7 @@
     <relativePath/>
   </parent>
 
-  <groupId>com.cs205</groupId>
+  <groupId>com.CS203</groupId>
   <artifactId>tariffg4t2</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>tariffg4t2</name>

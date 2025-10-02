@@ -1,0 +1,25 @@
+package com.CS203.tariffg4t2.dto.basic;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+import com.CS203.tariffg4t2.model.tariff.TariffRate;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class TariffRateDTO {
+
+    private String hsCode;
+    private String importingCountryCode;
+    private String exportingCountryCode;
+    private BigDecimal baseRate;
+    private String unit;
+    private String TariffType;
+    private BigDecimal adValoremRate;
+    private BigDecimal specificRateAmount;
+}
+
