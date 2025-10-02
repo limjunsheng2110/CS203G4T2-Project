@@ -39,6 +39,10 @@ const App = () => {
     setCurrentPage('detail');
   };
 
+  const handleBackToHome = () => {
+    setCurrentPage('home');
+  };
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
@@ -60,6 +64,7 @@ const App = () => {
       handleSearch={handleSearch}
       theme={theme}
       toggleTheme={toggleTheme}
+      onBack={handleBackToHome}
     />
   ) : (
     <ResultsPage

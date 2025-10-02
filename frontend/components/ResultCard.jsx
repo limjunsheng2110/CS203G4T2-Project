@@ -1,47 +1,47 @@
 import React from 'react';
 import { Package, TrendingDown } from 'lucide-react';
 
-const ResultCard = ({ result, formData, theme, colors }) => {
-  const bgColor = result.isRecommended 
+const ResultCard = ({ result, formData, theme, colours }) => {
+  const bgColour = result.isRecommended 
     ? (theme === 'light' ? 'bg-green-50' : 'bg-green-950') 
-    : colors.resultCardBg;
-  const borderColor = result.isRecommended 
+    : colours.resultCardBg;
+  const borderColour = result.isRecommended 
     ? (theme === 'light' ? 'border-green-200' : 'border-green-800') 
-    : colors.border;
+    : colours.border;
 
   return (
-    <div className={`${bgColor} border ${borderColor} rounded-lg shadow-sm p-6`}>
+    <div className={`${bgColour} border ${borderColour} rounded-lg shadow-sm p-6`}>
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-start gap-3">
-          <Package className={colors.textMuted} size={24} />
+          <Package className={colours.textMuted} size={24} />
           <div>
-            <h3 className={`text-lg font-semibold ${colors.text} mb-1`}>{result.type}</h3>
-            <p className={`text-sm ${colors.textMuted}`}>{result.productName}</p>
+            <h3 className={`text-lg font-semibold ${colours.text} mb-1`}>{result.type}</h3>
+            <p className={`text-sm ${colours.textMuted}`}>{result.productName}</p>
           </div>
         </div>
         <div className="text-right">
-          <div className={`text-2xl font-bold ${colors.text}`}>{result.tariffRate}</div>
-          <div className={`text-xs ${colors.textMuted}`}>Tariff Rate</div>
+          <div className={`text-2xl font-bold ${colours.text}`}>{result.tariffRate}</div>
+          <div className={`text-xs ${colours.textMuted}`}>Tariff Rate</div>
         </div>
       </div>
 
       <div className={`${theme === 'light' ? 'bg-white' : 'bg-zinc-800'} rounded p-4 mb-3`}>
         <div className="grid grid-cols-4 gap-4 text-sm">
           <div>
-            <div className={colors.textMuted + ' mb-1'}>HS Code</div>
-            <div className={`font-semibold ${colors.text}`}>{result.hsCode}</div>
+            <div className={colours.textMuted + ' mb-1'}>HS Code</div>
+            <div className={`font-semibold ${colours.text}`}>{result.hsCode}</div>
           </div>
           <div>
-            <div className={colors.textMuted + ' mb-1'}>Base Value</div>
-            <div className={`font-semibold ${colors.text}`}>${result.baseCost.toLocaleString()}</div>
+            <div className={colours.textMuted + ' mb-1'}>Base Value</div>
+            <div className={`font-semibold ${colours.text}`}>${result.baseCost.toLocaleString()}</div>
           </div>
           <div>
-            <div className={colors.textMuted + ' mb-1'}>Tariff</div>
-            <div className={`font-semibold ${colors.text}`}>${result.tariffAmount.toLocaleString()}</div>
+            <div className={colours.textMuted + ' mb-1'}>Tariff</div>
+            <div className={`font-semibold ${colours.text}`}>${result.tariffAmount.toLocaleString()}</div>
           </div>
           <div>
-            <div className={colors.textMuted + ' mb-1'}>Fees</div>
-            <div className={`font-semibold ${colors.text}`}>${result.fees.toLocaleString()}</div>
+            <div className={colours.textMuted + ' mb-1'}>Fees</div>
+            <div className={`font-semibold ${colours.text}`}>${result.fees.toLocaleString()}</div>
           </div>
         </div>
       </div>
@@ -56,13 +56,13 @@ const ResultCard = ({ result, formData, theme, colors }) => {
           )}
         </div>
         <div className="text-right">
-          <div className={`text-xs ${colors.textMuted} mb-1`}>Total Cost</div>
-          <div className={`text-2xl font-bold ${colors.text}`}>${result.totalCost.toLocaleString()}</div>
+          <div className={`text-xs ${colours.textMuted} mb-1`}>Total Cost</div>
+          <div className={`text-2xl font-bold ${colours.text}`}>${result.totalCost.toLocaleString()}</div>
         </div>
       </div>
 
-      <div className={`mt-4 pt-4 border-t ${colors.border}`}>
-        <div className={`text-xs ${colors.textMuted} space-y-1`}>
+      <div className={`mt-4 pt-4 border-t ${colours.border}`}>
+        <div className={`text-xs ${colours.textMuted} space-y-1`}>
           <div><span className="font-semibold">Import:</span> {formData.importCountry || 'United States'}</div>
           <div><span className="font-semibold">Export:</span> {formData.exportCountry || 'China'}</div>
           {formData.shippingMode && (
