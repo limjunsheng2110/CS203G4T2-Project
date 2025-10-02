@@ -29,13 +29,6 @@ public class TariffRate {
     @Column(name = "exporting_country_code")
     private String exportingCountryCode;
 
-    @Column(name = "base_rate", precision = 10, scale = 4)
-    private BigDecimal baseRate;
-
-    @Column(name = "unit")
-    private String unit; //kg, liters, units, etc.
-
-
     @OneToMany(mappedBy = "tariffRate", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TariffRateDetail> details;
 

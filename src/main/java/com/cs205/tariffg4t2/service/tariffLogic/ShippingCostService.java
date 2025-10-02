@@ -28,6 +28,7 @@ public class ShippingCostService {
         //distance is baked into shipping rate, so pairs of countries further apart would have higher rates.
         BigDecimal shippingCostRate = shippingService.getShippingRate(
                 request.getShippingMode(), request.getImportingCountry(), request.getExportingCountry());
+
         if (shippingCostRate == null) {
             return new BigDecimal(0);
         }
