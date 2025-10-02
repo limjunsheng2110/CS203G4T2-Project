@@ -22,15 +22,5 @@ export const mockResults = [
       savings: 700,
       type: 'Trade Agreement',
       isRecommended: true
-    },
-    {
-      hsCode: '8517.12.05',
-      productName: 'Smartphones and Mobile Phones (Alternative Classification)',
-      tariffRate: '12.5%',
-      totalCost: 11550,
-      baseCost: 10000,
-      tariffAmount: 1250,
-      fees: 300,
-      type: 'Alternative Classification'
     }
   ];

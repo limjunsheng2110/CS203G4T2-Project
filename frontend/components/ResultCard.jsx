@@ -25,27 +25,6 @@ const ResultCard = ({ result, formData, theme, colours }) => {
         </div>
       </div>
 
-      <div className={`${theme === 'light' ? 'bg-white' : 'bg-zinc-800'} rounded p-4 mb-3`}>
-        <div className="grid grid-cols-4 gap-4 text-sm">
-          <div>
-            <div className={colours.textMuted + ' mb-1'}>HS Code</div>
-            <div className={`font-semibold ${colours.text}`}>{result.hsCode}</div>
-          </div>
-          <div>
-            <div className={colours.textMuted + ' mb-1'}>Base Value</div>
-            <div className={`font-semibold ${colours.text}`}>${result.baseCost.toLocaleString()}</div>
-          </div>
-          <div>
-            <div className={colours.textMuted + ' mb-1'}>Tariff</div>
-            <div className={`font-semibold ${colours.text}`}>${result.tariffAmount.toLocaleString()}</div>
-          </div>
-          <div>
-            <div className={colours.textMuted + ' mb-1'}>Fees</div>
-            <div className={`font-semibold ${colours.text}`}>${result.fees.toLocaleString()}</div>
-          </div>
-        </div>
-      </div>
-
       <div className="flex justify-between items-center">
         <div>
           {result.savings && (

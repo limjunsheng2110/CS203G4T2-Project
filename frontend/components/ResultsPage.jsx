@@ -23,10 +23,12 @@ const ResultsPage = ({ formData, handleBack, theme, toggleTheme }) => {
           <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
         </div>
 
-        <div className="text-center mb-8">
-          <h1 className={`text-4xl font-bold ${colours.text} mb-2`}>Full Result Page</h1>
-          <p className={colours.textMuted}>All Tariff Options</p>
-          <p className={`text-sm ${colours.textMuted} mt-1`}>Compare different tariff rates and classifications</p>
+        <div className="flex justify-center mb-6">
+          <img 
+            src="/TariffNomLogo.png" 
+            alt="TariffNom Logo" 
+            className="w-96 h-auto"
+          />
         </div>
 
         <div className="space-y-4">
@@ -39,15 +41,6 @@ const ResultsPage = ({ formData, handleBack, theme, toggleTheme }) => {
               colours={colours}
             />
           ))}
-        </div>
-
-        <div className={`mt-8 ${colours.infoBg} border ${colours.infoBorder} rounded-lg p-4`}>
-          <h4 className={`font-semibold ${colours.infoText} mb-2`}>Important Notes</h4>
-          <ul className={`text-sm ${colours.infoText} space-y-1`}>
-            <li>• Tariff rates are subject to change based on current trade agreements</li>
-            <li>• Additional fees may apply depending on product category and customs requirements</li>
-            <li>• Preferential rates require valid certificates of origin</li>
-          </ul>
         </div>
       </div>
     </div>
