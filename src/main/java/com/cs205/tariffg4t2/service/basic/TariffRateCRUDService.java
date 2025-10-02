@@ -44,8 +44,6 @@ public class TariffRateCRUDService {
                     existingTariffRate.setHsCode(updatedTariffRateDto.getHsCode());
                     existingTariffRate.setImportingCountryCode(updatedTariffRateDto.getImportingCountryCode());
                     existingTariffRate.setExportingCountryCode(updatedTariffRateDto.getExportingCountryCode());
-                    existingTariffRate.setBaseRate(updatedTariffRateDto.getBaseRate());
-                    existingTariffRate.setUnit(updatedTariffRateDto.getUnit());
                     existingTariffRate.setTariffType(updatedTariffRateDto.getTariffType());
                     existingTariffRate.setAdValoremRate(updatedTariffRateDto.getAdValoremRate());
                     existingTariffRate.setSpecificRateAmount(updatedTariffRateDto.getSpecificRateAmount());
@@ -114,8 +112,6 @@ public class TariffRateCRUDService {
         entity.setHsCode(dto.getHsCode().trim());
         entity.setImportingCountryCode(dto.getImportingCountryCode().trim().toUpperCase());
         entity.setExportingCountryCode(dto.getExportingCountryCode().trim().toUpperCase());
-        entity.setBaseRate(dto.getBaseRate());
-        entity.setUnit(dto.getUnit() != null ? dto.getUnit().trim() : null);
         entity.setTariffType(dto.getTariffType() != null ? dto.getTariffType().trim().toUpperCase() : null);
         entity.setAdValoremRate(dto.getAdValoremRate());
         entity.setSpecificRateAmount(dto.getSpecificRateAmount());
