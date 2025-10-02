@@ -33,7 +33,7 @@ public class ShippingRate {
     @Column(name = "sea_rate", precision = 10, scale = 2)
     private BigDecimal seaRate;
 
-    @Column(name = "land_rate", precision = 10, scale = 2, nullable = true)
+    @Column(name = "land_rate", precision = 15, scale = 5, nullable = true)
     private BigDecimal landRate;
 
     @Column(name = "distance", precision = 10, scale = 2)

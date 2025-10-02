@@ -53,7 +53,7 @@ public class TariffController {
                     .body(new TariffCalculationResponseDTO(e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
-                    .body(new TariffCalculationResponseDTO("Internal server error", null));
+                    .body(new TariffCalculationResponseDTO("Internal server error: " + e.getMessage(), null));
         }
     }
 

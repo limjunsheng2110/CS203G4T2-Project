@@ -57,7 +57,6 @@ public class TariffRateService {
             }
 
             //calculation : just multiply rate per unit by weight and return
-
             return ratePerUnit.multiply((BigDecimal.valueOf(request.getHeads())));
         } else {
             throw new RuntimeException("Unknown tariff type: " + tariffRate.getTariffType());

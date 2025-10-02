@@ -23,7 +23,6 @@ public class TariffCalculationResultDTO {
     private BigDecimal productValue;
     private BigDecimal quantity;
     private Integer heads;
-    private String unit;
     private BigDecimal tariffAmount;
     private BigDecimal shippingCost;
     private BigDecimal totalCost;

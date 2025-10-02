@@ -42,7 +42,9 @@ public class ShippingCostService {
             BigDecimal distance = shippingService.getDistance(request.getImportingCountry(), request.getExportingCountry());
             Integer numberofHeads = request.getHeads();
 
-            BigDecimal shippingCost = shippingCostRate.multiply(distance).multiply(request.getWeight()).multiply(BigDecimal.valueOf(numberofHeads));
+
+            // Calculate shipping cost based on distance and weight (total Weight)
+            BigDecimal shippingCost = shippingCostRate.multiply(distance).multiply(request.getWeight());
 
             System.out.println("Distance: " + distance);
             System.out.println("Shipping Cost Rate: " + shippingCostRate);
