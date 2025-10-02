@@ -19,7 +19,7 @@ const HomePage = ({ onGetStarted, theme, toggleTheme }) => {
             <img 
               src="/TariffNomLogo.png" 
               alt="TariffNom Logo" 
-              className="w-64 h-auto"
+              className="w-96 h-auto"
             />
           </div>
           

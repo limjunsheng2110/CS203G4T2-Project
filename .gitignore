@@ -71,3 +71,11 @@ frontend/*.local
 frontend/.env
 frontend/.env.local
 frontend/.env.*.local
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Vercel
+.vercel
+*/.vercel

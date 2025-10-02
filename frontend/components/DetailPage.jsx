@@ -15,9 +15,14 @@ const DetailPage = ({ formData, handleInputChange, handleSearch, theme, toggleTh
           <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
         </div>
         
-        <div className="text-center mb-8">
-          <h1 className={`text-4xl font-bold ${colours.text} mb-2`}>T.A.R.I.F.F</h1>
-          <p className={colours.textSecondary}>Transaction Details</p>
+        <div className="text-center mb-6">
+          <div className="flex justify-center">
+            <img 
+              src="/TariffNomLogo.png" 
+              alt="TariffNom Logo" 
+              className="w-96 h-auto"
+            />
+          </div>
         </div>
 
         <div className={`${colours.cardBg} rounded-lg shadow-lg p-8 border ${colours.border}`}>
