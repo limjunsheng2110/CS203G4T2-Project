@@ -29,4 +29,5 @@ public class TariffCalculationResultDTO {
     private BigDecimal totalCost;
     private String TariffType;
     private LocalDateTime calculationDate;
+    private String tradeAgreement;
 }

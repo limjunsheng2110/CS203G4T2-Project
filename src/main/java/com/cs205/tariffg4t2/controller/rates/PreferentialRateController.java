@@ -14,11 +14,5 @@ import org.springframework.web.bind.annotation.*;
 public class PreferentialRateController {
 
     private final PreferentialRateService preferentialRateService;
-
-    @PostMapping
-    public ResponseEntity<PreferentialRateDTO> createPreferentialRate(@Valid @RequestBody PreferentialRateDTO preferentialRateDto) {
-        PreferentialRateDTO createdRate = preferentialRateService.createPreferentialRate(preferentialRateDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdRate);
-    }
 }
 

@@ -27,12 +27,12 @@ public class PreferentialRate {
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "origin_country_id", nullable = false)
-    private Country originCountry;
+    @JoinColumn(name = "importing_country", nullable = false)
+    private Country importingCountry;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "destination_country_id", nullable = false)
-    private Country destinationCountry;
+    @JoinColumn(name = "exporting_country", nullable = false)
+    private Country exportingCountry;
 
     @Column(name = "preferential_rate", nullable = false, precision = 5, scale = 4)
     private BigDecimal preferentialRate; // e.g., 0.05 for 5%

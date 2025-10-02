@@ -12,11 +12,11 @@ import java.util.Optional;
 public interface PreferentialRateRepository extends JpaRepository<PreferentialRate, Long> {
 
     @Query("SELECT pr FROM PreferentialRate pr " +
-           "WHERE pr.originCountry.countryCode = :originCountryCode " +
-           "AND pr.destinationCountry.countryCode = :destinationCountryCode " +
+           "WHERE pr.importingCountry.countryCode = :importingCountryCode " +
+           "AND pr.exportingCountry.countryCode = :exportingCountryCode " +
            "AND pr.product.hsCode = :hsCode")
     Optional<PreferentialRate> findCustomPreferentialRate(
-            @Param("originCountryCode") String originCountryCode,
-            @Param("destinationCountryCode") String destinationCountryCode,
+            @Param("importingCountryCode") String importingCountryCode,
+            @Param("exportingCountryCode") String exportingCountryCode,
             @Param("hsCode") String hsCode);
 }

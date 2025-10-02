@@ -21,10 +21,10 @@ public class PreferentialRateDTO {
     private String hsCode;
 
     @NotNull(message = "Origin country ID cannot be null")
-    private String originCountryId;
+    private String importingCountryCode;
 
     @NotNull(message = "Destination country ID cannot be null")
-    private String destinationCountryId;
+    private String exportingCountryCode;
 
     @NotNull(message = "Preferential rate cannot be null")
     @PositiveOrZero(message = "Preferential rate must be zero or positive")

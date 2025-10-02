@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.cs205.tariffg4t2.repository.basic.TradeAgreementRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -109,5 +110,14 @@ public class TradeAgreementService {
             throw new RuntimeException("Expiry date cannot be before effective date");
         }
     }
-}
 
+    public Optional<TradeAgreement> findTradeAgreement(String exportingCountryCode, String importingCountryCode, String hsCode) {
+        return tradeAgreementRepository.findTradeAgreementByCountriesAndHsCode(
+                exportingCountryCode, importingCountryCode, hsCode);
+    }
+
+    public String getTradeAgreementName(String exportingCountryCode, String importingCountryCode, String hsCode) {
+        Optional<TradeAgreement> agreement = findTradeAgreement(exportingCountryCode, importingCountryCode, hsCode);
+        return agreement.map(TradeAgreement::getName).orElse(null);
+    }
+}

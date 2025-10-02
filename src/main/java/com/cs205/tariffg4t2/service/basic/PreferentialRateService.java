@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,44 +26,6 @@ public class PreferentialRateService {
     private final ProductRepository productRepository;
     private final CountryRepository countryRepository;
 
-    public PreferentialRateDTO createPreferentialRate(PreferentialRateDTO dto) {
-        // Validate input DTO
-        validatePreferentialRateDto(dto);
-
-        // Fetch related entities
-        TradeAgreement tradeAgreement = tradeAgreementRepository.findById(dto.getTradeAgreementId())
-                .orElseThrow(() -> new RuntimeException("Trade agreement not found with id: " + dto.getTradeAgreementId()));
-
-        Product product = productRepository.findById(dto.getHsCode())
-                .orElseThrow(() -> new RuntimeException("Product not found with HS code: " + dto.getHsCode()));
-
-        Country originCountry = countryRepository.findByCountryCode(dto.getOriginCountryId())
-                .orElseThrow(() -> new RuntimeException("Origin country not found with country code: " + dto.getOriginCountryId()));
-
-        Country destinationCountry = countryRepository.findByCountryCode(dto.getDestinationCountryId())
-                .orElseThrow(() -> new RuntimeException("Destination country not found with country code: " + dto.getDestinationCountryId()));
-
-        // Create entity with all references set
-        PreferentialRate preferentialRate = new PreferentialRate();
-        preferentialRate.setTradeAgreement(tradeAgreement);
-        preferentialRate.setProduct(product);
-        preferentialRate.setOriginCountry(originCountry);
-        preferentialRate.setDestinationCountry(destinationCountry);
-        preferentialRate.setPreferentialRate(dto.getPreferentialRate());
-
-        PreferentialRate savedRate = preferentialRateRepository.save(preferentialRate);
-
-        // Convert entity back to DTO
-        PreferentialRateDTO result = new PreferentialRateDTO();
-        result.setTradeAgreementId(savedRate.getTradeAgreement().getId());
-        result.setHsCode(savedRate.getProduct().getHsCode());
-        result.setOriginCountryId(savedRate.getOriginCountry().getCountryCode());
-        result.setDestinationCountryId(savedRate.getDestinationCountry().getCountryCode());
-        result.setPreferentialRate(savedRate.getPreferentialRate());
-
-        return result;
-    }
-
     // Basic validation logic
 
 
@@ -73,10 +36,10 @@ public class PreferentialRateService {
         if (dto.getHsCode() == null || dto.getHsCode().trim().isEmpty()) {
             throw new RuntimeException("HS code cannot be null or empty");
         }
-        if (dto.getOriginCountryId() == null) {
+        if (dto.getExportingCountryCode() == null) {
             throw new RuntimeException("Origin country ID cannot be null");
         }
-        if (dto.getDestinationCountryId() == null) {
+        if (dto.getImportingCountryCode() == null) {
             throw new RuntimeException("Destination country ID cannot be null");
         }
         if (dto.getPreferentialRate() == null) {
@@ -89,11 +52,15 @@ public class PreferentialRateService {
 
 
     // Fetch preferential rate based on origin, destination, and HS code (USED IN TARIFF LOGIC)
-    public BigDecimal getPreferentialRate(String originCountryCode, String destinationCountryCode, String hsCode) {
+    public BigDecimal getPreferentialRate(String importingCountryCode, String exportingCountryCode, String hsCode) {
         PreferentialRate rate = preferentialRateRepository
-                .findCustomPreferentialRate(originCountryCode, destinationCountryCode, hsCode)
+                .findCustomPreferentialRate(importingCountryCode, exportingCountryCode, hsCode)
                 .orElse(null);
 
         return rate != null ? rate.getPreferentialRate() : null;
+    }
+
+    public Optional<PreferentialRate> findPreferentialRate(String importingCountryCode, String exportingCountryCode, String hsCode) {
+        return preferentialRateRepository.findCustomPreferentialRate(importingCountryCode, exportingCountryCode, hsCode);
     }
 }

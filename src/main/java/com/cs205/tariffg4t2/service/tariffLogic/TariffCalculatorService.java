@@ -6,6 +6,7 @@ import com.cs205.tariffg4t2.model.basic.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.cs205.tariffg4t2.service.basic.ProductService;
+import com.cs205.tariffg4t2.service.basic.TradeAgreementService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -28,6 +29,9 @@ public class TariffCalculatorService {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private TradeAgreementService tradeAgreementService;
+
     public TariffCalculationResultDTO calculateTariff(TariffCalculationRequestDTO request) {
 
         System.out.println("Received tariff calculation request: " + request);
@@ -48,10 +52,12 @@ public class TariffCalculatorService {
         // get preferential rate from TariffFTAService
         BigDecimal preferentialRate = tariffFTAService.applyTradeAgreementDiscount(request, dutyAmount);
 
+        //show preferential rate
+        System.out.println("Preferential rate from FTA: " + preferentialRate);
+
         if (preferentialRate != null) {
             dutyAmount = request.getProductValue().multiply(preferentialRate).setScale(2, RoundingMode.HALF_UP);
         }
-
 
         System.out.println("Discounted duty amount after FTA: " + dutyAmount);
 
@@ -71,6 +77,12 @@ public class TariffCalculatorService {
         Product product = productService.getProductByHsCode(request.getHsCode());
         String productDescription = (product != null) ? product.getDescription() : "N/A";
 
+        // Fetch trade agreement information
+        String tradeAgreementName = tradeAgreementService.getTradeAgreementName(
+                request.getExportingCountry(),
+                request.getImportingCountry(),
+                request.getHsCode());
+
         return TariffCalculationResultDTO.builder()
                 .importingCountry(request.getImportingCountry())
                 .exportingCountry(request.getExportingCountry())
@@ -82,9 +94,9 @@ public class TariffCalculatorService {
                 .tariffAmount(dutyAmount.setScale(2, RoundingMode.HALF_UP))
                 .shippingCost(shippingCost.setScale(2, RoundingMode.HALF_UP))
                 .totalCost(totalCost.setScale(2, RoundingMode.HALF_UP))
+                .tradeAgreement(tradeAgreementName)
                 .calculationDate(LocalDateTime.now())
                 .build();
     }
 
 }
-
