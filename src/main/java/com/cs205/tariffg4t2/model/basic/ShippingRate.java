@@ -1,47 +1,43 @@
 package com.cs205.tariffg4t2.model.basic;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
-@Table(name = "shipping_rates")
+@Table(name = "shipping_rate")
 public class ShippingRate {
-
-    // public enum ShippingMode { SEA, AIR, LAND }
-    public enum ShippingRateType { FLAT, PER_WEIGHT }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // country codes (match your 'country.code' values)
-    @Column(name = "importing_country_code", nullable = false)
-    private String importingCountryCode;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "importing_country_code", nullable = false)
+    private Country importingCountry;
 
-    @Column(name = "exporting_country_code", nullable = false)
-    private String exportingCountryCode;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exporting_country_code", nullable = false)
+    private Country exportingCountry;
 
-    // @Enumerated(EnumType.STRING)
-    // @Column(name = "mode", nullable = false)
-    // private ShippingMode mode = ShippingMode.SEA;
-    @Column(name = "shipping_mode")
-    private String shippingMode; 
+    @Column(name = "air_rate", precision = 10, scale = 2)
+    private BigDecimal airRate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "rate_type", nullable = false)
-    private ShippingRateType rateType = ShippingRateType.FLAT;
+    @Column(name = "sea_rate", precision = 10, scale = 2)
+    private BigDecimal seaRate;
 
-    @Column(name = "amount", nullable = false, precision = 18, scale = 6)
-    private BigDecimal amount; // flat amount or per-kg rate depending on rateType
+    @Column(name = "land_rate", precision = 10, scale = 2, nullable = true)
+    private BigDecimal landRate;
 
-    // @Column(name = "currency")
-    // private String currency; // optional
-
-    @Column(name = "effective_date")
-    private LocalDate effectiveDate;
-
-    @Column(name = "expiry_date")
-    private LocalDate expiryDate;
+    @Column(name = "distance", precision = 10, scale = 2)
+    private BigDecimal distance; // in kilometers
 }
 

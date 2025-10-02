@@ -1,4 +1,4 @@
-package com.cs205.tariffg4t2.dto;
+package com.cs205.tariffg4t2.dto.basic;
 
 import com.cs205.tariffg4t2.model.basic.User;
 import lombok.Data;

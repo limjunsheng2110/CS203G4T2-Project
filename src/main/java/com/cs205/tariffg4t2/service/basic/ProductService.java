@@ -16,7 +16,7 @@ public class ProductService {
 
     //CREATE PRODUCT
 
-    public Product createProduct(String hsCode, String description, String category, String unit) {
+    public Product createProduct(String hsCode, String description, String category) {
 
         //HsCode and description cannot be empty
 
@@ -36,7 +36,6 @@ public class ProductService {
         p.setHsCode(hsCode);
         p.setDescription(description);
         p.setCategory(category);
-        p.setUnit(unit);
 
         return productRepository.save(p);
     }
@@ -63,7 +62,7 @@ public class ProductService {
 
     //UPDATE PRODUCT BY HSCODE
 
-    public Product updateProductByHsCode(String hsCode, String description, String category, String unit) {
+    public Product updateProductByHsCode(String hsCode, String description, String category) {
         Product existingProduct = productRepository.findById(hsCode).orElse(null);
 
         if (existingProduct == null) {
@@ -75,9 +74,6 @@ public class ProductService {
         }
         if (category != null) {
             existingProduct.setCategory(category);
-        }
-        if (unit != null) {
-            existingProduct.setUnit(unit);
         }
 
         return productRepository.save(existingProduct);

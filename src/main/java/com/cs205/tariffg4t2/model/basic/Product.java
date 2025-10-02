@@ -21,7 +21,4 @@ public class Product {
     
     @Column(name = "category", length = 100, nullable = true)
     private String category;
-    
-    @Column(name = "unit", length = 50, nullable = true)
-    private String unit; // e.g., "kg", "liters", "units"
 }

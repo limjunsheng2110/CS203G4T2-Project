@@ -1,8 +1,8 @@
 package com.cs205.tariffg4t2.controller;
 
-import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
-import com.cs205.tariffg4t2.dto.response.TariffCalculationResponse;
-import com.cs205.tariffg4t2.dto.response.TariffCalculationResult;
+import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
+import com.cs205.tariffg4t2.dto.response.TariffCalculationResponseDTO;
+import com.cs205.tariffg4t2.dto.response.TariffCalculationResultDTO;
 import com.cs205.tariffg4t2.service.tariffLogic.TariffCalculatorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,41 +21,39 @@ public class TariffController {
     private TariffCalculatorService tariffService;
 
     @GetMapping("/calculate")
-    public ResponseEntity<TariffCalculationResponse> calculateTariff(
-            @RequestParam String homeCountry,
-            @RequestParam String destinationCountry,
-            @RequestParam String productName,
-            @RequestParam(required = false) BigDecimal productValue,
-            @RequestParam(required = false) BigDecimal quantity,
-            @RequestParam(required = false) String unit,
-            @RequestParam(required = false) String shippingMode,
-            @RequestParam(required = false) String hsCode) {
+    public ResponseEntity<TariffCalculationResponseDTO> calculateTariff(
+            @RequestParam String importingCountry,
+            @RequestParam String exportingCountry,
+            @RequestParam BigDecimal productValue,
+            @RequestParam BigDecimal weight,
+            @RequestParam String shippingMode,
+            @RequestParam Integer heads,
+            @RequestParam String hsCode) {
 
         try {
             // Create calculation request
-            TariffCalculationRequest request = TariffCalculationRequest.builder()
-                    .homeCountry(homeCountry.trim().toUpperCase())
-                    .destinationCountry(destinationCountry.trim().toUpperCase())
-                    .productName(productName.trim())
+            TariffCalculationRequestDTO request = TariffCalculationRequestDTO.builder()
+                    .importingCountry(importingCountry.trim().toUpperCase())
+                    .exportingCountry(exportingCountry.trim().toUpperCase())
                     .productValue(productValue)
-                    .quantity(quantity)
-                    .unit(unit.trim())
+                    .weight(weight)
+                    .heads(heads)
                     .shippingMode(shippingMode.trim())
                     .hsCode(hsCode)
                     .build();
 
 
             // Calculate tariff (validation is handled in the service layer)
-            TariffCalculationResult result = tariffService.calculateTariff(request);
+            TariffCalculationResultDTO result = tariffService.calculateTariff(request);
 
-            return ResponseEntity.ok(new TariffCalculationResponse("Success", result));
+            return ResponseEntity.ok(new TariffCalculationResponseDTO("Success", result));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                    .body(new TariffCalculationResponse(e.getMessage(), null));
+                    .body(new TariffCalculationResponseDTO(e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
-                    .body(new TariffCalculationResponse("Internal server error", null));
+                    .body(new TariffCalculationResponseDTO("Internal server error", null));
         }
     }
 

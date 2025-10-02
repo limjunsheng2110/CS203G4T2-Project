@@ -52,12 +52,11 @@ public class ProductController {
     public ResponseEntity<?> addProduct(
             @RequestParam String hsCode,
             @RequestParam String description,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String unit
+            @RequestParam(required = false) String category
     ) {
 
         try {
-            Product newProduct = productService.createProduct(hsCode, description, category, unit);
+            Product newProduct = productService.createProduct(hsCode, description, category);
             return ResponseEntity.status(201).body(newProduct);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(400).body("Invalid input: " + e.getMessage());
@@ -75,11 +74,10 @@ public class ProductController {
     public ResponseEntity<?> updateProduct (
             @PathVariable String hsCode,
             @RequestParam(required = false) String description,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String unit
+            @RequestParam(required = false) String category
     ) {
         try {
-            Product updatedProduct = productService.updateProductByHsCode(hsCode, description, category, unit);
+            Product updatedProduct = productService.updateProductByHsCode(hsCode, description, category);
             return ResponseEntity.ok(updatedProduct);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(400).body("Invalid input: " + e.getMessage());

@@ -1,38 +1,66 @@
 package com.cs205.tariffg4t2.service.tariffLogic;
 
+import com.cs205.tariffg4t2.service.basic.TariffRateCRUDService;
 import com.cs205.tariffg4t2.service.data.WebScrapingService;
-import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
+import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
+import com.cs205.tariffg4t2.model.basic.TariffRate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class TariffRateService {
 
+
+    //This needs s
     @Autowired
     private TariffCacheService tariffCacheService;
 
     @Autowired
     private WebScrapingService webScrapingService;
 
-    public BigDecimal calculateAdValoremRate(TariffCalculationRequest request) {
-        BigDecimal rate = tariffCacheService.getCachedAdValoremRate(request);
-        if (rate == null) {
-            // should call on webscraper to get real rate
-            rate = BigDecimal.valueOf(0.3);
-            tariffCacheService.cacheAdValoremRate(request, rate);
-        }
-        return rate;
-    }
+    @Autowired
+    private TariffRateCRUDService tariffRateCRUDService;
 
-    public BigDecimal calculateSpecificRate(TariffCalculationRequest request) {
-        BigDecimal ratePerUnit = tariffCacheService.getCachedSpecificRate(request);
-        if (ratePerUnit == null) {
-            // should call on webscraper to get real rate
-            ratePerUnit = BigDecimal.valueOf(1);
-            tariffCacheService.cacheSpecificRate(request, ratePerUnit);
+    public BigDecimal calculateTariffAmount(TariffCalculationRequestDTO request) {
+        // Get the tariff rate entity based on request parameters
+        Optional<TariffRate> tariffRateOptional = tariffRateCRUDService.getTariffRateByDetails(
+            request.getHsCode(),
+            request.getImportingCountry(),
+            request.getExportingCountry()
+        );
+
+        if (tariffRateOptional.isEmpty()) {
+            throw new RuntimeException("No tariff rate found for the given parameters");
         }
-        return ratePerUnit.multiply(request.getQuantity());
+
+        TariffRate tariffRate = tariffRateOptional.get();
+        System.out.println("Found tariff rate: " + tariffRate);
+
+        // Calculate based on tariff type
+        if (Objects.equals(tariffRate.getTariffType(), "AD_VALOREM")) {
+            // Ad Valorem: rate * product value
+            BigDecimal rate = tariffRate.getAdValoremRate();
+            if (rate == null) {
+                throw new RuntimeException("Ad valorem rate is null");
+            }
+            return rate.multiply(request.getProductValue());
+            // Note: rate is expected to be in decimal form (e.g., 0.05 for 5%)
+        } else if (Objects.equals(tariffRate.getTariffType(), "SPECIFIC")) {
+            // Specific: specific rate amount per unit * quantity
+            BigDecimal ratePerUnit = tariffRate.getSpecificRateAmount();
+            if (ratePerUnit == null || request.getWeight() == null) {
+                throw new RuntimeException("Specific rate amount or quantity is null");
+            }
+
+            //calculation : just multiply rate per unit by weight and return
+
+            return ratePerUnit.multiply((BigDecimal.valueOf(request.getHeads())));
+        } else {
+            throw new RuntimeException("Unknown tariff type: " + tariffRate.getTariffType());
+        }
     }
 }

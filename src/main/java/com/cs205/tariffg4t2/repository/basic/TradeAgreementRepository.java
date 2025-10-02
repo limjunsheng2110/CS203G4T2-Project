@@ -6,23 +6,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface TradeAgreementRepository extends JpaRepository<TradeAgreement, Long> {
-
     Optional<TradeAgreement> findByName(String name);
 
-    List<TradeAgreement> findByType(String type);
-
-    @Query("SELECT ta FROM TradeAgreement ta WHERE ta.effectiveDate <= :date AND (ta.expiryDate IS NULL OR ta.expiryDate >= :date)")
-    List<TradeAgreement> findActiveAgreements(@Param("date") LocalDate date);
-
-    @Query("SELECT ta FROM TradeAgreement ta JOIN ta.memberCountries c WHERE c.countryCode = :countryCode")
-    List<TradeAgreement> findByMemberCountry(@Param("countryCode") String countryCode);
-
-    @Query("SELECT ta FROM TradeAgreement ta WHERE SIZE(ta.memberCountries) >= :minMembers")
-    List<TradeAgreement> findByMinimumMemberCount(@Param("minMembers") int minMembers);
+    @Query("SELECT DISTINCT ta FROM TradeAgreement ta " +
+           "JOIN ta.preferentialRates pr " +
+           "WHERE pr.exportingCountry.countryCode = :exportingCountryCode " +
+           "AND pr.importingCountry.countryCode = :importingCountryCode " +
+           "AND pr.product.hsCode = :hsCode " +
+           "AND CURRENT_DATE BETWEEN ta.effectiveDate AND ta.expiryDate")
+    Optional<TradeAgreement> findTradeAgreementByCountriesAndHsCode(
+            @Param("exportingCountryCode") String exportingCountryCode,
+            @Param("importingCountryCode") String importingCountryCode,
+            @Param("hsCode") String hsCode);
 }

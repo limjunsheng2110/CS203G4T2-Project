@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.service.data;
 
-import com.cs205.tariffg4t2.dto.TariffDataDTO;
+import com.cs205.tariffg4t2.dto.basic.TariffDataDTO;
 import com.cs205.tariffg4t2.model.basic.*;
 import com.cs205.tariffg4t2.model.web.*;
 import com.cs205.tariffg4t2.repository.*;
@@ -338,16 +338,14 @@ public class WebScrapingService {
         if (existingTariffRate.isPresent()) {
             tariffRate = existingTariffRate.get();
             // Update the base rate with new information
-            tariffRate.setBaseRate(rate);
-            tariffRate.setUnit(unit);
+            tariffRate.setAdValoremRate(rate);
             tariffRate = tariffRateRepository.save(tariffRate);
         } else {
             tariffRate = new TariffRate();
             tariffRate.setHsCode(hsCode);
             tariffRate.setImportingCountryCode(importingCountry);
             tariffRate.setExportingCountryCode(exportingCountry);
-            tariffRate.setBaseRate(rate);
-            tariffRate.setUnit(unit);
+            tariffRate.getAdValoremRate();
             tariffRate = tariffRateRepository.save(tariffRate);
         }
 
@@ -392,7 +390,7 @@ public class WebScrapingService {
             if (latestDetail.isPresent()) {
                 return latestDetail.get().getFinalRate();
             } else {
-                return existingRate.get().getBaseRate();
+                return existingRate.get().getAdValoremRate();
             }
         }
 

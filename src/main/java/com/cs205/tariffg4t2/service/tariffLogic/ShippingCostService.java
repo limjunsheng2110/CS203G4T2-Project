@@ -1,37 +1,60 @@
 package com.cs205.tariffg4t2.service.tariffLogic;
 
+import com.cs205.tariffg4t2.service.basic.ShippingService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
+import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Service
 public class ShippingCostService {
 
-    public BigDecimal calculateShippingCost(TariffCalculationRequest request) {
-        BigDecimal shippingMultiplier;
-        BigDecimal shippingAmount;
+    @Autowired
+    private ShippingService shippingService;
 
-        switch (request.getShippingMode()) {
-            case "air":
-                shippingMultiplier = BigDecimal.valueOf(1.5); // Air shipping multiplier
-                break;
-            case "land":
-                shippingMultiplier = BigDecimal.valueOf(1.2); // Land shipping multiplier
-                break;
-            case "sea":
-                shippingMultiplier = BigDecimal.valueOf(1.0); // Sea shipping multiplier
-                break;
-            default:
-                shippingMultiplier = BigDecimal.valueOf(1.5); // default to Air shipping multiplier
-                request.setShippingMode("air");
+    public BigDecimal calculateShippingCost(TariffCalculationRequestDTO request) {
+
+
+        //find shippingCost using the ShippingCost Entity
+        //air rate, sea rate, land rate
+        //air rate would be something like 0.3, so if its 0.3 then it would be like 0.3 dollars per kg
+        //so if its 10kg it would be 3 dollars
+        //so we would need to get the shipping mode from the request
+        //then we would need to get the importing country and exporting country from the request
+        //then we would need to get the quantity
+        //distance is baked into shipping rate, so pairs of countries further apart would have higher rates.
+        BigDecimal shippingCostRate = shippingService.getShippingRate(
+                request.getShippingMode(), request.getImportingCountry(), request.getExportingCountry());
+
+        if (shippingCostRate == null) {
+            return new BigDecimal(0);
         }
 
-        shippingAmount = request.getQuantity();
+        if (Objects.equals(request.getShippingMode(), "LAND")) {
 
-        // Calculate and return the shipping cost based on the mode
-        return shippingAmount.multiply(shippingMultiplier).setScale(2, BigDecimal.ROUND_HALF_UP);
+            //no existent of landrate, return error
+            if (shippingCostRate.compareTo(BigDecimal.ZERO) == 0) {
+                throw new IllegalArgumentException("No land shipping route between " + request.getImportingCountry() + " and " + request.getExportingCountry());
+            }
+            BigDecimal distance = shippingService.getDistance(request.getImportingCountry(), request.getExportingCountry());
+            Integer numberofHeads = request.getHeads();
+
+            BigDecimal shippingCost = shippingCostRate.multiply(distance).multiply(request.getWeight()).multiply(BigDecimal.valueOf(numberofHeads));
+
+            System.out.println("Distance: " + distance);
+            System.out.println("Shipping Cost Rate: " + shippingCostRate);
+            System.out.println("Quantity: " + request.getWeight());
+            System.out.println("Calculated Shipping Cost for land: " + shippingCost);
+
+            return shippingCost.setScale(2, BigDecimal.ROUND_HALF_UP);
+        }
+
+        // Calculate shipping cost based on product value
+        BigDecimal shippingCost = shippingCostRate.multiply(request.getWeight());
+        return shippingCost.setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 }
 

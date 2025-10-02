@@ -12,21 +12,22 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TariffCalculationResult {
+public class TariffCalculationResultDTO {
     //difference between TariffCalculationResult and TariffCalculationResponse is
     //additional fields tarrifRate, tariffAmount, totalCost, currency, tradeAgreement, calculationDate
 
-    public enum TariffType { AD_VALOREM, SPECIFIC }
-
-    private String homeCountry;
-    private String destinationCountry;
-    private String productName;
+    private String importingCountry;
+    private String exportingCountry;
+    private String hsCode;
+    private String productDescription;
     private BigDecimal productValue;
     private BigDecimal quantity;
+    private Integer heads;
     private String unit;
     private BigDecimal tariffAmount;
     private BigDecimal shippingCost;
     private BigDecimal totalCost;
     private String TariffType;
     private LocalDateTime calculationDate;
+    private String tradeAgreement;
 }

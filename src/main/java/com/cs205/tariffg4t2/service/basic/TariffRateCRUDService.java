@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.service.basic;
 
-import com.cs205.tariffg4t2.dto.TariffRateDTO;
+import com.cs205.tariffg4t2.dto.basic.TariffRateDTO;
 import com.cs205.tariffg4t2.model.basic.TariffRate;
 import com.cs205.tariffg4t2.repository.basic.TariffRateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class TariffRateService {
+public class TariffRateCRUDService {
 
     @Autowired
     private TariffRateRepository tariffRateRepository;
@@ -44,8 +44,6 @@ public class TariffRateService {
                     existingTariffRate.setHsCode(updatedTariffRateDto.getHsCode());
                     existingTariffRate.setImportingCountryCode(updatedTariffRateDto.getImportingCountryCode());
                     existingTariffRate.setExportingCountryCode(updatedTariffRateDto.getExportingCountryCode());
-                    existingTariffRate.setBaseRate(updatedTariffRateDto.getBaseRate());
-                    existingTariffRate.setUnit(updatedTariffRateDto.getUnit());
                     existingTariffRate.setTariffType(updatedTariffRateDto.getTariffType());
                     existingTariffRate.setAdValoremRate(updatedTariffRateDto.getAdValoremRate());
                     existingTariffRate.setSpecificRateAmount(updatedTariffRateDto.getSpecificRateAmount());
@@ -110,12 +108,11 @@ public class TariffRateService {
         }
 
         TariffRate entity = new TariffRate();
+
         entity.setHsCode(dto.getHsCode().trim());
         entity.setImportingCountryCode(dto.getImportingCountryCode().trim().toUpperCase());
         entity.setExportingCountryCode(dto.getExportingCountryCode().trim().toUpperCase());
-        entity.setBaseRate(dto.getBaseRate());
-        entity.setUnit(dto.getUnit() != null ? dto.getUnit().trim() : null);
-        entity.setTariffType(dto.getTariffType() != null ? dto.getTariffType() : TariffRate.TariffType.AD_VALOREM);
+        entity.setTariffType(dto.getTariffType() != null ? dto.getTariffType().trim().toUpperCase() : null);
         entity.setAdValoremRate(dto.getAdValoremRate());
         entity.setSpecificRateAmount(dto.getSpecificRateAmount());
         return entity;

@@ -1,9 +1,12 @@
 package com.cs205.tariffg4t2.service.tariffLogic;
 
-import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
-import com.cs205.tariffg4t2.dto.response.TariffCalculationResult;
+import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
+import com.cs205.tariffg4t2.dto.response.TariffCalculationResultDTO;
+import com.cs205.tariffg4t2.model.basic.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.cs205.tariffg4t2.service.basic.ProductService;
+import com.cs205.tariffg4t2.service.basic.TradeAgreementService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -21,64 +24,79 @@ public class TariffCalculatorService {
     @Autowired
     private ShippingCostService shippingCostService;
 
-    public TariffCalculationResult calculateTariff(TariffCalculationRequest request) {
-        // Validate input
-        validateRequest(request);
+    @Autowired
+    TariffValidationService tariffValidationService;
+    @Autowired
+    private ProductService productService;
 
-        // Determine tariff type (Ad Valorem or Specific)
-        boolean hasProductValue = request.getProductValue() != null;
-        boolean hasQuantityAndUnit = request.getQuantity() != null && request.getUnit() != null;
+    @Autowired
+    private TradeAgreementService tradeAgreementService;
 
-        if (!hasProductValue && !hasQuantityAndUnit) {
-            throw new IllegalArgumentException("Provide either productValue or quantity and unit.");
+    public TariffCalculationResultDTO calculateTariff(TariffCalculationRequestDTO request) {
+
+        System.out.println("Received tariff calculation request: " + request);
+
+        // First validate the request using TariffValidationService
+        tariffValidationService.validateTariffRequest(request);
+
+        System.out.println("Request validated successfully.");
+
+        //then call TariffRateService to calculate based on ad valorem or specific
+        //it should return an amount.
+
+        BigDecimal dutyAmount;
+        dutyAmount = tariffRateService.calculateTariffAmount(request);
+
+        System.out.println("Initial calculated duty amount: " + dutyAmount);
+
+        // get preferential rate from TariffFTAService
+        BigDecimal preferentialRate = tariffFTAService.applyTradeAgreementDiscount(request, dutyAmount);
+
+        //show preferential rate
+        System.out.println("Preferential rate from FTA: " + preferentialRate);
+
+        if (preferentialRate != null) {
+            dutyAmount = request.getProductValue().multiply(preferentialRate).setScale(2, RoundingMode.HALF_UP);
         }
 
-        // Initialize result variables
-        BigDecimal dutyAmount = BigDecimal.ZERO;
-        BigDecimal additionalCost = BigDecimal.ZERO;
-        BigDecimal totalCost = BigDecimal.ZERO;
-        String tariffType = null;
+        System.out.println("Discounted duty amount after FTA: " + dutyAmount);
 
-        // Determine calculation type: Ad Valorem or Specific
-        if (hasProductValue) {
-            // Ad Valorem calculation
-            dutyAmount = tariffRateService.calculateAdValoremRate(request);
-            dutyAmount = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
-            totalCost = request.getProductValue().multiply(dutyAmount).add(request.getProductValue());
-            tariffType = "AD_VALOREM";
-        } else if (hasQuantityAndUnit) {
-            // Specific calculation
-            dutyAmount = tariffRateService.calculateSpecificRate(request);
-            dutyAmount = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
-            additionalCost = shippingCostService.calculateShippingCost(request);
-            totalCost = request.getQuantity().multiply(dutyAmount).add(request.getProductValue()).add(additionalCost);
-            tariffType = "SPECIFIC";
-        }
+        // Calculate shipping cost using ShippingCostService, return amount
+        BigDecimal shippingCost = shippingCostService.calculateShippingCost(request);
 
-        // Apply FTA discount (if applicable)
-        // BigDecimal finalRate = tariffFTAService.applyTradeAgreementDiscount(dutyAmount, request.getHomeCountry(), request.getDestinationCountry());
+        System.out.println("Calculated shipping cost: " + shippingCost);
+        System.out.println("Calculated duty amount: " + dutyAmount);
+        System.out.println("Product value: " + request.getProductValue());
+
+        //Total Cost = product value + duty amount + shipping cost
+        BigDecimal totalCost = request.getProductValue().add(dutyAmount).add(shippingCost);
 
         // Build and return result
-        return TariffCalculationResult.builder()
-                .homeCountry(request.getHomeCountry())
-                .destinationCountry(request.getDestinationCountry())
-                .productName(request.getProductName())
+
+        //get product description from tariffRateService
+        Product product = productService.getProductByHsCode(request.getHsCode());
+        String productDescription = (product != null) ? product.getDescription() : "N/A";
+
+        // Fetch trade agreement information
+        String tradeAgreementName = tradeAgreementService.getTradeAgreementName(
+                request.getExportingCountry(),
+                request.getImportingCountry(),
+                request.getHsCode());
+
+        return TariffCalculationResultDTO.builder()
+                .importingCountry(request.getImportingCountry())
+                .exportingCountry(request.getExportingCountry())
                 .productValue(request.getProductValue())
-                .quantity(request.getQuantity())
-                .unit(request.getUnit())
+                .productDescription(productDescription)
+                .hsCode(request.getHsCode())
+                .quantity(request.getWeight())
+                .heads(request.getHeads())
                 .tariffAmount(dutyAmount.setScale(2, RoundingMode.HALF_UP))
-                .shippingCost(additionalCost)
+                .shippingCost(shippingCost.setScale(2, RoundingMode.HALF_UP))
                 .totalCost(totalCost.setScale(2, RoundingMode.HALF_UP))
+                .tradeAgreement(tradeAgreementName)
                 .calculationDate(LocalDateTime.now())
-                .TariffType(tariffType)
                 .build();
     }
 
-    private void validateRequest(TariffCalculationRequest request) {
-        // Simple validation for missing fields, assuming they must have either productValue or quantity/unit
-        if (request.getProductValue() == null && (request.getQuantity() == null || request.getUnit() == null)) {
-            throw new IllegalArgumentException("Either productValue or quantity and unit must be provided.");
-        }
-    }
 }
-

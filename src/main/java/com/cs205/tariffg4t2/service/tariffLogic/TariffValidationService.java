@@ -1,6 +1,6 @@
 package com.cs205.tariffg4t2.service.tariffLogic;
 
-import com.cs205.tariffg4t2.dto.request.TariffCalculationRequest;
+import com.cs205.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 import com.cs205.tariffg4t2.repository.basic.CountryRepository;
 import com.cs205.tariffg4t2.model.basic.Country;
 import org.springframework.stereotype.Service;
@@ -18,34 +18,44 @@ public class TariffValidationService {
     private CountryRepository countryRepository;
 
 
-    public List<String> validateTariffRequest(TariffCalculationRequest request) {
+    public List<String> validateTariffRequest(TariffCalculationRequestDTO request) {
         List<String> errors = new ArrayList<>();
 
         // required fields
-        if (isBlank(request.getHomeCountry())) errors.add("Home country is required");
-        if (isBlank(request.getDestinationCountry())) errors.add("Destination country is required");
-        if (isBlank(request.getProductName())) errors.add("Product name is required");
+        if (isBlank(request.getImportingCountry())) errors.add("Importing country is required");
+        if (isBlank(request.getExportingCountry())) errors.add("Exporting country is required");
         if (request.getProductValue() == null || request.getProductValue().compareTo(BigDecimal.ZERO) <= 0) {
             errors.add("Product value must be greater than zero");
         }
+
+        if (request.getWeight() == null || request.getWeight().compareTo(BigDecimal.ZERO) <= 0) {
+            errors.add("Weight must be greater than zero");
+        }
+
+        if (isBlank(request.getShippingMode())) errors.add("Shipping mode is required");
+        if (request.getHeads() == null || request.getHeads() < 0) {
+            errors.add("Heads must be zero or a positive integer");
+        }
+
+
 
         // Short-circuit if requireds already failed
         if (!errors.isEmpty()) return errors;
 
         // Resolve + normalize countries to alpha-2
-        Optional<String> homeCode = resolveToAlpha2(request.getHomeCountry());
-        Optional<String> destCode = resolveToAlpha2(request.getDestinationCountry());
+        Optional<String> importCode = resolveToAlpha2(request.getImportingCountry());
+        Optional<String> exportCode = resolveToAlpha2(request.getExportingCountry());
 
-        if (homeCode.isEmpty()) {
+        if (importCode.isEmpty()) {
             errors.add("Unknown home country (not found by code or name)");
         } else {
-            request.setHomeCountry(homeCode.get());  // normalize to alpha-2
+            request.setImportingCountry(importCode.get());  // normalize to alpha-2
         }
 
-        if (destCode.isEmpty()) {
+        if (exportCode.isEmpty()) {
             errors.add("Unknown destination country (not found by code or name)");
         } else {
-            request.setDestinationCountry(destCode.get()); // normalize to alpha-2
+            request.setExportingCountry(exportCode.get()); // normalize to alpha-2
         }
 
         // HS code (optional): keep your old rule if you like
@@ -56,17 +66,9 @@ public class TariffValidationService {
         }
 
         boolean hasValue = request.getProductValue() != null && request.getProductValue().compareTo(BigDecimal.ZERO) > 0;
-        boolean hasQty   = request.getQuantity() != null && request.getQuantity().compareTo(BigDecimal.ZERO) > 0;
-        boolean hasUnit  = request.getUnit() != null && !request.getUnit().isBlank();
+        boolean hasQty   = request.getWeight() != null && request.getWeight().compareTo(BigDecimal.ZERO) > 0;
 
-        if (!hasValue && !(hasQty && hasUnit)) {
-            errors.add("Provide either productValue > 0, or (quantity > 0 and unit).");
-        }
-
-        if (!hasValue && hasQty && !hasUnit) {
-            errors.add("Provide either productValue > 0, or (quantity > 0 and unit).");
-        }
-        if (!hasValue && hasUnit && !hasQty) {
+        if (!hasValue && !hasQty) {
             errors.add("Provide either productValue > 0, or (quantity > 0 and unit).");
         }
 
@@ -93,7 +95,7 @@ public class TariffValidationService {
         return s == null || s.trim().isEmpty();
     }
 
-    public boolean isValidRequest(TariffCalculationRequest request) {
+    public boolean isValidRequest(TariffCalculationRequestDTO request) {
         return validateTariffRequest(request).isEmpty();
     }
 }
