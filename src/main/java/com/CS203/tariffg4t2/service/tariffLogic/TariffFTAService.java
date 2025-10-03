@@ -38,21 +38,37 @@ public class TariffFTAService {
 
         // Get preferential rate if its advalorem(e.g., 0.05 for 5% duty rate)
         if (Objects.equals(tariffRate.getTariffType(), "SPECIFIC")) {
+            if (preferentialRateService.getSpecificPreferentialRate(
+                    request.getImportingCountry(),
+                    request.getExportingCountry(),
+                    request.getHsCode()
+            ) == null) {
+                return dutyAmount; // No preferential rate, return original duty amount
+            }
+
             BigDecimal specificPreferentialRate = preferentialRateService.getSpecificPreferentialRate(
                     request.getImportingCountry(),
                     request.getExportingCountry(),
                     request.getHsCode()
             );
-            return specificPreferentialRate;
+            return specificPreferentialRate.multiply(new BigDecimal(request.getHeads()));
         } else {
             // Ad Valorem case
             if (Objects.equals(tariffRate.getTariffType(), "AD_VALOREM")) {
+                if (preferentialRateService.getAdValoremPreferentialRate(
+                        request.getImportingCountry(),
+                        request.getExportingCountry(),
+                        request.getHsCode()
+                ) == null) {
+                    return dutyAmount; // No preferential rate, return original duty amount
+                }
+
                 BigDecimal adValoremPreferentialRate = preferentialRateService.getAdValoremPreferentialRate(
                         request.getImportingCountry(),
                         request.getExportingCountry(),
                         request.getHsCode()
                 );
-                return adValoremPreferentialRate;
+                return adValoremPreferentialRate.multiply(request.getProductValue());
             }
             return null;
         }

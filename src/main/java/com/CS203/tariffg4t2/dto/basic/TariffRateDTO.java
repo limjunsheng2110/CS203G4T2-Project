@@ -15,7 +15,6 @@ public class TariffRateDTO {
     private String importingCountryCode;
     private String exportingCountryCode;
     private BigDecimal baseRate;
-    private String unit;
     private String TariffType;
     private BigDecimal adValoremRate;
     private BigDecimal specificRateAmount;

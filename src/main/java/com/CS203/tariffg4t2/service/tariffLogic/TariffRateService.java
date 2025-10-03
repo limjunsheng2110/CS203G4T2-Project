@@ -40,8 +40,15 @@ public class TariffRateService {
         TariffRate tariffRate = tariffRateOptional.get();
         System.out.println("Found tariff rate: " + tariffRate);
 
+        System.out.println("Calculating tariff for request: " + request);
+        System.out.println("Using tariff rate: " + tariffRate.getTariffType());
+
+        String tariffType = tariffRate.getTariffType();
+        String AD_VALOREM = "AD_VALOREM";
+        String SPECIFIC = "SPECIFIC";
+
         // Calculate based on tariff type
-        if (Objects.equals(tariffRate.getTariffType(), "AD_VALOREM")) {
+        if (tariffType.equals(AD_VALOREM)) {
             // Ad Valorem: rate * product value
             BigDecimal rate = tariffRate.getAdValoremRate();
             if (rate == null) {
@@ -49,7 +56,7 @@ public class TariffRateService {
             }
             return rate.multiply(request.getProductValue());
             // Note: rate is expected to be in decimal form (e.g., 0.05 for 5%)
-        } else if (Objects.equals(tariffRate.getTariffType(), "SPECIFIC")) {
+        } else if ("SPECIFIC".equals(tariffType)) {
             // Specific: specific rate amount per unit * quantity
             BigDecimal ratePerUnit = tariffRate.getSpecificRateAmount();
             if (ratePerUnit == null || request.getWeight() == null) {
@@ -59,6 +66,7 @@ public class TariffRateService {
             //calculation : just multiply rate per unit by weight and return
             return ratePerUnit.multiply((BigDecimal.valueOf(request.getHeads())));
         } else {
+            System.out.println("Unknown tariff type: " + tariffType);
             throw new RuntimeException("Unknown tariff type: " + tariffRate.getTariffType());
         }
     }

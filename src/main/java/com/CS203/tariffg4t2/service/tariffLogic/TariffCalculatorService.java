@@ -61,14 +61,7 @@ public class TariffCalculatorService {
         System.out.println("Initial calculated duty amount: " + dutyAmount);
 
         // get preferential rate from TariffFTAService
-        BigDecimal preferentialRate = tariffFTAService.applyTradeAgreementDiscount(request, dutyAmount);
-
-        //show preferential rate
-        System.out.println("Preferential rate from FTA: " + preferentialRate);
-
-        if (preferentialRate != null) {
-            dutyAmount = request.getProductValue().multiply(preferentialRate).setScale(2, RoundingMode.HALF_UP);
-        }
+        dutyAmount = tariffFTAService.applyTradeAgreementDiscount(request, dutyAmount);
 
         System.out.println("Discounted duty amount after FTA: " + dutyAmount);
 
@@ -137,7 +130,7 @@ public class TariffCalculatorService {
                 .productValue(request.getProductValue())
                 .productDescription(productDescription)
                 .hsCode(request.getHsCode())
-                .quantity(request.getWeight())
+                .weight(request.getWeight())
                 .heads(request.getHeads())
                 .TariffType(tariffType)
                 .tariffAmount(dutyAmount.setScale(2, RoundingMode.HALF_UP))
