@@ -28,7 +28,7 @@ public class TariffValidationService {
             errors.add("Product value must be greater than zero");
         }
 
-        if (request.getWeight() == null || request.getWeight().compareTo(BigDecimal.ZERO) <= 0) {
+        if (request.getTotalWeight() == null || request.getTotalWeight().compareTo(BigDecimal.ZERO) <= 0) {
             errors.add("Weight must be greater than zero");
         }
 
@@ -66,7 +66,7 @@ public class TariffValidationService {
         }
 
         boolean hasValue = request.getProductValue() != null && request.getProductValue().compareTo(BigDecimal.ZERO) > 0;
-        boolean hasQty   = request.getWeight() != null && request.getWeight().compareTo(BigDecimal.ZERO) > 0;
+        boolean hasQty   = request.getTotalWeight() != null && request.getTotalWeight().compareTo(BigDecimal.ZERO) > 0;
 
         if (!hasValue && !hasQty) {
             errors.add("Provide either productValue > 0, or (quantity > 0 and unit).");

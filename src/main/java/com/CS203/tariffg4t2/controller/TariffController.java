@@ -25,7 +25,7 @@ public class TariffController {
             @RequestParam String importingCountry,
             @RequestParam String exportingCountry,
             @RequestParam BigDecimal productValue,
-            @RequestParam BigDecimal weight,
+            @RequestParam BigDecimal totalWeight,
             @RequestParam String shippingMode,
             @RequestParam Integer heads,
             @RequestParam String hsCode) {
@@ -36,7 +36,7 @@ public class TariffController {
                     .importingCountry(importingCountry.trim().toUpperCase())
                     .exportingCountry(exportingCountry.trim().toUpperCase())
                     .productValue(productValue)
-                    .weight(weight)
+                    .totalWeight(totalWeight)
                     .heads(heads)
                     .shippingMode(shippingMode.trim())
                     .hsCode(hsCode)

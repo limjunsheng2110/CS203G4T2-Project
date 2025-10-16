@@ -21,7 +21,7 @@ public class TariffCalculationResultDTO {
     private String hsCode;
     private String productDescription;
     private BigDecimal productValue;
-    private BigDecimal weight;
+    private BigDecimal totalWeight;
     private Integer heads;
     private BigDecimal tariffAmount;
     private BigDecimal shippingCost;

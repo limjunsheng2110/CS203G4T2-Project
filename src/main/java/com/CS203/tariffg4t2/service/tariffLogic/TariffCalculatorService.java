@@ -130,7 +130,7 @@ public class TariffCalculatorService {
                 .productValue(request.getProductValue())
                 .productDescription(productDescription)
                 .hsCode(request.getHsCode())
-                .weight(request.getWeight())
+                .totalWeight(request.getTotalWeight())
                 .heads(request.getHeads())
                 .TariffType(tariffType)
                 .tariffAmount(dutyAmount.setScale(2, RoundingMode.HALF_UP))

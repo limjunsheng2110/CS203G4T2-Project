@@ -59,7 +59,7 @@ public class TariffRateService {
         } else if ("SPECIFIC".equals(tariffType)) {
             // Specific: specific rate amount per unit * quantity
             BigDecimal ratePerUnit = tariffRate.getSpecificRateAmount();
-            if (ratePerUnit == null || request.getWeight() == null) {
+            if (ratePerUnit == null || request.getTotalWeight() == null) {
                 throw new RuntimeException("Specific rate amount or quantity is null");
             }
 

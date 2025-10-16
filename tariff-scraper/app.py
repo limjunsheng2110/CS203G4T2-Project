@@ -1,4 +1,5 @@
 from scraper import run_tariff_scraper
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 

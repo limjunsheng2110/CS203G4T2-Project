@@ -44,11 +44,11 @@ public class ShippingCostService {
 
 
             // Calculate shipping cost based on distance and weight (total Weight)
-            BigDecimal shippingCost = shippingCostRate.multiply(distance).multiply(request.getWeight());
+            BigDecimal shippingCost = shippingCostRate.multiply(distance).multiply(request.getTotalWeight());
 
             System.out.println("Distance: " + distance);
             System.out.println("Shipping Cost Rate: " + shippingCostRate);
-            System.out.println("Quantity: " + request.getWeight());
+            System.out.println("Quantity: " + request.getTotalWeight());
             System.out.println("Calculated Shipping Cost for land: " + shippingCost);
 
             return shippingCost.setScale(2, BigDecimal.ROUND_HALF_UP);
@@ -56,7 +56,7 @@ public class ShippingCostService {
 
         // Calculate shipping cost based on WEIGHT only for air and sea
         //air and sea is simpler, just rate * weight
-        BigDecimal shippingCost = shippingCostRate.multiply(request.getWeight());
+        BigDecimal shippingCost = shippingCostRate.multiply(request.getTotalWeight());
         return shippingCost.setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 }
