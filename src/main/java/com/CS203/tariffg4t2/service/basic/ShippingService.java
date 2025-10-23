@@ -25,7 +25,7 @@ public class ShippingService {
                 .findByImportingAndExportingCountry(importingCountry, exportingCountry)
                 .orElse(null);
 
-        if (shippingRate == null) {
+        if (shippingRate == null || shippingMode == null) {
             return null;
         }
 

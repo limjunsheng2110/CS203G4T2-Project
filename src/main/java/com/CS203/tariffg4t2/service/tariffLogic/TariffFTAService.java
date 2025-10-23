@@ -63,13 +63,42 @@ public class TariffFTAService {
                     return dutyAmount; // No preferential rate, return original duty amount
                 }
 
-                BigDecimal adValoremPreferentialRate = preferentialRateService.getAdValoremPreferentialRate(
-                        request.getImportingCountry(),
-                        request.getExportingCountry(),
-                        request.getHsCode()
-                );
-                return adValoremPreferentialRate.multiply(request.getProductValue());
-            }
+                if (Boolean.FALSE.equals(request.getRooEligible())) {
+                    return dutyAmount; // no RoO => no preference
+                }
+  
+                BigDecimal prefAdValorem = preferentialRateService.getAdValoremPreferentialRate(
+                        request.getImportingCountry(), request.getExportingCountry(), request.getHsCode());
+                BigDecimal prefSpecific = preferentialRateService.getSpecificPreferentialRate(
+                        request.getImportingCountry(), request.getExportingCountry(), request.getHsCode());
+  
+                // Apply whichever leg exists matching the tariff type
+                String tariffType = Optional.ofNullable(tariffRate.getTariffType()).orElse("").toUpperCase();
+                if (tariffType.startsWith("AD")) {
+                    return (prefAdValorem != null) ? prefAdValorem.multiply(request.getProductValue()) : dutyAmount;
+                } else if (tariffType.startsWith("SPECIFIC")) {
+                    BigDecimal qty = ("HEAD".equalsIgnoreCase(tariffRate.getUnitBasis()))
+                            ? BigDecimal.valueOf(request.getHeads())
+                            : request.getWeight();
+                    return (prefSpecific != null && qty != null) ? prefSpecific.multiply(qty) : dutyAmount;
+                } else if (tariffType.startsWith("COMPOUND")) {
+                    BigDecimal adLeg = (prefAdValorem != null) ? prefAdValorem.multiply(request.getProductValue()) : BigDecimal.ZERO;
+                    BigDecimal spLeg = (prefSpecific != null)
+                            ? prefSpecific.multiply(("HEAD".equalsIgnoreCase(tariffRate.getUnitBasis()))
+                            ? BigDecimal.valueOf(request.getHeads()) : request.getWeight())
+                            : BigDecimal.ZERO;
+                    return adLeg.add(spLeg);
+                } else if (tariffType.startsWith("MIXED")) {
+                    BigDecimal adLeg = (prefAdValorem != null) ? prefAdValorem.multiply(request.getProductValue()) : null;
+                    BigDecimal spLeg = (prefSpecific != null)
+                            ? prefSpecific.multiply(("HEAD".equalsIgnoreCase(tariffRate.getUnitBasis()))
+                            ? BigDecimal.valueOf(request.getHeads()) : request.getWeight())
+                            : null;
+                    if (adLeg == null || spLeg == null) return dutyAmount; // incomplete pref leg
+                    return tariffType.contains("MAX") ? adLeg.max(spLeg) : adLeg.min(spLeg);
+                }
+                return dutyAmount;
+            }  
             return null;
         }
     }

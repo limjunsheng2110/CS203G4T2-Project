@@ -23,6 +23,8 @@ public interface TariffRateDetailRepository extends JpaRepository<TariffRateDeta
     
     // Find latest detail for a tariff rate
     Optional<TariffRateDetail> findFirstByTariffRateAndIsActiveTrueOrderByCreatedAtDesc(TariffRate tariffRate);
+
+    Optional<TariffRateDetail> findFirstByTariffRate_HsCode(String hsCode);
     
     // Find details by data source
     List<TariffRateDetail> findByDataSourceAndIsActiveTrueOrderByCreatedAtDesc(String dataSource);
