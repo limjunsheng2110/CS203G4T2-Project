@@ -39,6 +39,12 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Build and Test application
+        env:
+          # Explicitly pass the secrets as environment variables for this step
+          SPRING_DATASOURCE_URL: ${{ secrets.DB_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_KEY }}
         run: mvn clean package
 
       # -----------------------------------------------------------------------
