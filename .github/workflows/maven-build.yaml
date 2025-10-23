@@ -5,8 +5,17 @@
 #  pull_request:
 #    branches:
 #      - main
+name: CI/CD Pipeline - Maven Build, Test, Dockerize, and Publish
 
-on: [push, pull_request]
+on:
+  # 1. Continuous Integration (Run on PRs for validation)
+  pull_request:
+    branches: [ main ] # Runs when a PR is opened/updated targeting 'main'
+
+  # 2. Continuous Delivery (Run ONLY on push to stable branch, after merge)
+  push:
+    branches: [ main ] # Change 'main' to your default branch if different
+
 
 jobs:
   build_and_publish:
