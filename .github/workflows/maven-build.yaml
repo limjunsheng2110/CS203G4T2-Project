@@ -1,5 +1,3 @@
-name: Full CI/CD Pipeline: Build, Test, Inject Secrets, & Publish Docker Image
-
 on:
   push:
     branches:
