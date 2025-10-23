@@ -66,7 +66,7 @@ jobs:
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/tariff-app # <--- RENAME YOUR APP HERE
           tags: |
-            type=sha,prefix=,format={{sha}}
+            type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and Push Docker Image (with Secrets)
