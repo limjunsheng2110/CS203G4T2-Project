@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------
 # Stage 1: The Build Stage (Uses Maven to produce the JAR)
 # --------------------------------------------------------------------------
-FROM maven:3.9.5-openjdk-21-slim AS builder
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
 COPY . /app
@@ -11,7 +11,7 @@ RUN mvn clean package -DskipTests
 # --------------------------------------------------------------------------
 # Stage 2: The Runtime Stage (Uses minimal JRE to run the JAR securely)
 # --------------------------------------------------------------------------
-FROM openjdk:21-jre-slim AS runtime
+FROM eclipse-temurin:21-jre-alpine AS runtime
 
 # Define ARG variables to receive secrets from GitHub Actions build-args
 ARG SPRING_DATASOURCE_URL
