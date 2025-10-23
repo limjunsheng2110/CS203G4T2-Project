@@ -15,10 +15,11 @@ public class Product {
     @Id
     @Column(name = "hs_code", length = 20)
     private String hsCode;
-    
+
     @Column(name = "description", length = 500)
     private String description;
     
     @Column(name = "category", length = 100, nullable = true)
     private String category;
+
 }
