@@ -103,3 +103,46 @@ jobs:
         with:
           name: jar-artifacts
           path: target/tariffg4t2-0.0.1-SNAPSHOT.jar # <--- Confirmed JAR Name
+
+
+  #Deploy
+    # ... (after the 'build_and_publish' job ends)
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_and_publish # This dependency ensures the job only runs if the image push succeeded
+
+    steps:
+      - name: Deploy via SSH and Restart Container
+        # Uses the community action to execute commands on the remote EC2 server
+        uses: appleboy/ssh-action@v1.0.1
+        with:
+          # SSH Credentials passed securely from GitHub Secrets
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          # 🚨 Deployment Script (Run these commands on the EC2 server) 🚨
+          script: |
+            # 1. Log into Docker Hub on the EC2 instance to pull the image
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+            # 2. Define image name (Must match the name pushed in the first job)
+            IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/tariff-app:latest
+            CONTAINER_NAME=tariff-app-container
+
+            echo "Pulling new image: $IMAGE_NAME"
+            docker pull $IMAGE_NAME
+
+            # 3. Stop and remove old container (if running)
+            echo "Restarting application container..."
+            docker stop $CONTAINER_NAME || true 
+            docker rm $CONTAINER_NAME || true 
+
+            # 4. Run the new container, mapping the application port
+            docker run -d \
+              --name $CONTAINER_NAME \
+              -e SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
+              -e OPENAI_API_KEY="${{ secrets.OPENAI_KEY }}" \
+              -p 8080:8080 \
+              $IMAGE_NAME
