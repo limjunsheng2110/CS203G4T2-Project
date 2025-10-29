@@ -1,6 +1,6 @@
-package com.CS203.tariffg4t2.model.basic;
+package com.cs203.tariffg4t2.model.basic;
 
-import com.CS203.tariffg4t2.model.web.ScrapingJob;
+import com.cs203.tariffg4t2.model.web.ScrapingJob;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.*;

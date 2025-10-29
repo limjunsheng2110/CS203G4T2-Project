@@ -1,4 +1,4 @@
-package com.CS203.tariffg4t2.dto.request;
+package com.cs203.tariffg4t2.dto.request;
 
 import lombok.*;
 import java.math.BigDecimal;

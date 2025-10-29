@@ -52,7 +52,3 @@ public class TariffController {
         return ResponseEntity.ok(result);
     }
 }
-
-
-
-}
