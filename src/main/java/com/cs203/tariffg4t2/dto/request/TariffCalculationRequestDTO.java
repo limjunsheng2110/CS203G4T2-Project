@@ -2,6 +2,8 @@ package com.cs203.tariffg4t2.dto.request;
 
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import jakarta.validation.constraints.*;
 
 @Data
@@ -15,7 +17,7 @@ public class TariffCalculationRequestDTO {
     @NotBlank private String exportingCountry;
     @NotBlank private String hsCode;
 
-@NotNull private BigDecimal productValue;
+    @NotNull private BigDecimal productValue;
     @NotNull private Boolean rooEligible;
 
     @NotNull private Integer heads;      // number of units/items
@@ -37,4 +39,11 @@ public class TariffCalculationRequestDTO {
     private BigDecimal safeguardRate;
 
     private BigDecimal trqRemaining;
+
+    // Track missing or defaulted fields
+    @Builder.Default
+    private List<String> missingFields = new ArrayList<>();
+
+    @Builder.Default
+    private List<String> defaultedFields = new ArrayList<>();
 }

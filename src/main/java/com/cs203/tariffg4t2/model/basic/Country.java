@@ -18,4 +18,12 @@ public class Country {
     @Column(name = "country_name", length = 100)  
     private String countryName;
 
+    @Column(name = "iso3_code", length = 3)
+    private String iso3Code;
+
+    // Constructor for backward compatibility
+    public Country(String countryCode, String countryName) {
+        this.countryCode = countryCode;
+        this.countryName = countryName;
+    }
 }
