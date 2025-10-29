@@ -1,6 +1,6 @@
-package com.CS203.tariffg4t2.repository.basic;
+package com.cs203.tariffg4t2.repository.basic;
 
-import com.CS203.tariffg4t2.model.basic.AdditionalDutyMap;
+import com.cs203.tariffg4t2.model.basic.AdditionalDutyMap;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDate;
 import java.util.Optional;

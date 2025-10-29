@@ -2,11 +2,12 @@ package com.cs203.tariffg4t2.service.tariffLogic;
 
 import com.cs203.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 import com.cs203.tariffg4t2.dto.response.TariffCalculationResultDTO;
-import com.cs203.tariffg4t2.model.basic.Product;
-import com.cs203.tariffg4t2.model.basic.TariffRate;
-import com.cs203.tariffg4t2.service.basic.*;
-import com.cs203.tariffg4t2.service.basic.*;
-import com.cs203.tariffg4t2.service.basic.*;
+import com.cs203.tariffg4t2.model.basic.TariffRateDetail;
+import com.cs203.tariffg4t2.repository.basic.CountryProfileRepository;
+import com.cs203.tariffg4t2.repository.basic.TariffRateDetailRepository;
+import com.cs203.tariffg4t2.model.enums.ValuationBasis;
+import com.cs203.tariffg4t2.repository.basic.AdditionalDutyMapRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -43,13 +44,12 @@ public class TariffCalculatorService {
     private ShippingCostService shippingCostService;
 
     @Autowired
-    private ShippingCostService shippingCostService;
+    private CountryProfileRepository countryProfileRepository;
+    @Autowired
+    private TariffRateDetailRepository tariffRateDetailRepository; // when you wire TRQ
 
     @Autowired
-    private com.CS203.tariffg4t2.repository.basic.CountryProfileRepository countryProfileRepository;
-    @Autowired
-    private com.CS203.tariffg4t2.repository.basic.AdditionalDutyMapRepository additionalDutyMapRepository;
-    // @Autowired private TariffRateDetailRepository tariffRateDetailRepository; // when you wire TRQ
+    private AdditionalDutyMapRepository additionalDutyMapRepository;
 
 
     // If you later create a CountryProfileService, inject it here to replace the simple helpers.
@@ -216,7 +216,6 @@ public class TariffCalculatorService {
                 .exportingCountry(request.getExportingCountry())
                 .hsCode(request.getHsCode())
                 .productValue(scale2(invoiceValueDest))
-                .weight(scale2(safeBD(request.getWeight())))
                 .heads(request.getHeads() == null ? null : request.getHeads())
                 .TariffType(null) // optionally fill from your TariffRate if you expose it here
 
@@ -287,15 +286,15 @@ public class TariffCalculatorService {
         return x != null && x.compareTo(BigDecimal.ZERO) > 0;
     }
 
-    private com.CS203.tariffg4t2.model.enums.ValuationBasis resolveValuationBasis(String importingCountry, String override) {
+    private ValuationBasis resolveValuationBasis(String importingCountry, String override) {
         if (override != null) {
             String up = override.trim().toUpperCase();
-            if ("CIF".equals(up)) return com.CS203.tariffg4t2.model.enums.ValuationBasis.CIF;
-            if ("TRANSACTION".equals(up)) return com.CS203.tariffg4t2.model.enums.ValuationBasis.TRANSACTION;
+            if ("CIF".equals(up)) return ValuationBasis.CIF;
+            if ("TRANSACTION".equals(up)) return ValuationBasis.TRANSACTION;
         }
         var cp = countryProfileRepository.findByCountryCode(importingCountry);
-        if (cp != null && cp.getValuationBasis() != null) return cp.getValuationBasis();
-        return com.CS203.tariffg4t2.model.enums.ValuationBasis.CIF;
+//        if (cp != null && cp.getValuationBasis() != null) return cp.getValuationBasis();
+        return ValuationBasis.CIF;
     }
 
     private BigDecimal resolveVatRate(String importingCountry, BigDecimal override) {

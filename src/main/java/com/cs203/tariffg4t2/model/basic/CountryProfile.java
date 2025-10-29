@@ -1,6 +1,6 @@
 package com.cs203.tariffg4t2.model.basic;
 
-import com.CS203.tariffg4t2.model.enums.ValuationBasis;
+import com.cs203.tariffg4t2.model.enums.ValuationBasis;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import lombok.*;

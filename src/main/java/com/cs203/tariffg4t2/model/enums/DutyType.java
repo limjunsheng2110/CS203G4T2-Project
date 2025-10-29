@@ -1,4 +1,4 @@
-package com.CS203.tariffg4t2.model.enums;
+package com.cs203.tariffg4t2.model.enums;
 
 public enum DutyType {
     AD_VALOREM,          // % of customs value

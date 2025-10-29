@@ -54,6 +54,7 @@ jobs:
           SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: mvn clean package
 
       # -----------------------------------------------------------------------
@@ -93,6 +94,7 @@ jobs:
             SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
             SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
             OPENAI_API_KEY=${{ secrets.OPENAI_KEY }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
 
       # -----------------------------------------------------------------------
       # 3. CLEANUP (Optional)

@@ -15,12 +15,11 @@ public class TariffCalculationRequestDTO {
     @NotBlank private String exportingCountry;
     @NotBlank private String hsCode;
 
-    @NotNull private BigDecimal productValue;
+@NotNull private BigDecimal productValue;
     @NotNull private Boolean rooEligible;
 
     @NotNull private Integer heads;      // number of units/items
-    @NotNull private BigDecimal weight; // in kg
-
+    @NotNull private BigDecimal weight;   // in kg
     // OPTIONAL (user)
     private String shippingMode;               // "SEA" | "AIR" | "LAND"
     private BigDecimal freight;                // may be null
