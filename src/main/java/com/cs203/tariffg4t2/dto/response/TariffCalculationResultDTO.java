@@ -6,32 +6,41 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TariffCalculationResultDTO {
-    //difference between TariffCalculationResult and TariffCalculationResponse is
-    //additional fields tarrifRate, tariffAmount, totalCost, currency, tradeAgreement, calculationDate
-
+    // Inputs echoed
     private String importingCountry;
     private String exportingCountry;
     private String hsCode;
-    private String productDescription;
     private BigDecimal productValue;
     private BigDecimal totalWeight;
     private Integer heads;
-    private BigDecimal tariffAmount;
-    private BigDecimal shippingCost;
-    private BigDecimal totalCost;
     private String TariffType;
-    private LocalDateTime calculationDate;
+
+    // Breakdown
+    private BigDecimal customsValue;
+    private BigDecimal baseDuty;
+    private BigDecimal trqDuty;
+    private BigDecimal additionalDuties;   // sum of 301/ADD/CVD/SG
+    private BigDecimal vatOrGst;
+    private BigDecimal shippingCost;
+
+    // Totals
+    private BigDecimal tariffAmount;       // baseDuty + trqDuty + additionalDuties
+    private BigDecimal totalCost;          // customsValue + tariffAmount + vat/gst + shipping
+
+    // Meta
     private String tradeAgreement;
-    private BigDecimal shippingRate;
+    private java.time.LocalDateTime calculationDate;
+
+    // Rates shown for transparency
     private BigDecimal adValoremRate;
     private BigDecimal specificRate;
     private BigDecimal adValoremPreferentialRate;
     private BigDecimal specificPreferentialRate;
+    private BigDecimal shippingRate;
 }

@@ -1,29 +1,41 @@
-package com.cs203.tariffg4t2.dto.request;
+package com.CS203.tariffg4t2.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
 import java.math.BigDecimal;
-
-// import basic.model.com.CS203.tariffg4t2.ShippingRate.ShippingMode;
-
+import jakarta.validation.constraints.*;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class TariffCalculationRequestDTO {
 
-    // public enum ShippingMode { SEA, AIR, LAND }
+    // REQUIRED (user)
+    @NotBlank private String importingCountry;
+    @NotBlank private String exportingCountry;
+    @NotBlank private String hsCode;
 
-    private String importingCountry;
-    private String exportingCountry;
-    private BigDecimal productValue;
-    private String hsCode;
-    private Integer heads;
-    private BigDecimal totalWeight;
-    private String shippingMode;
+    @NotNull private BigDecimal productValue;
+    @NotNull private Boolean rooEligible;
+
+    @NotNull private Integer heads;      // number of units/items
+    @NotNull private BigDecimal weight; // in kg
+
+    // OPTIONAL (user)
+    private String shippingMode;               // "SEA" | "AIR" | "LAND"
+    private BigDecimal freight;                // may be null
+    private BigDecimal insurance;              // may be null
+
+    // ---- Tester overrides only (optional)
+    private String valuationOverride;          // "CIF"/"TRANSACTION" for testing
+    private BigDecimal vatOrGstOverride;       // for testing
+
+    // ---- INTERNAL (DB-fetched). Do NOT document as input in Swagger.
+    // Keep them here so the service can carry values around; they are NOT user inputs.
+    private BigDecimal section301Rate;
+    private BigDecimal antiDumpingRate;
+    private BigDecimal countervailingRate;
+    private BigDecimal safeguardRate;
+
+    private BigDecimal trqRemaining;
 }

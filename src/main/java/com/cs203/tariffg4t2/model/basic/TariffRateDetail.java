@@ -1,19 +1,24 @@
-package com.cs203.tariffg4t2.model.basic;
+package com.CS203.tariffg4t2.model.basic;
 
-import com.cs203.tariffg4t2.model.web.ScrapingJob;
+import com.CS203.tariffg4t2.model.web.ScrapingJob;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "tariff_rate_details")
+@ToString(onlyExplicitlyIncluded = true)  
 public class TariffRateDetail {
     
     @Id
@@ -23,6 +28,7 @@ public class TariffRateDetail {
     // Link to core tariff rate
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tariff_rate_id", nullable = false)
+    @JsonBackReference
     private TariffRate tariffRate;
     
     // Calculated/Final rate information
@@ -76,4 +82,23 @@ public class TariffRateDetail {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    @Column(name="trq_quota_balance")
+    private BigDecimal trqQuotaBalance; // remaining in-quota amount (same unit as tariffRate.unitBasis)
+    
+    @Column(name="in_quota_rate_percent")
+    private BigDecimal inQuotaRatePercent;
+    
+    @Column(name="in_quota_rate_specific")
+    private BigDecimal inQuotaRateSpecific;
+    
+    @Column(name="out_quota_rate_percent")
+    private BigDecimal outQuotaRatePercent;
+    
+    @Column(name="out_quota_rate_specific")
+    private BigDecimal outQuotaRateSpecific;
+    
+    @Column(name="unit_basis")
+    private String unitBasis; // "KG", "HEAD"
+    
 }
