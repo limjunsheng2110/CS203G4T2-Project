@@ -1,7 +1,10 @@
 # main.py
 
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask
+from flask import request
+from flask import jsonify
+from flask import render_template
 # Import the function from the new module
 from rates import get_tariff_rates
 
