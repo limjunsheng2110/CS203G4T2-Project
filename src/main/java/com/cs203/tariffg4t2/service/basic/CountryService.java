@@ -86,6 +86,7 @@ public class CountryService {
         countryRepository.deleteAll();
     }
 
+    @Transactional(readOnly = true)
     public Country getCountryByCode(String code) {
         try {
             Country c = countryRepository.findByCountryCodeIgnoreCase(code).orElse(null);
@@ -113,6 +114,7 @@ public class CountryService {
      * @param countryName Full country name (e.g., "Singapore", "China")
      * @return 3-digit ISO code (e.g., "SGP", "CHN") or null if not found
      */
+    @Transactional(readOnly = true)
     public String convertCountryNameToIso3(String countryName) {
         if (countryName == null || countryName.trim().isEmpty()) {
             return null;
@@ -163,6 +165,7 @@ public class CountryService {
      * @param countryName Full country name (e.g., "Singapore", "China") or ISO3 code (e.g., "SGP", "CHN")
      * @return 2-digit ISO code (e.g., "SG", "CN") or null if not found
      */
+    @Transactional(readOnly = true)
     public String convertCountryNameToIso2(String countryName) {
         if (countryName == null || countryName.trim().isEmpty()) {
             return null;

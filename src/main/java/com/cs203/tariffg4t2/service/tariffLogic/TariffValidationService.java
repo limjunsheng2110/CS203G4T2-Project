@@ -3,7 +3,6 @@ package com.cs203.tariffg4t2.service.tariffLogic;
 import com.cs203.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 import com.cs203.tariffg4t2.repository.basic.CountryRepository;
 import com.cs203.tariffg4t2.model.basic.Country;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -149,7 +148,6 @@ public class TariffValidationService {
     }
 
     /** Try to resolve user input to an alpha-2 country code using DB. */
-    @Transactional
     public Optional<String> resolveToAlpha2(String input) {
         if (isBlank(input)) return Optional.empty();
 

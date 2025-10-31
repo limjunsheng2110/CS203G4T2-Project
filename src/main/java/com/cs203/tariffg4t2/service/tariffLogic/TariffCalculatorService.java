@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Orchestrates the full tariff calculation flow:
@@ -53,7 +54,7 @@ public class TariffCalculatorService {
 
 
     // If you later create a CountryProfileService, inject it here to replace the simple helpers.
-
+    @Transactional(readOnly = true) // <--- ADD THIS ANNOTATION
     public TariffCalculationResultDTO calculate(TariffCalculationRequestDTO request) {
         // Use the validation service - now sets defaults instead of just validating
         List<String> validationErrors = tariffValidationService.validateTariffRequest(request);

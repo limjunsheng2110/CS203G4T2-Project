@@ -4,6 +4,7 @@ import com.cs203.tariffg4t2.dto.scraping.ScrapedTariffData;
 import com.cs203.tariffg4t2.dto.scraping.ScrapedTariffResponse;
 import com.cs203.tariffg4t2.service.basic.CountryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
