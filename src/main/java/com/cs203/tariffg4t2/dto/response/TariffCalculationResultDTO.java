@@ -24,7 +24,6 @@ public class TariffCalculationResultDTO {
     // Breakdown
     private BigDecimal customsValue;
     private BigDecimal baseDuty;
-    private BigDecimal trqDuty;
     private BigDecimal additionalDuties;   // sum of 301/ADD/CVD/SG
     private BigDecimal vatOrGst;
     private BigDecimal shippingCost;
@@ -39,8 +38,4 @@ public class TariffCalculationResultDTO {
 
     // Rates shown for transparency
     private BigDecimal adValoremRate;
-    private BigDecimal specificRate;
-    private BigDecimal adValoremPreferentialRate;
-    private BigDecimal specificPreferentialRate;
-    private BigDecimal shippingRate;
 }

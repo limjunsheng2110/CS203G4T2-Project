@@ -18,4 +18,18 @@ public class Country {
     @Column(name = "country_name", length = 100)  
     private String countryName;
 
+    @Column(name = "iso3_code", length = 3)
+    private String iso3Code;
+
+
+//      add this
+//    //add vat rate
+//    @Column (name = "vat_rate", precision = 6, scale = 4)
+//    private java.math.BigDecimal vatRate;
+
+    // Constructor for backward compatibility
+    public Country(String countryCode, String countryName) {
+        this.countryCode = countryCode;
+        this.countryName = countryName;
+    }
 }

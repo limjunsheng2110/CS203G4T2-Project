@@ -7,12 +7,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.cs203.tariffg4t2.repository.basic.CountryRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class TariffRateCRUDService {
+
+    private static final Logger logger = LoggerFactory.getLogger(TariffRateCRUDService.class);
 
     @Autowired
     private TariffRateRepository tariffRateRepository;
@@ -34,25 +39,23 @@ public class TariffRateCRUDService {
     }
 
     public Optional<TariffRate> getTariffRateByDetails(String hsCode, String importingCountryCode, String exportingCountryCode) {
-        return tariffRateRepository.findByHsCodeAndImportingCountryCodeAndExportingCountryCode(
-                hsCode, importingCountryCode, exportingCountryCode);
-    }
+        logger.debug("Looking up tariff rate for HS: {}, importing: {}, exporting: {}",
+                    hsCode, importingCountryCode, exportingCountryCode);
 
-    public TariffRate updateTariffRate(Long id, TariffRateDTO updatedTariffRateDto) {
-        return tariffRateRepository.findById(id)
-                .map(existingTariffRate -> {
-                    existingTariffRate.setHsCode(updatedTariffRateDto.getHsCode());
-                    existingTariffRate.setImportingCountryCode(updatedTariffRateDto.getImportingCountryCode());
-                    existingTariffRate.setExportingCountryCode(updatedTariffRateDto.getExportingCountryCode());
-                    existingTariffRate.setTariffType(updatedTariffRateDto.getTariffType());
-                    existingTariffRate.setAdValoremRate(updatedTariffRateDto.getAdValoremRate());
-                    existingTariffRate.setSpecificRateAmount(updatedTariffRateDto.getSpecificRateAmount());
-                    return tariffRateRepository.save(existingTariffRate);
-                })
-                .orElseThrow(() -> new RuntimeException("TariffRate not found with id: " + id));
+        Optional<TariffRate> result = tariffRateRepository.findByHsCodeAndImportingCountryCodeAndExportingCountryCode(
+            hsCode, importingCountryCode, exportingCountryCode);
+
+        if (result.isPresent()) {
+            logger.debug("Found tariff rate with ID: {}", result.get().getId());
+        } else {
+            logger.debug("No tariff rate found for given parameters");
+        }
+
+        return result;
     }
 
     public void deleteTariffRate(Long id) {
+        logger.debug("Deleting tariff rate with ID: {}", id);
         if (!tariffRateRepository.existsById(id)) {
             throw new RuntimeException("TariffRate not found with id: " + id);
         }
@@ -112,9 +115,7 @@ public class TariffRateCRUDService {
         entity.setHsCode(dto.getHsCode().trim());
         entity.setImportingCountryCode(dto.getImportingCountryCode().trim().toUpperCase());
         entity.setExportingCountryCode(dto.getExportingCountryCode().trim().toUpperCase());
-        entity.setTariffType(dto.getTariffType() != null ? dto.getTariffType().trim().toUpperCase() : null);
         entity.setAdValoremRate(dto.getAdValoremRate());
-        entity.setSpecificRateAmount(dto.getSpecificRateAmount());
         return entity;
     }
 }

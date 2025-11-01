@@ -17,6 +17,10 @@ public class CountryAPI {
     @JsonProperty("currencies")
     private Object currencies;  // Complex structure, we'll handle this
 
+    public String getIso3Code() {
+        return code;
+    }
+
     @Data
     public static class CountryName {
         @JsonProperty("common")

@@ -2,9 +2,7 @@ package com.cs203.tariffg4t2.service.tariffLogic;
 
 import com.cs203.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 import com.cs203.tariffg4t2.dto.response.TariffCalculationResultDTO;
-import com.cs203.tariffg4t2.model.basic.TariffRateDetail;
 import com.cs203.tariffg4t2.repository.basic.CountryProfileRepository;
-import com.cs203.tariffg4t2.repository.basic.TariffRateDetailRepository;
 import com.cs203.tariffg4t2.model.enums.ValuationBasis;
 import com.cs203.tariffg4t2.repository.basic.AdditionalDutyMapRepository;
 
@@ -14,7 +12,10 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Orchestrates the full tariff calculation flow:
@@ -38,24 +39,42 @@ public class TariffCalculatorService {
     private TariffRateService tariffRateService;
 
     @Autowired
-    private TariffFTAService tariffFTAService;
-
-    @Autowired
     private ShippingCostService shippingCostService;
 
     @Autowired
     private CountryProfileRepository countryProfileRepository;
-    @Autowired
-    private TariffRateDetailRepository tariffRateDetailRepository; // when you wire TRQ
 
     @Autowired
     private AdditionalDutyMapRepository additionalDutyMapRepository;
 
+    @Autowired
+    private TariffValidationService tariffValidationService;
+
+    Logger logger = LoggerFactory.getLogger(TariffCalculatorService.class);
+
 
     // If you later create a CountryProfileService, inject it here to replace the simple helpers.
-
+    @Transactional(readOnly = true) // <--- ADD THIS ANNOTATION
     public TariffCalculationResultDTO calculate(TariffCalculationRequestDTO request) {
-        validateRequest(request);
+        // Use the validation service - now sets defaults instead of just validating
+        List<String> validationErrors = tariffValidationService.validateTariffRequest(request);
+
+        // Log any missing or defaulted fields for monitoring
+        if (!request.getMissingFields().isEmpty()) {
+            logger.warn("Missing fields detected: {}", request.getMissingFields());
+        }
+        if (!request.getDefaultedFields().isEmpty()) {
+            logger.info("Fields set to default values: {}", request.getDefaultedFields());
+        }
+
+        // Only fail if there are actual validation errors (not just missing fields that were defaulted)
+        if (!validationErrors.isEmpty()) {
+            String errorMessage = "Validation errors: " + String.join(", ", validationErrors);
+            if (!request.getMissingFields().isEmpty()) {
+                errorMessage += ". Missing fields (defaulted): " + String.join(", ", request.getMissingFields());
+            }
+            throw new IllegalArgumentException(errorMessage);
+        }
 
         // ------------------------------------------------------------
         // 1) Valuation (Customs Value)
@@ -75,102 +94,30 @@ public class TariffCalculatorService {
         // ------------------------------------------------------------
         // 2) Base Duty (MFN) – computed by duty type; percent legs later scaled to Customs Value
         // ------------------------------------------------------------
-        BigDecimal baseDutyProvisional = tariffRateService.calculateTariffAmount(request);
+        BigDecimal baseDuty = tariffRateService.calculateTariffAmount(request);
 
-        BigDecimal baseDutyMFN = baseDutyProvisional;
         if (invoiceValueDest.compareTo(BigDecimal.ZERO) > 0) {
             // Scale any percent components from productValue to customsValue
             BigDecimal percentScaler = customsValue.divide(invoiceValueDest, 10, RoundingMode.HALF_UP);
-            baseDutyMFN = baseDutyProvisional.multiply(percentScaler);
-        }
-
-        // ------------------------------------------------------------
-        // 3) Apply FTA preference if RoO-eligible (service respects specific/compound/mixed)
-        // ------------------------------------------------------------
-        BigDecimal baseDuty = tariffFTAService.applyTradeAgreementDiscount(request, baseDutyMFN);
-        if (baseDuty == null) {
-            baseDuty = baseDutyMFN;
-        }
-
-        // ------------------------------------------------------------
-        // 4) TRQ (Tariff Rate Quota) – placeholder. Wire to TariffRateDetail if available.
-        // ------------------------------------------------------------
-        BigDecimal trqDuty = BigDecimal.ZERO;
-        Optional<TariffRateDetail> detailOpt = tariffRateDetailRepository.findFirstByTariffRate_HsCode(request.getHsCode());
-
-        if (detailOpt.isPresent()) {
-            TariffRateDetail detail = detailOpt.get();
-
-            // Determine which unit applies for TRQ
-            BigDecimal qty = BigDecimal.ZERO;
-            String unit = detail.getUnitBasis(); // from DB
-
-            if ("HEAD".equalsIgnoreCase(unit)) {
-                // use heads if present
-                if (request.getHeads() != null && request.getHeads() > 0) {
-                    qty = new BigDecimal(request.getHeads());
-                }
-            } else if ("KG".equalsIgnoreCase(unit)) {
-                // use weight if present
-                if (request.getWeight() != null && request.getWeight().compareTo(BigDecimal.ZERO) > 0) {
-                    qty = request.getWeight();
-                }
-            }
-
-            // Only compute if we have a positive quantity and quota balance
-            if (qty.compareTo(BigDecimal.ZERO) > 0 &&
-                detail.getTrqQuotaBalance() != null &&
-                detail.getTrqQuotaBalance().compareTo(BigDecimal.ZERO) > 0) {
-
-                BigDecimal inQuota = qty.min(detail.getTrqQuotaBalance());
-                BigDecimal outQuota = qty.subtract(inQuota).max(BigDecimal.ZERO);
-
-                BigDecimal inQuotaDuty = BigDecimal.ZERO;
-                BigDecimal outQuotaDuty = BigDecimal.ZERO;
-
-                // In-quota leg
-                if (isPositive(detail.getInQuotaRatePercent())) {
-                    inQuotaDuty = inQuotaDuty.add(customsValue.multiply(detail.getInQuotaRatePercent()));
-                }
-                if (isPositive(detail.getInQuotaRateSpecific())) {
-                    if ("HEAD".equalsIgnoreCase(unit)) {
-                        inQuotaDuty = inQuotaDuty.add(
-                            new BigDecimal(request.getHeads()).multiply(detail.getInQuotaRateSpecific()));
-                    } else if ("KG".equalsIgnoreCase(unit)) {
-                        inQuotaDuty = inQuotaDuty.add(
-                            request.getWeight().multiply(detail.getInQuotaRateSpecific()));
-                    }
-                }
-
-                // Out-of-quota leg
-                if (isPositive(detail.getOutQuotaRatePercent())) {
-                    outQuotaDuty = outQuotaDuty.add(customsValue.multiply(detail.getOutQuotaRatePercent()));
-                }
-                if (isPositive(detail.getOutQuotaRateSpecific())) {
-                    if ("HEAD".equalsIgnoreCase(unit)) {
-                        outQuotaDuty = outQuotaDuty.add(
-                            new BigDecimal(request.getHeads()).multiply(detail.getOutQuotaRateSpecific()));
-                    } else if ("KG".equalsIgnoreCase(unit)) {
-                        outQuotaDuty = outQuotaDuty.add(
-                            request.getWeight().multiply(detail.getOutQuotaRateSpecific()));
-                    }
-                }
-
-                trqDuty = inQuotaDuty.add(outQuotaDuty);
-            }
+            baseDuty = baseDuty.multiply(percentScaler);
         }
 
         // ------------------------------------------------------------
         // 5) Additional stacked duties (e.g., Section 301 / ADD / CVD / Safeguard)
         //     For most jurisdictions these apply on Customs Value (confirm per country profile).
         // ------------------------------------------------------------
+
         java.time.LocalDate today = java.time.LocalDate.now();
         additionalDutyMapRepository
         .findFirstByImportingCountryAndExportingCountryAndHsCodeAndEffectiveFromLessThanEqualAndEffectiveToGreaterThanEqual(
                 request.getImportingCountry(), request.getExportingCountry(), request.getHsCode(), today, today)
         .ifPresent(map -> {
+
+                //20 % for us and china
                 request.setSection301Rate(map.getSection301Rate());
+                //exporting from really cheap country to well-to-do, add dumping rate
                 request.setAntiDumpingRate(map.getAntiDumpingRate());
+                //if the exporting country get subsidies from government
                 request.setCountervailingRate(map.getCountervailingRate());
                 request.setSafeguardRate(map.getSafeguardRate());
         });
@@ -195,7 +142,7 @@ public class TariffCalculatorService {
         BigDecimal vatRate = resolveVatRate(request.getImportingCountry(), request.getVatOrGstOverride());
         boolean vatIncludesDuties = resolveVatIncludesDuties(request.getImportingCountry());
         BigDecimal vatBase = vatIncludesDuties
-                ? customsValue.add(baseDuty).add(trqDuty).add(additional)
+                ? customsValue.add(baseDuty).add(additional)
                 : customsValue;
         BigDecimal vatOrGst = vatRate.multiply(vatBase);
 
@@ -204,7 +151,8 @@ public class TariffCalculatorService {
         // ------------------------------------------------------------
         BigDecimal shippingCost = shippingCostService.calculateShippingCost(request);
 
-        BigDecimal tariffAmount = trqDuty.intValue() == 0 ? baseDuty.add(additional) : trqDuty.add(additional);
+        BigDecimal tariffAmount = baseDuty.add(additional);
+
         BigDecimal totalCost = customsValue.add(tariffAmount).add(vatOrGst).add(shippingCost);
 
         // ------------------------------------------------------------
@@ -222,7 +170,6 @@ public class TariffCalculatorService {
                 // Breakdown
                 .customsValue(scale2(customsValue))
                 .baseDuty(scale2(baseDuty))
-                .trqDuty(scale2(trqDuty))
                 .additionalDuties(scale2(additional))
                 .vatOrGst(scale2(vatOrGst))
                 .shippingCost(scale2(shippingCost))
@@ -236,12 +183,18 @@ public class TariffCalculatorService {
                 .calculationDate(LocalDateTime.now())
 
                 // Optional rate echoes if your services expose them
-                .adValoremRate(null)
-                .specificRate(null)
-                .adValoremPreferentialRate(null)
-                .specificPreferentialRate(null)
-                .shippingRate(null)
+                .adValoremRate(tariffRateService.getAdValoremRate(
+                        request.getHsCode(),
+                        request.getImportingCountry(),
+                        request.getExportingCountry())
+                )
                 .build();
+
+        // Add tracking information to result if needed
+        if (!request.getMissingFields().isEmpty() || !request.getDefaultedFields().isEmpty()) {
+            logger.info("Calculation completed with {} missing fields and {} defaulted fields",
+                       request.getMissingFields().size(), request.getDefaultedFields().size());
+        }
 
         return result;
     }
@@ -250,29 +203,6 @@ public class TariffCalculatorService {
     // Helpers
     // ------------------------------
 
-    private void validateRequest(TariffCalculationRequestDTO request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Request cannot be null.");
-        }
-        if (request.getImportingCountry() == null || request.getImportingCountry().trim().isEmpty()) {
-            throw new IllegalArgumentException("Importing country is required.");
-        }
-        if (request.getExportingCountry() == null || request.getExportingCountry().trim().isEmpty()) {
-            throw new IllegalArgumentException("Exporting country is required.");
-        }
-        if (request.getHsCode() == null || request.getHsCode().trim().isEmpty()) {
-            throw new IllegalArgumentException("HS code is required.");
-        }
-        if (request.getProductValue() == null) {
-            throw new IllegalArgumentException("Product (invoice) value is required (destination currency).");
-        }
-        // Quantity sanity: at least one of heads or weight should be provided depending on the HS line used
-        if ((request.getHeads() == null || request.getHeads() <= 0)
-                && (request.getWeight() == null || request.getWeight().compareTo(BigDecimal.ZERO) <= 0)) {
-            // We do not fail here because some ad valorem-only lines may not need units,
-            // but your specific/compound/mixed logic will ask for the right unit as needed.
-        }
-    }
 
     private BigDecimal safeBD(BigDecimal x) {
         return x == null ? BigDecimal.ZERO : x;
@@ -286,6 +216,8 @@ public class TariffCalculatorService {
         return x != null && x.compareTo(BigDecimal.ZERO) > 0;
     }
 
+
+    //removed to CountryProfileService later
     private ValuationBasis resolveValuationBasis(String importingCountry, String override) {
         if (override != null) {
             String up = override.trim().toUpperCase();

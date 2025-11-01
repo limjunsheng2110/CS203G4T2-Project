@@ -50,6 +50,24 @@ application-*.yml
 application-*.yaml
 set-env.sh
 
+# === Python ===
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python package files
+*.egg-info/
+dist/
+build/
+
 # Frontend - Logs
 frontend/logs
 frontend/*.log

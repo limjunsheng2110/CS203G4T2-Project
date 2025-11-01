@@ -48,17 +48,6 @@ public class TariffRateController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<TariffRate> updateTariffRate(
-            @PathVariable Long id,
-            @RequestBody TariffRateDTO tariffRateDto) {
-        try {
-            TariffRate updated = tariffRateService.updateTariffRate(id, tariffRateDto);
-            return ResponseEntity.ok(updated);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTariffRate(@PathVariable Long id) {
