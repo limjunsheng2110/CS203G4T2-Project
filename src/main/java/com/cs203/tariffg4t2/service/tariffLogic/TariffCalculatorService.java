@@ -106,13 +106,18 @@ public class TariffCalculatorService {
         // 5) Additional stacked duties (e.g., Section 301 / ADD / CVD / Safeguard)
         //     For most jurisdictions these apply on Customs Value (confirm per country profile).
         // ------------------------------------------------------------
+
         java.time.LocalDate today = java.time.LocalDate.now();
         additionalDutyMapRepository
         .findFirstByImportingCountryAndExportingCountryAndHsCodeAndEffectiveFromLessThanEqualAndEffectiveToGreaterThanEqual(
                 request.getImportingCountry(), request.getExportingCountry(), request.getHsCode(), today, today)
         .ifPresent(map -> {
+
+                //20 % for us and china
                 request.setSection301Rate(map.getSection301Rate());
+                //exporting from really cheap country to well-to-do, add dumping rate
                 request.setAntiDumpingRate(map.getAntiDumpingRate());
+                //if the exporting country get subsidies from government
                 request.setCountervailingRate(map.getCountervailingRate());
                 request.setSafeguardRate(map.getSafeguardRate());
         });
@@ -211,6 +216,8 @@ public class TariffCalculatorService {
         return x != null && x.compareTo(BigDecimal.ZERO) > 0;
     }
 
+
+    //removed to CountryProfileService later
     private ValuationBasis resolveValuationBasis(String importingCountry, String override) {
         if (override != null) {
             String up = override.trim().toUpperCase();
