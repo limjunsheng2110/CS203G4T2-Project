@@ -40,7 +40,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> reigster(@Valid @RequestBody RegisterRequest  request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest  request) {
 
         // check if username alreadyt exists
         if (userRepository.existsByUsername(request.getUsername())) {
