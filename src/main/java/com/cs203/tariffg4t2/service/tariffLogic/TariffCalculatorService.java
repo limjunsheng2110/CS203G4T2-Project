@@ -52,9 +52,6 @@ public class TariffCalculatorService {
 
     Logger logger = LoggerFactory.getLogger(TariffCalculatorService.class);
 
-
-    // If you later create a CountryProfileService, inject it here to replace the simple helpers.
-    @Transactional(readOnly = true) // <--- ADD THIS ANNOTATION
     public TariffCalculationResultDTO calculate(TariffCalculationRequestDTO request) {
         // Use the validation service - now sets defaults instead of just validating
         List<String> validationErrors = tariffValidationService.validateTariffRequest(request);
