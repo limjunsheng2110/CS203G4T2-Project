@@ -127,8 +127,8 @@ class ExchangeRateServiceTest {
             .build();
 
         when(countryRepository.findById("INVALID")).thenReturn(Optional.empty());
-        when(countryRepository.findAll()).thenReturn(List.of(usCountry, cnCountry));
         when(countryRepository.findByCountryNameIgnoreCase("INVALID")).thenReturn(Optional.empty());
+        when(countryRepository.findById("CN")).thenReturn(Optional.of(cnCountry));
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> {
@@ -186,9 +186,14 @@ class ExchangeRateServiceTest {
             .exportingCountry("CHN")
             .build();
 
+        // Mock for USA (3-character lookup)
         when(countryRepository.findById("USA")).thenReturn(Optional.empty());
-        when(countryRepository.findAll()).thenReturn(List.of(usCountry, cnCountry));
+        when(countryRepository.findByIso3CodeIgnoreCase("USA")).thenReturn(Optional.of(usCountry));
+
+        // Mock for CHN (3-character lookup)
         when(countryRepository.findById("CHN")).thenReturn(Optional.empty());
+        when(countryRepository.findByIso3CodeIgnoreCase("CHN")).thenReturn(Optional.of(cnCountry));
+
         when(currencyCodeService.getCurrencyCode("US")).thenReturn("USD");
         when(currencyCodeService.getCurrencyCode("CN")).thenReturn("CNY");
         when(exchangeRateRepository.findLatestByFromCurrencyAndToCurrency("CNY", "USD"))

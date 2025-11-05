@@ -33,7 +33,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 @TestPropertySource(properties = {
     "openexchangerates.api.key=test_key",
-    "openexchangerates.api.url=https://test.api.url"
+    "openexchangerates.api.url=https://test.api.url",
+    "spring.datasource.url=jdbc:h2:mem:testdb",
+    "spring.datasource.driver-class-name=org.h2.Driver",
+    "spring.datasource.username=sa",
+    "spring.datasource.password=password",
+    "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
+    "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 class ExchangeRateIntegrationTest {
 
@@ -54,7 +60,7 @@ class ExchangeRateIntegrationTest {
         // Clean up existing data
         exchangeRateRepository.deleteAll();
         
-        // Ensure test countries exist
+        // Ensure test countries exist with proper ISO3 codes
         if (!countryRepository.existsById("US")) {
             countryRepository.save(new Country("US", "United States", "USA"));
         }
@@ -67,6 +73,9 @@ class ExchangeRateIntegrationTest {
         if (!countryRepository.existsById("JP")) {
             countryRepository.save(new Country("JP", "Japan", "JPN"));
         }
+
+        // Force flush to ensure data is persisted
+        countryRepository.flush();
 
         // Create test exchange rate data
         createTestExchangeRates();
@@ -293,4 +302,3 @@ class ExchangeRateIntegrationTest {
         assertTrue(response.getRecommendation().length() > 10);
     }
 }
-
