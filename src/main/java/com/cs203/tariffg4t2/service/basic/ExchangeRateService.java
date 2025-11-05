@@ -26,7 +26,6 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ExchangeRateService {
     
     private static final Logger logger = LoggerFactory.getLogger(ExchangeRateService.class);
@@ -51,10 +50,10 @@ public class ExchangeRateService {
         logger.info("Starting exchange rate analysis for {} -> {}", 
                    request.getExportingCountry(), request.getImportingCountry());
         
-        // Step 1: Resolve country codes
-        String importingCountryCode = resolveCountryCode(request.getImportingCountry());
-        String exportingCountryCode = resolveCountryCode(request.getExportingCountry());
-        
+        // Step 1: Resolve country codes (non-transactional to prevent connection leaks)
+        String importingCountryCode = resolveCountryCodeSafely(request.getImportingCountry());
+        String exportingCountryCode = resolveCountryCodeSafely(request.getExportingCountry());
+
         if (importingCountryCode == null || exportingCountryCode == null) {
             throw new IllegalArgumentException(
                 String.format("Invalid country codes. Importing: %s, Exporting: %s", 
@@ -75,7 +74,7 @@ public class ExchangeRateService {
         
         logger.info("Resolved currencies: {} -> {}", exportingCurrency, importingCurrency);
         
-        // Step 3: Try to fetch live data from API
+        // Step 3: Try to fetch live data from API (separate transaction)
         boolean liveDataAvailable = false;
         String dataSource = "fallback_database";
         String message = "";
@@ -89,10 +88,22 @@ public class ExchangeRateService {
         } catch (Exception e) {
             logger.warn("Failed to fetch live rates, using database fallback: {}", e.getMessage());
             message = "Live API unavailable. Using last known stored data from database.";
-            liveDataAvailable = false;
         }
-        
-        // Step 4: Get current rate (most recent in database)
+
+        // Step 4-8: Execute the rest within a single read-only transaction
+        return executeAnalysisInTransaction(exportingCurrency, importingCurrency, importingCountryCode,
+                                          exportingCountryCode, liveDataAvailable, dataSource, message);
+    }
+
+    /**
+     * Execute the main analysis logic within a single read-only transaction
+     */
+    @Transactional(readOnly = true)
+    private ExchangeRateAnalysisResponse executeAnalysisInTransaction(
+            String exportingCurrency, String importingCurrency, String importingCountryCode,
+            String exportingCountryCode, boolean liveDataAvailable, String dataSource, String message) {
+
+        // Get current rate (most recent in database)
         ExchangeRate currentRate = exchangeRateRepository
             .findLatestByFromCurrencyAndToCurrency(exportingCurrency, importingCurrency)
             .orElse(null);
@@ -103,7 +114,7 @@ public class ExchangeRateService {
             );
         }
         
-        // Step 5: Get historical data (past 6 months)
+        // Get historical data (past 6 months)
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusMonths(ANALYSIS_MONTHS);
         
@@ -112,13 +123,13 @@ public class ExchangeRateService {
                 exportingCurrency, importingCurrency, startDate, endDate
             );
         
-        // Step 6: Perform trend analysis
+        // Perform trend analysis
         TrendAnalysisResult trendResult = performTrendAnalysis(historicalRates);
         
-        // Step 7: Generate recommendation
+        // Generate recommendation
         RecommendationResult recommendation = generateRecommendation(historicalRates, trendResult);
         
-        // Step 8: Build response
+        // Build response
         return ExchangeRateAnalysisResponse.builder()
             .importingCountry(importingCountryCode)
             .exportingCountry(exportingCountryCode)
@@ -144,6 +155,7 @@ public class ExchangeRateService {
     /**
      * Fetch live exchange rates from OpenExchangeRates API and store in database
      */
+    @Transactional
     private void fetchAndStoreLiveRates(String fromCurrency, String toCurrency) throws Exception {
         if (apiKey == null || apiKey.isEmpty()) {
             throw new IllegalStateException("OpenExchangeRates API key not configured");
@@ -191,6 +203,44 @@ public class ExchangeRateService {
         }
     }
     
+    /**
+     * Safe country code resolution that prevents connection leaks
+     */
+    private String resolveCountryCodeSafely(String countryInput) {
+        if (countryInput == null || countryInput.isEmpty()) {
+            return null;
+        }
+
+        String normalizedInput = countryInput.toUpperCase().trim();
+
+        try {
+            // Try direct lookup by alpha-2 code
+            Optional<Country> country = countryRepository.findById(normalizedInput);
+            if (country.isPresent()) {
+                return country.get().getCountryCode();
+            }
+
+            // If input is 3 characters, try alpha-3 code
+            if (normalizedInput.length() == 3) {
+                Optional<Country> countryByIso3 = countryRepository.findByIso3CodeIgnoreCase(normalizedInput);
+                if (countryByIso3.isPresent()) {
+                    return countryByIso3.get().getCountryCode();
+                }
+            }
+
+            // Try by name
+            country = countryRepository.findByCountryNameIgnoreCase(countryInput);
+            if (country.isPresent()) {
+                return country.get().getCountryCode();
+            }
+
+            return null;
+        } catch (Exception e) {
+            logger.error("Error resolving country code for input '{}': {}", countryInput, e.getMessage());
+            return null;
+        }
+    }
+
     /**
      * Perform trend analysis on historical rates
      */
@@ -270,15 +320,10 @@ public class ExchangeRateService {
      * Generate purchase recommendation based on trend analysis
      */
     private RecommendationResult generateRecommendation(List<ExchangeRate> rates, TrendAnalysisResult trend) {
-        LocalDate recommendedDate;
+        LocalDate recommendedDate = trend.minRateDate;
         String explanation;
         
-        // Strategy: Recommend the date with the minimum rate (best conversion value)
-        // But also provide context based on trend
-        recommendedDate = trend.minRateDate;
-        
         if ("decreasing".equals(trend.trend)) {
-            // Rate is going down - good for importers (getting cheaper)
             explanation = String.format(
                 "Exchange rate is trending downward (%.2f%% decrease). " +
                 "Consider waiting or purchasing soon. Best rate was %.4f on %s.",
@@ -287,7 +332,6 @@ public class ExchangeRateService {
                 trend.minRateDate
             );
         } else if ("increasing".equals(trend.trend)) {
-            // Rate is going up - bad for importers (getting more expensive)
             explanation = String.format(
                 "Exchange rate is trending upward (%.2f%% increase). " +
                 "Consider purchasing sooner to avoid higher costs. Best historical rate was %.4f on %s.",
@@ -296,7 +340,6 @@ public class ExchangeRateService {
                 trend.minRateDate
             );
         } else {
-            // Stable
             explanation = String.format(
                 "Exchange rate is relatively stable. " +
                 "Current rate is near the average. Best historical rate was %.4f on %s.",
@@ -331,42 +374,6 @@ public class ExchangeRateService {
                 .build());
         }
         return dataPoints;
-    }
-    
-    /**
-     * Resolve country code from various formats (alpha-2, alpha-3, full name)
-     */
-    private String resolveCountryCode(String countryInput) {
-        if (countryInput == null || countryInput.isEmpty()) {
-            return null;
-        }
-        
-        String normalizedInput = countryInput.toUpperCase().trim();
-        
-        // Try direct lookup by code (alpha-2)
-        Optional<Country> country = countryRepository.findById(normalizedInput);
-        if (country.isPresent()) {
-            return country.get().getCountryCode();
-        }
-        
-        // If input is 3 characters, it might be alpha-3, check iso3_code
-        if (normalizedInput.length() == 3) {
-            // Search by iso3Code in database
-            List<Country> allCountries = countryRepository.findAll();
-            for (Country c : allCountries) {
-                if (c.getIso3Code() != null && c.getIso3Code().equalsIgnoreCase(normalizedInput)) {
-                    return c.getCountryCode();
-                }
-            }
-        }
-        
-        // Try by name
-        country = countryRepository.findByCountryNameIgnoreCase(countryInput);
-        if (country.isPresent()) {
-            return country.get().getCountryCode();
-        }
-        
-        return null;
     }
     
     // Helper classes for internal use
