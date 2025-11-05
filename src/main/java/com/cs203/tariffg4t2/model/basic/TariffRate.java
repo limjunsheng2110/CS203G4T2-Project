@@ -1,4 +1,3 @@
-
 package com.cs203.tariffg4t2.model.basic;
 
 import jakarta.persistence.*;
@@ -35,4 +34,7 @@ public class TariffRate {
 
     @Column(name =  "av_rate")
     private BigDecimal adValoremRate;
+
+    @Column(name = "date")
+    private String date;
 }

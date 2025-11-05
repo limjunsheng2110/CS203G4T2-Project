@@ -23,9 +23,6 @@ public class TariffRateService {
     private static final Logger logger = LoggerFactory.getLogger(TariffRateService.class);
 
     @Autowired
-    private TariffCacheService tariffCacheService;
-
-    @Autowired
     private WebScrapingService webScrapingService;
 
     @Autowired
@@ -156,17 +153,19 @@ public class TariffRateService {
                     tariffRate.setImportingCountryCode(scrapedData.getImportingCountry());
                     tariffRate.setExportingCountryCode(scrapedData.getExportingCountry());
                     tariffRate.setAdValoremRate(adValoremRate);
+                    tariffRate.setDate(scrapedData.getDate());  // Set the date field
 
                     // Save to repository
                     TariffRate saved = tariffRateRepository.save(tariffRate);
                     savedCount++;
 
-                    logger.debug("Saved tariff rate with ID={}: HS={}, importing={}, exporting={}, rate={}%",
+                    logger.debug("Saved tariff rate with ID={}: HS={}, importing={}, exporting={}, rate={}%, date={}",
                                 saved.getId(),
                                 saved.getHsCode(),
                                 saved.getImportingCountryCode(),
                                 saved.getExportingCountryCode(),
-                                saved.getAdValoremRate());
+                                saved.getAdValoremRate(),
+                                saved.getDate());
                 } else {
                     logger.debug("Tariff rate already exists for HS={}, importing={}, exporting={}",
                                 scrapedData.getHsCode(),

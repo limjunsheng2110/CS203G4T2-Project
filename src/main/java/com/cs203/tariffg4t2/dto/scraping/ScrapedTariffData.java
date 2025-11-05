@@ -13,4 +13,5 @@ public class ScrapedTariffData {
     private String productName;
     private String hsCode;
     private String tariffRate;
+    private String date;
 }
