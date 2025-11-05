@@ -4,6 +4,7 @@ import { getThemeColours } from '../utils/themeColours';
 import { mockResults } from '../data/mockResults';
 import ThemeToggle from './ThemeToggle';
 import ResultCard from './ResultCard';
+import ExchangeRateAnalysis from './ExchangeRateAnalysis';
 
 const ResultsPage = ({ formData, handleBack, theme, toggleTheme }) => {
   const colours = getThemeColours(theme);
@@ -30,6 +31,13 @@ const ResultsPage = ({ formData, handleBack, theme, toggleTheme }) => {
             className="w-96 h-auto"
           />
         </div>
+
+        {/* Exchange Rate Analysis Section */}
+        <ExchangeRateAnalysis 
+          importingCountry={formData.importCountry}
+          exportingCountry={formData.exportCountry}
+          theme={theme}
+        />
 
         <div className="space-y-4">
           {mockResults.map((result, index) => (
