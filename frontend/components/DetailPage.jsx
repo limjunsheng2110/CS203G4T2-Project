@@ -54,81 +54,21 @@ const DetailPage = ({ formData, handleInputChange, handleSearch, theme, toggleTh
               type="text"
               value={formData.hsCode}
               onChange={handleInputChange}
-              placeholder="Enter HS code (e.g., 8517.12.00)"
+              placeholder="Enter HS code (e.g., 010310)"
               required={true}
               colours={colours}
             />
 
-            <div>
-              <label className={`block text-sm font-medium ${colours.textSecondary} mb-2`}>
-                Value Type <span className="text-red-500">*</span>
-              </label>
-              <div className="flex gap-4 mb-3">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="valueType"
-                    value="price"
-                    checked={formData.valueType === 'price'}
-                    onChange={handleInputChange}
-                    className="mr-2"
-                  />
-                  <span className={colours.textSecondary}>Total Value (USD)</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="valueType"
-                    value="quantity"
-                    checked={formData.valueType === 'quantity'}
-                    onChange={handleInputChange}
-                    className="mr-2"
-                  />
-                  <span className={colours.textSecondary}>Quantity & Unit</span>
-                </label>
-              </div>
-
-              {formData.valueType === 'price' ? (
-                <FormField
-                  name="value"
-                  type="number"
-                  value={formData.value}
-                  onChange={handleInputChange}
-                  placeholder="Enter total value"
-                  colours={colours}
-                />
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField
-                    name="quantity"
-                    type="number"
-                    value={formData.quantity}
-                    onChange={handleInputChange}
-                    placeholder="Enter quantity"
-                    colours={colours}
-                  />
-                  <div className="relative">
-                    <select
-                      name="unit"
-                      value={formData.unit}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border-2 ${colours.border} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${colours.inputBg} ${colours.text} appearance-none cursor-pointer transition-all ${colours.borderHover}`}
-                    >
-                      <option value="">Select unit</option>
-                      <option value="kg">Kilograms (kg)</option>
-                      <option value="tons">Tons</option>
-                      <option value="pieces">Pieces</option>
-                      <option value="litres">Litres</option>
-                    </select>
-                    <div className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 ${colours.textMuted}`}>
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <FormField
+              label="Total Value (USD)"
+              name="value"
+              type="number"
+              value={formData.value}
+              onChange={handleInputChange}
+              placeholder="Enter total value"
+              required={true}
+              colours={colours}
+            />
 
             <div>
               <label className={`block text-sm font-medium ${colours.textSecondary} mb-2`}>
