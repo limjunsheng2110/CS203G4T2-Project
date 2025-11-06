@@ -62,6 +62,7 @@ Importing Country: {import_code}
 Product Name: (specific live animal product name)
 HS Code: (must start with "01", e.g., "0101", "0102", "010121")
 Tariff Rate: (must be numeric, e.g., '0.00%', '7.5%', '15.2%')
+Date: (extract the effective date, year, or reporting period if available, e.g., "2024", "2023-12-31", "Jan 2024")
 
 CRITICAL INSTRUCTIONS:
 - Exporting Country must ALWAYS be: {export_code}
@@ -69,6 +70,8 @@ CRITICAL INSTRUCTIONS:
 - Only include entries where HS code starts with "01"
 - Skip all entries that don't have Chapter 1 HS codes
 - Only include entries with valid numeric tariff rates
+- Look for any date, year, or time period information associated with the tariff data
+- If no specific date is found, use the most recent year mentioned on the page
 
 Webpage URL: {url}
 Webpage content:
@@ -145,7 +148,8 @@ def get_tariff_rates(import_code: str, export_code: str) -> Dict:
             "importingCountry": import_code,  # Force correct importing country
             "productName": item.get("Product Name", ""),
             "hsCode": item.get("HS Code", ""),
-            "tariffRate": item.get("Tariff Rate", "")
+            "tariffRate": item.get("Tariff Rate", ""),
+            "date": item.get("Date", "2024")  # Include date with default fallback
         }
         formatted_results.append(formatted_item)
 

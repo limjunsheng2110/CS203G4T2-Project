@@ -5,6 +5,8 @@ import com.cs203.tariffg4t2.dto.response.TariffCalculationResultDTO;
 import com.cs203.tariffg4t2.repository.basic.CountryProfileRepository;
 import com.cs203.tariffg4t2.model.enums.ValuationBasis;
 import com.cs203.tariffg4t2.repository.basic.AdditionalDutyMapRepository;
+import com.cs203.tariffg4t2.repository.basic.TariffRateRepository;
+import com.cs203.tariffg4t2.model.basic.TariffRate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +55,7 @@ public class TariffCalculatorService {
 
     Logger logger = LoggerFactory.getLogger(TariffCalculatorService.class);
 
-    public TariffCalculationResultDTO calculate(TariffCalculationRequestDTO request) {
+     public TariffCalculationResultDTO calculate(TariffCalculationRequestDTO request) {
         // Use the validation service - now sets defaults instead of just validating
         List<String> validationErrors = tariffValidationService.validateTariffRequest(request);
 
@@ -92,6 +95,16 @@ public class TariffCalculatorService {
         // 2) Base Duty (MFN) – computed by duty type; percent legs later scaled to Customs Value
         // ------------------------------------------------------------
         BigDecimal baseDuty = tariffRateService.calculateTariffAmount(request);
+
+        // Retrieve the TariffRate to get the date information
+        Optional<TariffRate> tariffRateOptional = tariffRateService.getTariffRate(
+            request.getHsCode(),
+            request.getImportingCountry(),
+            request.getExportingCountry()
+        );
+        String tariffDate = tariffRateOptional
+            .map(TariffRate::getDate)
+            .orElse(null);
 
         if (invoiceValueDest.compareTo(BigDecimal.ZERO) > 0) {
             // Scale any percent components from productValue to customsValue
@@ -178,6 +191,7 @@ public class TariffCalculatorService {
                 // Meta
                 .tradeAgreement(null) // fill if you track which FTA applied
                 .calculationDate(LocalDateTime.now())
+                .date(tariffDate) // Include date from scraped tariff data
 
                 // Optional rate echoes if your services expose them
                 .adValoremRate(tariffRateService.getAdValoremRate(

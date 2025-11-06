@@ -35,6 +35,7 @@ public class TariffCalculationResultDTO {
     // Meta
     private String tradeAgreement;
     private java.time.LocalDateTime calculationDate;
+    private String date;  // Date from scraped tariff data
 
     // Rates shown for transparency
     private BigDecimal adValoremRate;
