@@ -4,8 +4,9 @@ import { getThemeColours } from '../utils/themeColours';
 import ThemeToggle from './ThemeToggle';
 import FormField from './FormField';
 import CountrySelect from './CountrySelect';
+import ProductSelect from './ProductSelect';
 
-const DetailPage = ({ formData, handleInputChange, handleSearch, theme, toggleTheme, onBack }) => {
+const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch, theme, toggleTheme, onBack, isLoading, error }) => {
   const colours = getThemeColours(theme);
 
   return (
@@ -18,8 +19,8 @@ const DetailPage = ({ formData, handleInputChange, handleSearch, theme, toggleTh
         <div className="text-center mb-6">
           <div className="flex justify-center">
             <img 
-              src="/TariffNomLogo.png" 
-              alt="TariffNom Logo" 
+              src="/TariffNomLogo.png"
+              alt="TariffNom Logo"
               className="w-96 h-auto"
             />
           </div>
@@ -28,6 +29,34 @@ const DetailPage = ({ formData, handleInputChange, handleSearch, theme, toggleTh
         <div className={`${colours.cardBg} rounded-lg shadow-lg p-8 border ${colours.border}`}>
           <h2 className={`text-2xl font-semibold ${colours.text} mb-2`}>Enter Transaction Information</h2>
           <p className={`${colours.textMuted} mb-6`}>Please provide details about your trade transaction</p>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-red-600 dark:text-red-400 text-sm font-medium mb-1">Error</p>
+              <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+              {error.includes('timeout') && (
+                <p className="text-red-500 dark:text-red-300 text-xs mt-2">
+                  The tariff calculation is taking longer than expected. This might happen when scraping new data. Please try again.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Loading Message with Progress Indicator */}
+          {isLoading && (
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <div>
+                  <p className="text-blue-600 dark:text-blue-400 text-sm font-medium">Calculating Tariffs...</p>
+                  <p className="text-blue-500 dark:text-blue-300 text-xs mt-1">
+                    This may take up to 1 minute if we need to scrape new data from external sources.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-5">
             <CountrySelect
@@ -48,16 +77,29 @@ const DetailPage = ({ formData, handleInputChange, handleSearch, theme, toggleTh
               colours={colours}
             />
 
-            <FormField
-              label="HS Code"
+            <ProductSelect
+              label="Product (HS Code)"
               name="hsCode"
-              type="text"
               value={formData.hsCode}
               onChange={handleInputChange}
-              placeholder="Enter HS code (e.g., 010310)"
               required={true}
               colours={colours}
             />
+
+            {/* Display selected product information */}
+            {selectedProduct && (
+              <div className={`p-3 ${colours.inputBg} border ${colours.border} rounded-lg`}>
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    <p className={`text-sm font-medium ${colours.text}`}>Selected Product:</p>
+                    <p className={`text-xs ${colours.textMuted} mt-1`}>{selectedProduct.description}</p>
+                    {selectedProduct.category && (
+                      <p className={`text-xs ${colours.textMuted}`}>Category: {selectedProduct.category}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <FormField
               label="Total Value (USD)"
@@ -98,16 +140,27 @@ const DetailPage = ({ formData, handleInputChange, handleSearch, theme, toggleTh
           <div className="flex justify-between mt-8">
             <button
               onClick={onBack}
-              className={`px-6 py-3 border-2 ${colours.buttonBorder} rounded-lg ${colours.textSecondary} ${colours.buttonBorderHover} transition-colors font-medium`}
+              disabled={isLoading}
+              className={`px-6 py-3 border-2 ${colours.buttonBorder} rounded-lg ${colours.textSecondary} ${colours.buttonBorderHover} transition-colors font-medium ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Back
             </button>
             <button
               onClick={handleSearch}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-medium shadow-md hover:shadow-lg"
+              disabled={isLoading}
+              className={`px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-medium shadow-md hover:shadow-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              <Search size={18} />
-              Search Tariffs
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Calculating...
+                </>
+              ) : (
+                <>
+                  <Search size={18} />
+                  Search Tariffs
+                </>
+              )}
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Globe, TrendingDown, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Zap, Shield, Globe, TrendingDown } from 'lucide-react';
 import { getThemeColours } from '../utils/themeColours';
 import ThemeToggle from './ThemeToggle';
 
@@ -7,18 +7,17 @@ const HomePage = ({ onGetStarted, theme, toggleTheme }) => {
   const colours = getThemeColours(theme);
 
   return (
-    <div className={`min-h-screen ${theme === 'light' ? 'bg-amber-50' : 'bg-black'} py-8 px-4`}>
-      <div className="max-w-6xl mx-auto">
+    <div className={`min-h-screen ${theme === 'light' ? 'bg-gradient-to-br from-amber-50 via-green-50 to-blue-50' : 'bg-gradient-to-br from-black via-gray-900 to-gray-800'} py-8 px-4`}>
+      <div className="max-w-4xl mx-auto">
         <div className="flex justify-end mb-4">
           <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
         </div>
 
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-8">
-            <img 
-              src="/TariffNomLogo.png" 
-              alt="TariffNom Logo" 
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-6">
+            <img
+              src="/TariffNomLogo.png"
+              alt="TariffNom Logo"
               className="w-96 h-auto"
             />
           </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, Minus, Calendar, DollarSign, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react';
 import { getThemeColours } from '../utils/themeColours';
+import apiService from '../services/apiService';
 
 const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => {
   const [analysisData, setAnalysisData] = useState(null);
@@ -9,28 +10,14 @@ const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => 
   const colours = getThemeColours(theme);
 
   const fetchExchangeRateAnalysis = async () => {
-    if (!importingCountry || !exportingCountry) {
-      setError('Please select both importing and exporting countries');
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/exchange-rates/analyze?importingCountry=${encodeURIComponent(importingCountry)}&exportingCountry=${encodeURIComponent(exportingCountry)}`
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Failed to fetch exchange rate analysis');
-      }
-
-      const data = await response.json();
+      const data = await apiService.exchangeRate.getExchangeRateAnalysis(importingCountry, exportingCountry);
       setAnalysisData(data);
     } catch (err) {
-      setError(err.message || 'Failed to fetch exchange rate data');
+      setError(err.message);
       console.error('Exchange rate analysis error:', err);
     } finally {
       setLoading(false);
@@ -253,4 +240,3 @@ const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => 
 };
 
 export default ExchangeRateAnalysis;
-
