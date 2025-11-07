@@ -111,18 +111,18 @@ public class CountryController {
 
     //---------------------API Fetching and Non-CRUD endpoints---------------------//
 
-//    @GetMapping("/api-all")
-//    public ResponseEntity<?> getAllCountries() {
-//        try {
-//            List<Country> countries = countryService.getAllCountries();
-//            return ResponseEntity.ok(countries);
-//        } catch (Exception e) {
-//            System.err.println("Error in getAllCountries: " + e.getMessage());
-//            e.printStackTrace();
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body("Error fetching countries: " + e.getMessage());
-//        }
-//    }
+   @GetMapping
+   public ResponseEntity<?> getAllCountries() {
+       try {
+           List<Country> countries = countryService.getAllCountries();
+           return ResponseEntity.ok(countries);
+       } catch (Exception e) {
+           System.err.println("Error in getAllCountries: " + e.getMessage());
+           e.printStackTrace();
+           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                   .body("Error fetching countries: " + e.getMessage());
+       }
+   }
 
     // Alternative populate method with batch processing
     @PostMapping("/populate-batch")
