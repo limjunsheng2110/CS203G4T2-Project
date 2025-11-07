@@ -2,6 +2,7 @@ package com.cs203.tariffg4t2.controller;
 
 import com.cs203.tariffg4t2.dto.basic.UserDTO;
 import com.cs203.tariffg4t2.dto.request.UserRequestDTO;
+import com.cs203.tariffg4t2.dto.request.UserUpdateRequestDTO;
 import com.cs203.tariffg4t2.model.basic.User;
 import com.cs203.tariffg4t2.service.basic.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,12 +28,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser(username = "admin", roles = {"ADMIN"})
 public class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
     @Autowired
@@ -40,6 +43,7 @@ public class UserControllerTest {
     private UserDTO userDTO1;
     private UserDTO userDTO2;
     private UserRequestDTO validUserRequest;
+    private UserUpdateRequestDTO validUpdateRequest;
     private List<UserDTO> userList;
 
     @BeforeEach
@@ -65,11 +69,16 @@ public class UserControllerTest {
 
         userList = Arrays.asList(userDTO1, userDTO2);
 
-        // Setup valid user request
+        // Setup valid user request for creation
         validUserRequest = new UserRequestDTO();
         validUserRequest.setUsername("newuser");
         validUserRequest.setEmail("newuser@example.com");
         validUserRequest.setPassword("password123");
+
+        // Setup valid update request
+        validUpdateRequest = new UserUpdateRequestDTO();
+        validUpdateRequest.setUsername("updateduser");
+        validUpdateRequest.setEmail("updated@example.com");
     }
 
     // ========== GET ALL USERS TESTS ==========
@@ -303,30 +312,30 @@ public class UserControllerTest {
         updatedUser.setCreatedAt(LocalDateTime.now());
         updatedUser.setUpdatedAt(LocalDateTime.now());
 
-        when(userService.updateUser(eq(1L), any(UserRequestDTO.class))).thenReturn(updatedUser);
+        when(userService.updateUser(eq(1L), any(UserUpdateRequestDTO.class))).thenReturn(updatedUser);
 
         // when and then
         mockMvc.perform(put("/api/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validUserRequest)))
+                .content(objectMapper.writeValueAsString(validUpdateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("updateduser"))
                 .andExpect(jsonPath("$.email").value("updated@example.com"));
 
-        verify(userService, times(1)).updateUser(eq(1L), any(UserRequestDTO.class));
+        verify(userService, times(1)).updateUser(eq(1L), any(UserUpdateRequestDTO.class));
     }
 
     @Test
     void testUpdateUser_NotFound() throws Exception {
         // given
-        when(userService.updateUser(eq(999L), any(UserRequestDTO.class)))
+        when(userService.updateUser(eq(999L), any(UserUpdateRequestDTO.class)))
                 .thenThrow(new RuntimeException("User not found"));
 
         // when and then
         mockMvc.perform(put("/api/users/999")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validUserRequest)))
+                .content(objectMapper.writeValueAsString(validUpdateRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$").value("Error updating user: User not found"));
     }
@@ -334,13 +343,13 @@ public class UserControllerTest {
     @Test
     void testUpdateUser_DuplicateEmail() throws Exception {
         // given
-        when(userService.updateUser(eq(1L), any(UserRequestDTO.class)))
+        when(userService.updateUser(eq(1L), any(UserUpdateRequestDTO.class)))
                 .thenThrow(new RuntimeException("Email already in use"));
 
         // when and then
         mockMvc.perform(put("/api/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validUserRequest)))
+                .content(objectMapper.writeValueAsString(validUpdateRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$").value("Error updating user: Email already in use"));
     }
@@ -512,3 +521,4 @@ public class UserControllerTest {
                 .andExpect(status().isInternalServerError());
     }
 }
+
