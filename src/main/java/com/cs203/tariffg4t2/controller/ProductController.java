@@ -4,6 +4,7 @@ package com.cs203.tariffg4t2.controller;
 import com.cs203.tariffg4t2.model.basic.Product;
 import com.cs203.tariffg4t2.service.basic.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +15,7 @@ import java.util.List;
 public class ProductController {
     @Autowired
     ProductService productService;
-    //GET ALL PRODUCTS
+    // get all product
     @GetMapping("/all")
     public ResponseEntity<?> getAllProducts() {
         try {
@@ -71,22 +72,24 @@ public class ProductController {
 
     //UPDATE PRODUCT
     @PutMapping("/update/{hsCode}")
-    public ResponseEntity<?> updateProduct (
+    public ResponseEntity<?> updateProduct(
             @PathVariable String hsCode,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String category
     ) {
         try {
-            Product updatedProduct = productService.updateProductByHsCode(hsCode, description, category);
-            return ResponseEntity.ok(updatedProduct);
+            Product updated = productService.updateProductByHsCode(hsCode, description, category);
+            if (updated == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Product with HS Code " + hsCode + " not found");
+            }
+            return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(400).body("Invalid input: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Invalid input: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Error in updateProduct: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error updating product: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error updating product: " + e.getMessage());
         }
-
     }
 
 
