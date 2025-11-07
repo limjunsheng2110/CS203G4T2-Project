@@ -351,6 +351,122 @@
 - `testValidateTariffRequest_MultipleErrors` → Returns all validation errors
 - `testResolveToAlpha2_MultipleCalls` → Multiple calls work correctly
 
+## WebScrapingService (7 tests)
+
+### Error Handling (6 tests)
+- `testScrapeTariffData_HttpError404` → Returns error response for 404
+- `testScrapeTariffData_HttpError500` → Returns error response for 500
+- `testScrapeTariffData_NetworkError` → Returns error response on network failure
+- `testScrapeTariffData_InterruptedException` → Returns error response on thread interruption
+- `testScrapeTariffData_InvalidJsonResponse` → Returns error response for invalid JSON
+- `testScrapeTariffData_NullResponse` → Returns error response for null response
+
+### Health Check (1 test)
+- `testIsScraperHealthy_ReturnsFalse` → Returns false without real HTTP client
+
+## ShippingCostService (24 tests)
+
+### Air Shipping (4 tests)
+- `testCalculateShippingCost_Air_Success` → Calculates air shipping cost (rate * weight)
+- `testCalculateShippingCost_Air_LargeWeight` → Handles large weight values
+- `testCalculateShippingCost_Air_SmallWeight` → Handles small weight values
+- `testCalculateShippingCost_Air_ZeroRate` → Returns zero for zero rate
+
+### Sea Shipping (3 tests)
+- `testCalculateShippingCost_Sea_Success` → Calculates sea shipping cost (rate * weight)
+- `testCalculateShippingCost_Sea_LargeWeight` → Handles large shipments
+- `testCalculateShippingCost_Sea_ZeroWeight` → Returns zero for zero weight
+
+### Land Shipping (5 tests)
+- `testCalculateShippingCost_Land_Success` → Calculates land cost (rate * distance * weight)
+- `testCalculateShippingCost_Land_ShortDistance` → Handles short distances
+- `testCalculateShippingCost_Land_LongDistance` → Handles long distances
+- `testCalculateShippingCost_Land_NoRoute_ThrowsException` → Throws exception when no land route exists
+- `testCalculateShippingCost_Land_ZeroDistance` → Returns zero for zero distance
+
+### Null Rate Handling (3 tests)
+- `testCalculateShippingCost_NullRate_Air` → Returns zero when air rate is null
+- `testCalculateShippingCost_NullRate_Sea` → Returns zero when sea rate is null
+- `testCalculateShippingCost_NullRate_Land` → Returns zero when land rate is null
+
+### Rounding (2 tests)
+- `testCalculateShippingCost_Air_RoundingHalfUp` → Rounds to 2 decimal places (half up)
+- `testCalculateShippingCost_Land_RoundingHalfUp` → Rounds complex calculations correctly
+
+### Edge Cases (7 tests)
+- `testCalculateShippingCost_CaseInsensitiveMode_Air` → Handles lowercase air mode
+- `testCalculateShippingCost_CaseInsensitiveMode_Land` → Lowercase "land" treated as non-LAND mode
+- `testCalculateShippingCost_VerySmallRate` → Handles very small rates (0.001)
+- `testCalculateShippingCost_VeryHighRate` → Handles very high rates (100.00)
+- `testCalculateShippingCost_DecimalWeight` → Handles decimal weight values
+- `testCalculateShippingCost_UnknownMode_TreatedAsAirOrSea` → Unknown mode uses weight-only calculation
+- `testCalculateShippingCost_Land_WithHeads` → Heads parameter available but not used
+
+---
+
+# Integration Test Cases Documentation
+
+## TariffCalculationIntegrationTest (31 tests)
+
+### Successful Calculations (6 tests)
+- `testCalculateTariff_Success_MFN` → Complete end-to-end tariff calculation
+- `testCalculateTariff_Success_WithROO` → Calculation with ROO eligibility
+- `testCalculateTariff_Success_AirShipping` → Calculation with air shipping mode
+- `testCalculateTariff_Success_LandShipping` → Calculation with land shipping between neighbors
+- `testCalculateTariff_Success_HighValue` → Calculation with high-value shipment
+- `testCalculateTariff_Success_DifferentHSCodes` → Handles both 6 and 10 digit HS codes
+
+### Validation Errors (7 tests)
+- `testCalculateTariff_MissingImportingCountry` → 400 error for missing importing country
+- `testCalculateTariff_MissingExportingCountry` → 400 error for missing exporting country
+- `testCalculateTariff_MissingHsCode` → 400 error for missing HS code
+- `testCalculateTariff_InvalidHsCode_TooShort` → 400 error for HS code < 6 digits
+- `testCalculateTariff_InvalidHsCode_TooLong` → 400 error for HS code > 10 digits
+- `testCalculateTariff_InvalidCountry` → 400 error for unknown country code
+- `testCalculateTariff_MultipleValidationErrors` → Returns validation errors for multiple issues
+
+### Default Values (4 tests)
+- `testCalculateTariff_DefaultProductValue` → Handles null product value
+- `testCalculateTariff_DefaultShippingMode` → Handles null shipping mode
+- `testCalculateTariff_DefaultFreightAndInsurance` → Handles null freight and insurance
+- `testCalculateTariff_DefaultWeightAndHeads` → Handles null weight and heads
+
+### Authentication & Authorization (3 tests)
+- `testCalculateTariff_Unauthorized` → 403 error without authentication
+- `testCalculateTariff_AuthorizedUser` → USER role can access endpoint
+- `testCalculateTariff_AdminAccess` → ADMIN role can access endpoint
+
+### Edge Cases (8 tests)
+- `testCalculateTariff_ZeroProductValue` → Handles zero product value
+- `testCalculateTariff_NegativeProductValue` → Handles negative product value
+- `testCalculateTariff_VeryLargeWeight` → Handles large weight values (99999.99)
+- `testCalculateTariff_DecimalWeight` → Handles decimal weight values
+- `testCalculateTariff_SameImportExportCountry` → Allows same import/export country
+- `testCalculateTariff_CountryByName` → Resolves country names to ISO codes
+- `testCalculateTariff_HsCodeWithSpaces` → Cleans HS code formatting
+- `testCalculateTariff_CaseInsensitiveCountryCodes` → Handles lowercase country codes
+
+### Malformed Requests (3 tests)
+- `testCalculateTariff_InvalidJson` → 400 error for malformed JSON
+- `testCalculateTariff_EmptyRequestBody` → 400 error for empty request body
+- `testCalculateTariff_NullRequestBody` → 400 error for null request body
+
+---
+
+## EndToEndIntegrationTest (6 tests)
+
+### User Registration Flow (2 tests)
+- `testCompleteUserRegistrationFlow` → Register user → verify response token and user details
+- `testRegistrationWithDuplicateUsername` → Cannot register duplicate username
+
+### Authentication (1 test)
+- `testLoginWithInvalidCredentials` → Login fails with wrong password (403)
+
+### Tariff Calculation Flow (3 tests)
+- `testCompleteTariffCalculationFlow` → Register → calculate tariff with full details
+- `testTariffCalculationWithoutAuthentication` → Tariff calculation works without auth (filters disabled)
+- `testMultipleTariffCalculationsWithDifferentShippingModes` → Calculate with SEA and AIR modes
+
 ---
 
 ## Summary
@@ -368,4 +484,83 @@
 | CountryService | 35 |
 | ProductService | 18 |
 | TariffValidationService | 37 |
-| **TOTAL** | **205** |
+| WebScrapingService | 7 |
+| ShippingCostService | 24 |
+| **Integration Tests** | |
+| TariffCalculationIntegrationTest | 31 |
+| EndToEndIntegrationTest | 6 |
+| **TOTAL** | **273** |
+
+---
+
+---
+
+# Integration Test Cases Documentation
+
+## TariffCalculationIntegrationTest (31 tests)
+
+### Successful Calculations (6 tests)
+- `testCalculateTariff_Success_MFN` → Complete end-to-end tariff calculation
+- `testCalculateTariff_Success_WithROO` → Calculation with ROO eligibility
+- `testCalculateTariff_Success_AirShipping` → Calculation with air shipping mode
+- `testCalculateTariff_Success_LandShipping` → Calculation with land shipping between neighbors
+- `testCalculateTariff_Success_HighValue` → Calculation with high-value shipment
+- `testCalculateTariff_Success_DifferentHSCodes` → Handles both 6 and 10 digit HS codes
+
+### Validation Errors (7 tests)
+- `testCalculateTariff_MissingImportingCountry` → 400 error for missing importing country
+- `testCalculateTariff_MissingExportingCountry` → 400 error for missing exporting country
+- `testCalculateTariff_MissingHsCode` → 400 error for missing HS code
+- `testCalculateTariff_InvalidHsCode_TooShort` → 400 error for HS code < 6 digits
+- `testCalculateTariff_InvalidHsCode_TooLong` → 400 error for HS code > 10 digits
+- `testCalculateTariff_InvalidCountry` → 400 error for unknown country code
+- `testCalculateTariff_MultipleValidationErrors` → Returns validation errors for multiple issues
+
+### Default Values (4 tests)
+- `testCalculateTariff_DefaultProductValue` → Handles null product value
+- `testCalculateTariff_DefaultShippingMode` → Handles null shipping mode
+- `testCalculateTariff_DefaultFreightAndInsurance` → Handles null freight and insurance
+- `testCalculateTariff_DefaultWeightAndHeads` → Handles null weight and heads
+
+### Authentication & Authorization (3 tests)
+- `testCalculateTariff_Unauthorized` → 403 error without authentication
+- `testCalculateTariff_AuthorizedUser` → USER role can access endpoint
+- `testCalculateTariff_AdminAccess` → ADMIN role can access endpoint
+
+### Edge Cases (8 tests)
+- `testCalculateTariff_ZeroProductValue` → Handles zero product value
+- `testCalculateTariff_NegativeProductValue` → Handles negative product value
+- `testCalculateTariff_VeryLargeWeight` → Handles large weight values (99999.99)
+- `testCalculateTariff_DecimalWeight` → Handles decimal weight values
+- `testCalculateTariff_SameImportExportCountry` → Allows same import/export country
+- `testCalculateTariff_CountryByName` → Resolves country names to ISO codes
+- `testCalculateTariff_HsCodeWithSpaces` → Cleans HS code formatting
+- `testCalculateTariff_CaseInsensitiveCountryCodes` → Handles lowercase country codes
+
+### Malformed Requests (3 tests)
+- `testCalculateTariff_InvalidJson` → 400 error for malformed JSON
+- `testCalculateTariff_EmptyRequestBody` → 400 error for empty request body
+- `testCalculateTariff_NullRequestBody` → 400 error for null request body
+
+---
+
+## Summary
+
+| Component | Tests | 
+|-----------|-------|
+| **Controllers** | |
+| AuthController | 20 |
+| UserController | 32 |
+| ProductController | 19 |
+| TariffController | 9 |
+| CountryController | 15 |
+| **Services** | |
+| TariffCalculatorService | 20 |
+| CountryService | 35 |
+| ProductService | 18 |
+| TariffValidationService | 37 |
+| WebScrapingService | 7 |
+| ShippingCostService | 24 |
+| **Integration Tests** | |
+| TariffCalculationIntegrationTest | 31 |
+| **TOTAL** | **267** |
