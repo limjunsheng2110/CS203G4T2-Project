@@ -14,12 +14,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // Enable method-level security annotations
 public class SecurityConfig {
     
     private final UserDetailsService userDetailsService;
@@ -62,16 +62,26 @@ public class SecurityConfig {
                 // Public endpoints - no authentication required
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
+
+                // Public read-only endpoints for reference data
                 .requestMatchers("/api/countries/**").permitAll()
                 .requestMatchers("/api/exchange-rates/**").permitAll()
-                .requestMatchers("/api/tariffs/**").permitAll()
                 .requestMatchers("/api/products/**").permitAll()
 
                 // Swagger/OpenAPI endpoints
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 
+                // USER role - can access tariff calculation endpoints (both USER and ADMIN)
+                .requestMatchers("/api/tariff/**").hasAnyRole("USER", "ADMIN")
+
+                // ADMIN role only - can manage users and tariff rates
+                .requestMatchers("/api/users/**").hasRole("ADMIN")
+                .requestMatchers("/api/tariff-rates/**").hasRole("ADMIN")
+                .requestMatchers("/api/shipping-rates/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                 // All other requests require authentication
-                .anyRequest().permitAll()
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
