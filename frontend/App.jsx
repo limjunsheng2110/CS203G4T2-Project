@@ -7,6 +7,7 @@ import ResultsPage from './components/ResultsPage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import UserInfo from './components/UserInfo';
+import AdminDashboard from './components/AdminDashboard';
 import apiService from './services/apiService';
 
 const App = () => {
@@ -150,6 +151,10 @@ const App = () => {
     setTariffResults(null);
   };
 
+  const handleAdminClick = () => {
+    setCurrentPage('admin');
+  };
+
   // Render authentication pages
   if (!user) {
     if (authPage === 'login') {
@@ -174,7 +179,7 @@ const App = () => {
     <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
       <div className="container mx-auto px-4 py-6">
         {/* User Info Component - shows at top of all pages */}
-        <UserInfo user={user} onLogout={handleLogout} />
+        <UserInfo user={user} onLogout={handleLogout} onAdminClick={handleAdminClick} />
 
         {currentPage === 'home' && (
           <HomePage onGetStarted={handleGetStarted} theme={theme} setTheme={setTheme} />
@@ -204,6 +209,11 @@ const App = () => {
             theme={theme}
             setTheme={setTheme}
           />
+        )}
+
+        {/* Admin dashboard - only for admin users */}
+        {user && user.role === 'ADMIN' && currentPage === 'admin' && (
+          <AdminDashboard onBack={handleBackToHome} theme={theme} />
         )}
       </div>
     </div>

@@ -4,6 +4,7 @@ import com.cs203.tariffg4t2.model.basic.User;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +15,7 @@ public class UserDTO {
     private Long id;
     private String username;
     private String email;
+    //set role
     private User.Role role;
     private Boolean isActive;
     private LocalDateTime createdAt;
@@ -29,5 +31,6 @@ public class UserDTO {
         this.createdAt = user.getCreatedAt();
         this.updatedAt = user.getUpdatedAt();
     }
+
 }
 
