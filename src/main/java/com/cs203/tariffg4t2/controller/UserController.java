@@ -3,6 +3,7 @@ package com.cs203.tariffg4t2.controller;
 
 import com.cs203.tariffg4t2.dto.basic.UserDTO;
 import com.cs203.tariffg4t2.dto.request.UserRequestDTO;
+import com.cs203.tariffg4t2.dto.request.UserUpdateRequestDTO;
 import com.cs203.tariffg4t2.model.basic.User;
 import com.cs203.tariffg4t2.service.basic.UserService;
 import jakarta.validation.Valid;
@@ -104,7 +105,7 @@ public class UserController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id,
-                                       @Valid @RequestBody UserRequestDTO request) {
+                                       @Valid @RequestBody UserUpdateRequestDTO request) {
         try {
             UserDTO updatedUser = userService.updateUser(id, request);
             return ResponseEntity.ok(updatedUser);
