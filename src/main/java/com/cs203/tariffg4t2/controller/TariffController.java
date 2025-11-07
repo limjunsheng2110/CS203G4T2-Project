@@ -6,11 +6,6 @@ import com.cs203.tariffg4t2.dto.response.TariffCalculationResultDTO;
 import com.cs203.tariffg4t2.service.tariffLogic.TariffCalculatorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 // Otherwise this class-level mapping is fine:
 @RestController
 @RequestMapping("/api/tariff")
+@CrossOrigin(origins = "*")
 public class TariffController {
 
     @Autowired
@@ -50,5 +46,11 @@ public class TariffController {
 
         TariffCalculationResultDTO result = tariffCalculatorService.calculate(req);
         return ResponseEntity.ok(result);
+    }
+    
+    // Add this exception handler
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }
