@@ -65,11 +65,6 @@ public class TariffValidationService {
             request.getDefaultedFields().add("productValue (corrected from non-positive to $100.00)");
         }
 
-        if (request.getRooEligible() == null) {
-            request.getMissingFields().add("rooEligible");
-            request.setRooEligible(false);
-            request.getDefaultedFields().add("rooEligible (defaulted to false)");
-        }
 
         if (isBlank(request.getShippingMode())) {
             request.getMissingFields().add("shippingMode");

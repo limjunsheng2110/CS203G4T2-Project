@@ -4,7 +4,7 @@ import com.cs203.tariffg4t2.dto.auth.AuthResponse;
 import com.cs203.tariffg4t2.dto.auth.LoginRequest;
 import com.cs203.tariffg4t2.dto.auth.RegisterRequest;
 import com.cs203.tariffg4t2.model.basic.User;
-import com.cs203.tariffg4t2.repository.UserRepository;
+import com.cs203.tariffg4t2.repository.basic.UserRepository;
 import com.cs203.tariffg4t2.security.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;

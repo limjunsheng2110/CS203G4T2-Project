@@ -112,9 +112,20 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
               colours={colours}
             />
 
+            <FormField
+              label="Year"
+              name="year"
+              type="number"
+              value={formData.year}
+              onChange={handleInputChange}
+              placeholder="e.g., 2025"
+              required={false}
+              colours={colours}
+            />
+
             <div>
               <label className={`block text-sm font-medium ${colours.textSecondary} mb-2`}>
-                Shipping Mode (Optional)
+                Shipping Mode
               </label>
               <div className="relative">
                 <select
@@ -126,7 +137,6 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
                   <option value="">Select shipping mode</option>
                   <option value="air">Air</option>
                   <option value="sea">Sea</option>
-                  <option value="land">Land</option>
                 </select>
                 <div className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 ${colours.textMuted}`}>
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">

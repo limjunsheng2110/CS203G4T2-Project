@@ -43,12 +43,18 @@ class TariffValidationServiceTest {
         validRequest.setInsurance(new BigDecimal("50.00"));
         validRequest.setHeads(10);
         validRequest.setWeight(new BigDecimal("500.00"));
-        validRequest.setRooEligible(false);
         validRequest.setShippingMode("SEA");
 
-        // Setup countries
-        sgCountry = new Country("SG", "Singapore", "SGP");
-        usCountry = new Country("US", "United States", "USA");
+        // Setup mock countries
+        sgCountry = new Country();
+        sgCountry.setCountryCode("SG");
+        sgCountry.setCountryName("Singapore");
+        sgCountry.setIso3Code("SGP");
+
+        usCountry = new Country();
+        usCountry.setCountryCode("US");
+        usCountry.setCountryName("United States");
+        usCountry.setIso3Code("USA");
     }
 
     // null request test
@@ -231,24 +237,6 @@ class TariffValidationServiceTest {
         // then
         assertTrue(errors.isEmpty());
         assertEquals(0, new BigDecimal("100.00").compareTo(validRequest.getProductValue()));
-    }
-
-    @Test
-    void testValidateTariffRequest_DefaultRooEligible() {
-        // given
-        validRequest.setRooEligible(null);
-        when(countryRepository.findByCountryCodeIgnoreCase("SG")).thenReturn(Optional.of(sgCountry));
-        when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
-
-        // when
-        List<String> errors = tariffValidationService.validateTariffRequest(validRequest);
-
-        // then
-        assertTrue(errors.isEmpty());
-        assertFalse(validRequest.getRooEligible());
-        assertTrue(validRequest.getMissingFields().contains("rooEligible"));
-        assertTrue(validRequest.getDefaultedFields().stream()
-                .anyMatch(f -> f.contains("rooEligible") && f.contains("false")));
     }
 
     @Test
@@ -630,3 +618,4 @@ class TariffValidationServiceTest {
         verify(countryRepository, times(2)).findByCountryCodeIgnoreCase("SG");
     }
 }
+

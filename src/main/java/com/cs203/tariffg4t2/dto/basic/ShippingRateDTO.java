@@ -10,11 +10,9 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ShippingRateDTO {
+    private Long id;
     private String importingCountryCode;
     private String exportingCountryCode;
     private BigDecimal airRate;
     private BigDecimal seaRate;
-    private BigDecimal landRate;
-    private BigDecimal distance;
 }
-

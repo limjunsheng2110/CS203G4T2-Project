@@ -1,6 +1,5 @@
 package com.cs203.tariffg4t2.model.basic;
 
-import com.cs203.tariffg4t2.model.web.SearchHistory;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -12,7 +11,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -54,11 +52,7 @@ public class User {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-    
-    // One user, many search histories
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<SearchHistory> searchHistories;
-    
+
     // Enum for user roles
     public enum Role {
         USER, ADMIN

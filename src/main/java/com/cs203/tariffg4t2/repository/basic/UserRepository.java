@@ -1,4 +1,4 @@
-package com.cs203.tariffg4t2.repository;
+package com.cs203.tariffg4t2.repository.basic;
 
 import com.cs203.tariffg4t2.model.basic.User;
 import org.springframework.data.jpa.repository.JpaRepository;

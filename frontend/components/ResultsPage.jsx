@@ -140,6 +140,11 @@ const TariffResultCard = ({ result, formData, selectedProduct, theme, colours })
             <div>
               <span className="font-medium">HS Code:</span> {result.hsCode}
             </div>
+            {result.year && (
+              <div>
+                <span className="font-medium">Tariff Year:</span> {result.year}
+              </div>
+            )}
             {selectedProduct && (
               <>
                 <div>
@@ -197,6 +202,40 @@ const TariffResultCard = ({ result, formData, selectedProduct, theme, colours })
           </div>
         </div>
 
+        {/* VAT Rate Display - New Section */}
+        {result.vatRate && result.vatRate > 0 && (
+          <div className={`${colours.inputBg} rounded-lg p-4 mb-6 border-l-4 border-green-500`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className={`font-medium ${colours.text}`}>VAT/GST Rate Applied:</span>
+                <span className={`ml-2 ${colours.textMuted} text-sm`}>
+                  ({result.importingCountry})
+                </span>
+              </div>
+              <div className="text-xl font-bold text-green-600">
+                {result.vatRate.toFixed(2)}%
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Shipping Rate Display - New Section */}
+        {result.shippingCost && result.shippingCost > 0 && formData.shippingMode && (
+          <div className={`${colours.inputBg} rounded-lg p-4 mb-6 border-l-4 border-blue-500`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className={`font-medium ${colours.text}`}>Shipping Rate Applied:</span>
+                <span className={`ml-2 ${colours.textMuted} text-sm`}>
+                  ({formData.shippingMode.toUpperCase()})
+                </span>
+              </div>
+              <div className="text-xl font-bold text-blue-600">
+                {formatCurrency(result.shippingCost)}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Detailed Breakdown */}
         <div className="space-y-6">
           <h3 className={`text-lg font-semibold ${colours.text} border-b ${colours.border} pb-2`}>
@@ -218,25 +257,32 @@ const TariffResultCard = ({ result, formData, selectedProduct, theme, colours })
                   {formatCurrency(result.baseDuty)}
                 </span>
               </div>
-
-              <div className="flex justify-between items-center">
-                <span className={colours.text}>Additional Duties:</span>
-                <span className={`font-medium ${colours.text}`}>
-                  {formatCurrency(result.additionalDuties)}
-                </span>
-              </div>
             </div>
 
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className={colours.text}>VAT/GST:</span>
+                <span className={colours.text}>
+                  VAT/GST:
+                  {result.vatRate && result.vatRate > 0 && (
+                    <span className="text-xs ml-1 text-green-600">
+                      ({result.vatRate.toFixed(2)}%)
+                    </span>
+                  )}
+                </span>
                 <span className={`font-medium ${colours.text}`}>
                   {formatCurrency(result.vatOrGst)}
                 </span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className={colours.text}>Shipping Cost:</span>
+                <span className={colours.text}>
+                  Shipping Cost:
+                  {formData.shippingMode && (
+                    <span className="text-xs ml-1 text-gray-500">
+                      ({formData.shippingMode.toUpperCase()})
+                    </span>
+                  )}
+                </span>
                 <span className={`font-medium ${colours.text}`}>
                   {formatCurrency(result.shippingCost)}
                 </span>

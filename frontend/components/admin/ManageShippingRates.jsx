@@ -1,9 +1,9 @@
-// frontend/components/admin/ManageTariffRates.jsx
+// frontend/components/admin/ManageShippingRates.jsx
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, Globe } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Ship } from 'lucide-react';
 
-const ManageTariffRates = ({ theme }) => {
-  const [tariffRates, setTariffRates] = useState([]);
+const ManageShippingRates = ({ theme }) => {
+  const [shippingRates, setShippingRates] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -13,23 +13,23 @@ const ManageTariffRates = ({ theme }) => {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    fetchTariffRates();
+    fetchShippingRates();
   }, []);
 
-  const fetchTariffRates = async () => {
+  const fetchShippingRates = async () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/tariff-rates', {
+      const response = await fetch('/api/shipping-rates', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      if (!response.ok) throw new Error('Failed to fetch tariff rates');
+      if (!response.ok) throw new Error('Failed to fetch shipping rates');
 
       const data = await response.json();
-      setTariffRates(data);
+      setShippingRates(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -38,21 +38,21 @@ const ManageTariffRates = ({ theme }) => {
   };
 
   const handleDeleteRate = async (rateId) => {
-    if (!window.confirm('Are you sure you want to delete this tariff rate?')) return;
+    if (!window.confirm('Are you sure you want to delete this shipping rate?')) return;
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`/api/tariff-rates/${rateId}`, {
+      const response = await fetch(`/api/shipping-rates/${rateId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      if (!response.ok) throw new Error('Failed to delete tariff rate');
+      if (!response.ok) throw new Error('Failed to delete shipping rate');
 
-      setSuccess('Tariff rate deleted successfully');
-      fetchTariffRates();
+      setSuccess('Shipping rate deleted successfully');
+      fetchShippingRates();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.message);
@@ -65,8 +65,7 @@ const ManageTariffRates = ({ theme }) => {
     setShowEditModal(true);
   };
 
-  const filteredRates = tariffRates.filter(rate =>
-    rate.hsCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredRates = shippingRates.filter(rate =>
     rate.importingCountryCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     rate.exportingCountryCode?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -79,19 +78,19 @@ const ManageTariffRates = ({ theme }) => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Search by HS Code or Country..."
+            placeholder="Search by Country..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
           />
         </div>
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus size={20} />
-          Add Tariff Rate
+          Add Shipping Rate
         </button>
       </div>
 
@@ -108,10 +107,10 @@ const ManageTariffRates = ({ theme }) => {
         </div>
       )}
 
-      {/* Tariff Rates Table */}
+      {/* Shipping Rates Table */}
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -120,16 +119,13 @@ const ManageTariffRates = ({ theme }) => {
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    HS Code
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Trade Route
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Ad Valorem Rate
+                    Air Rate (USD)
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Year
+                    Sea Rate (USD)
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
@@ -140,24 +136,19 @@ const ManageTariffRates = ({ theme }) => {
                 {filteredRates.map((rate) => (
                   <tr key={rate.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {rate.hsCode}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-900 dark:text-gray-300">
-                        <Globe size={16} className="mr-2 text-gray-400" />
+                        <Ship size={16} className="mr-2 text-gray-400" />
                         {rate.exportingCountryCode} → {rate.importingCountryCode}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-gray-300">
-                        {rate.adValoremRate ? `${rate.adValoremRate}%` : '0.00%'}
+                        ${rate.airRate ? rate.airRate.toFixed(2) : '0.00'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-gray-300">
-                        {rate.year || 'N/A'}
+                        ${rate.seaRate ? rate.seaRate.toFixed(2) : '0.00'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -182,7 +173,7 @@ const ManageTariffRates = ({ theme }) => {
 
           {filteredRates.length === 0 && (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              No tariff rates found
+              No shipping rates found
             </div>
           )}
         </div>
@@ -190,19 +181,19 @@ const ManageTariffRates = ({ theme }) => {
 
       {/* Modals */}
       {showCreateModal && (
-        <TariffRateModal
+        <ShippingRateModal
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
             setShowCreateModal(false);
-            fetchTariffRates();
-            setSuccess('Tariff rate created successfully');
+            fetchShippingRates();
+            setSuccess('Shipping rate created successfully');
             setTimeout(() => setSuccess(''), 3000);
           }}
         />
       )}
 
       {showEditModal && selectedRate && (
-        <TariffRateModal
+        <ShippingRateModal
           rate={selectedRate}
           onClose={() => {
             setShowEditModal(false);
@@ -211,8 +202,8 @@ const ManageTariffRates = ({ theme }) => {
           onSuccess={() => {
             setShowEditModal(false);
             setSelectedRate(null);
-            fetchTariffRates();
-            setSuccess('Tariff rate updated successfully');
+            fetchShippingRates();
+            setSuccess('Shipping rate updated successfully');
             setTimeout(() => setSuccess(''), 3000);
           }}
         />
@@ -221,15 +212,14 @@ const ManageTariffRates = ({ theme }) => {
   );
 };
 
-// Tariff Rate Modal Component
-const TariffRateModal = ({ rate, onClose, onSuccess }) => {
+// Shipping Rate Modal Component
+const ShippingRateModal = ({ rate, onClose, onSuccess }) => {
   const isEdit = !!rate;
   const [formData, setFormData] = useState({
-    hsCode: rate?.hsCode || '',
     importingCountryCode: rate?.importingCountryCode || '',
     exportingCountryCode: rate?.exportingCountryCode || '',
-    baseRate: rate?.adValoremRate || '',
-    year: rate?.year || new Date().getFullYear()
+    airRate: rate?.airRate || '',
+    seaRate: rate?.seaRate || ''
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -241,19 +231,17 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
 
     try {
       const token = localStorage.getItem('authToken');
-      const url = isEdit ? `/api/tariff-rates/${rate.id}` : '/api/tariff-rates';
+      const url = isEdit ? `/api/shipping-rates/${rate.id}` : '/api/shipping-rates';
       const method = isEdit ? 'PUT' : 'POST';
 
-      // Prepare the payload with proper data types
       const payload = {
-        hsCode: formData.hsCode,
         importingCountryCode: formData.importingCountryCode,
         exportingCountryCode: formData.exportingCountryCode,
-        baseRate: formData.baseRate ? parseFloat(formData.baseRate) : null,
-        year: formData.year ? parseInt(formData.year) : null
+        airRate: formData.airRate ? parseFloat(formData.airRate) : null,
+        seaRate: formData.seaRate ? parseFloat(formData.seaRate) : null
       };
 
-      console.log('Submitting tariff rate:', payload);
+      console.log('Submitting shipping rate:', payload);
 
       const response = await fetch(url, {
         method,
@@ -266,14 +254,14 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || `Failed to ${isEdit ? 'update' : 'create'} tariff rate`);
+        throw new Error(errorText || `Failed to ${isEdit ? 'update' : 'create'} shipping rate`);
       }
 
       const result = await response.json();
       console.log('Success response:', result);
       onSuccess();
     } catch (err) {
-      console.error('Error submitting tariff rate:', err);
+      console.error('Error submitting shipping rate:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -285,24 +273,10 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="p-6">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-            {isEdit ? 'Edit Tariff Rate' : 'Create Tariff Rate'}
+            {isEdit ? 'Edit Shipping Rate' : 'Create Shipping Rate'}
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                HS Code
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.hsCode}
-                onChange={(e) => setFormData({ ...formData, hsCode: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-                placeholder="e.g., 010310"
-              />
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -313,7 +287,7 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
                   required
                   value={formData.exportingCountryCode}
                   onChange={(e) => setFormData({ ...formData, exportingCountryCode: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., CN"
                   maxLength="3"
                 />
@@ -328,7 +302,7 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
                   required
                   value={formData.importingCountryCode}
                   onChange={(e) => setFormData({ ...formData, importingCountryCode: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="e.g., SG"
                   maxLength="3"
                 />
@@ -337,31 +311,36 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Base Rate (%)
+                Air Rate (USD) - Flat Rate
               </label>
               <input
                 type="number"
                 step="0.01"
-                value={formData.baseRate}
-                onChange={(e) => setFormData({ ...formData, baseRate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-                placeholder="0.00"
+                value={formData.airRate}
+                onChange={(e) => setFormData({ ...formData, airRate: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                placeholder="e.g., 15.00"
               />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Flat rate charge for air shipping (e.g., $10, $15)
+              </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Year
+                Sea Rate (USD) - Flat Rate
               </label>
               <input
                 type="number"
-                min="1900"
-                max="2100"
-                value={formData.year}
-                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
-                placeholder="e.g., 2024"
+                step="0.01"
+                value={formData.seaRate}
+                onChange={(e) => setFormData({ ...formData, seaRate: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                placeholder="e.g., 10.00"
               />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Flat rate charge for sea shipping (e.g., $10, $15)
+              </p>
             </div>
 
             {error && (
@@ -381,7 +360,7 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {isLoading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
               </button>
@@ -393,4 +372,5 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
   );
 };
 
-export default ManageTariffRates;
+export default ManageShippingRates;
+

@@ -2,7 +2,7 @@ package com.cs203.tariffg4t2.security;
 
 
 import com.cs203.tariffg4t2.model.basic.User;
-import com.cs203.tariffg4t2.repository.UserRepository;
+import com.cs203.tariffg4t2.repository.basic.UserRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

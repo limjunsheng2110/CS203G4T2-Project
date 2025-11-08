@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.mockito.Mockito.lenient;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -26,23 +27,18 @@ class CountryServiceTest {
     @Mock
     private CountryRepository countryRepository;
 
-    @Mock
-    private RestTemplate restTemplate;
-
     @InjectMocks
     private CountryService countryService;
 
     private Country sgCountry;
-    private Country usCountry;
-    private Country cnCountry;
     private List<Country> countryList;
 
     @BeforeEach
     void setUp() {
         // Setup test countries
-        sgCountry = new Country("SG", "Singapore", "SGP");
-        usCountry = new Country("US", "United States", "USA");
-        cnCountry = new Country("CN", "China", "CHN");
+        sgCountry = new Country("SG", "Singapore", "SGP", null);
+        Country usCountry = new Country("US", "United States", "USA", null);
+        Country cnCountry = new Country("CN", "China", "CHN", null);
         countryList = Arrays.asList(sgCountry, usCountry, cnCountry);
     }
 
@@ -67,7 +63,7 @@ class CountryServiceTest {
     @Test
     void testGetAllCountriesFromDatabase_EmptyList() {
         // given
-        when(countryRepository.findAll()).thenReturn(Arrays.asList());
+        when(countryRepository.findAll()).thenReturn(new ArrayList<>());
 
         // when
         List<Country> result = countryService.getAllCountriesFromDatabase();
@@ -116,9 +112,8 @@ class CountryServiceTest {
         when(countryRepository.findByCountryCodeIgnoreCase("XX")).thenReturn(Optional.empty());
 
         // when & then
-        assertThrows(RuntimeException.class, () -> {
-            countryService.getCountryByCode("XX");
-        });
+        assertThrows(RuntimeException.class, () ->
+            countryService.getCountryByCode("XX"));
     }
 
     // ========== CREATE COUNTRY TESTS ==========
@@ -159,42 +154,37 @@ class CountryServiceTest {
         when(countryRepository.existsByCountryCode("SG")).thenReturn(true);
 
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.createCountry("SG", "Singapore");
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.createCountry("SG", "Singapore"));
         verify(countryRepository, never()).save(any(Country.class));
     }
 
     @Test
     void testCreateCountry_NullCode() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.createCountry(null, "Test Country");
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.createCountry(null, "Test Country"));
     }
 
     @Test
     void testCreateCountry_EmptyCode() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.createCountry("", "Test Country");
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.createCountry("", "Test Country"));
     }
 
     @Test
     void testCreateCountry_NullName() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.createCountry("XX", null);
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.createCountry("XX", null));
     }
 
     @Test
     void testCreateCountry_EmptyName() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.createCountry("XX", "");
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.createCountry("XX", ""));
     }
 
     // ========== UPDATE COUNTRY TESTS ==========
@@ -229,17 +219,15 @@ class CountryServiceTest {
     @Test
     void testUpdateCountry_NullCode() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.updateCountry(null, "New Name");
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.updateCountry(null, "New Name"));
     }
 
     @Test
     void testUpdateCountry_EmptyCode() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.updateCountry("", "New Name");
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.updateCountry("", "New Name"));
     }
 
     @Test
@@ -301,17 +289,15 @@ class CountryServiceTest {
     @Test
     void testDeleteCountryByCode_NullCode() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.deleteCountryByCode(null);
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.deleteCountryByCode(null));
     }
 
     @Test
     void testDeleteCountryByCode_EmptyCode() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.deleteCountryByCode("");
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.deleteCountryByCode(""));
     }
 
     // ========== GET 3 DIGIT COUNTRY CODE TESTS ==========
@@ -344,17 +330,15 @@ class CountryServiceTest {
     @Test
     void testGet3DigitCountryCode_NullCode() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.get3DigitCountryCode(null);
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.get3DigitCountryCode(null));
     }
 
     @Test
     void testGet3DigitCountryCode_EmptyCode() {
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
-            countryService.get3DigitCountryCode("");
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            countryService.get3DigitCountryCode(""));
     }
 
     // ========== CONVERT COUNTRY NAME TO ISO3 TESTS ==========
@@ -374,7 +358,7 @@ class CountryServiceTest {
     void testConvertCountryNameToIso3_FromDatabase() {
         // given
         lenient().when(countryRepository.findByCountryNameIgnoreCase("Malaysia"))
-                .thenReturn(Optional.of(new Country("MY", "Malaysia", "MYS")));
+                .thenReturn(Optional.of(new Country("MY", "Malaysia", "MYS", null)));
 
         // when
         String result = countryService.convertCountryNameToIso3("Malaysia");
@@ -458,7 +442,7 @@ class CountryServiceTest {
     void testConvertCountryNameToIso2_FromDatabase() {
         // given
         lenient().when(countryRepository.findByCountryNameIgnoreCase("Malaysia"))
-                .thenReturn(Optional.of(new Country("MY", "Malaysia", "MYS")));
+                .thenReturn(Optional.of(new Country("MY", "Malaysia", "MYS", null)));
 
         // when
         String result = countryService.convertCountryNameToIso2("Malaysia");

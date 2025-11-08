@@ -1,8 +1,9 @@
 // frontend/components/AdminDashboard.jsx
 import React, { useState } from 'react';
-import { ArrowLeft, Users, DollarSign, Settings } from 'lucide-react';
+import { ArrowLeft, Users, DollarSign, Settings, Ship } from 'lucide-react';
 import ManageUsers from './admin/ManageUsers';
 import ManageTariffRates from './admin/ManageTariffRates';
+import ManageShippingRates from './admin/ManageShippingRates';
 
 const AdminDashboard = ({ onBack, theme }) => {
   const [activeTab, setActiveTab] = useState('users');
@@ -10,6 +11,7 @@ const AdminDashboard = ({ onBack, theme }) => {
   const tabs = [
     { id: 'users', label: 'Manage Users', icon: Users },
     { id: 'tariff-rates', label: 'Manage Tariff Rates', icon: DollarSign },
+    { id: 'shipping-rates', label: 'Manage Shipping Rates', icon: Ship },
   ];
 
   return (
@@ -32,7 +34,7 @@ const AdminDashboard = ({ onBack, theme }) => {
             </h1>
           </div>
           <p className="text-gray-600 dark:text-gray-400">
-            Manage users, tariff rates, and system settings
+            Manage users, tariff rates, shipping rates, and system settings
           </p>
         </div>
 
@@ -67,6 +69,7 @@ const AdminDashboard = ({ onBack, theme }) => {
           <div className="p-6">
             {activeTab === 'users' && <ManageUsers theme={theme} />}
             {activeTab === 'tariff-rates' && <ManageTariffRates theme={theme} />}
+            {activeTab === 'shipping-rates' && <ManageShippingRates theme={theme} />}
           </div>
         </div>
       </div>
@@ -75,4 +78,3 @@ const AdminDashboard = ({ onBack, theme }) => {
 };
 
 export default AdminDashboard;
-

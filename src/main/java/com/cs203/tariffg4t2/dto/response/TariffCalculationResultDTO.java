@@ -24,19 +24,19 @@ public class TariffCalculationResultDTO {
     // Breakdown
     private BigDecimal customsValue;
     private BigDecimal baseDuty;
-    private BigDecimal additionalDuties;   // sum of 301/ADD/CVD/SG
     private BigDecimal vatOrGst;
     private BigDecimal shippingCost;
 
     // Totals
-    private BigDecimal tariffAmount;       // baseDuty + trqDuty + additionalDuties
+    private BigDecimal tariffAmount;       // baseDuty
     private BigDecimal totalCost;          // customsValue + tariffAmount + vat/gst + shipping
 
     // Meta
     private String tradeAgreement;
     private java.time.LocalDateTime calculationDate;
-    private String date;  // Date from scraped tariff data
+    private Integer year;  // Year from tariff data
 
     // Rates shown for transparency
     private BigDecimal adValoremRate;
+    private BigDecimal vatRate;  // VAT/GST rate as percentage
 }
