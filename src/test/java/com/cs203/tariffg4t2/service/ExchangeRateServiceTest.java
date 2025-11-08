@@ -109,7 +109,7 @@ class ExchangeRateServiceTest {
         assertNotNull(response.getRecommendedPurchaseDate());
         assertNotNull(response.getRecommendation());
         assertNotNull(response.getTrendAnalysis());
-        assertTrue(response.getHistoricalRates().isEmpty());
+        assertFalse(response.getHistoricalRates().isEmpty()); // Should contain historical data
 
         // Verify interactions
         verify(countryRepository, times(1)).findById("US");

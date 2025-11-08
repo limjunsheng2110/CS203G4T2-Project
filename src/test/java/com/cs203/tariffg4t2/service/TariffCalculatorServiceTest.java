@@ -72,6 +72,12 @@ class TariffCalculatorServiceTest {
         mockCountry.setCountryCode("SG");
         mockCountry.setCountryName("Singapore");
         mockCountry.setVatRate(new BigDecimal("9")); // 9% GST (stored as whole number)
+
+        // Setup lenient defaults for commonly mocked methods
+        lenient().when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
+        lenient().when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("200.00"));
+        lenient().when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
+                .thenReturn(new BigDecimal("0.05"));
     }
 
     // basic calculation tests
@@ -79,13 +85,9 @@ class TariffCalculatorServiceTest {
     @Test
     void testCalculate_Success_CIFValuation() {
         // given
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(new BigDecimal("512.50"));
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.of(mockTariffRate));
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
-                .thenReturn(new BigDecimal("0.05"));
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("200.00"));
         when(countryRepository.findByCountryCodeIgnoreCase("SG")).thenReturn(Optional.of(mockCountry));
 
         // when
@@ -103,13 +105,9 @@ class TariffCalculatorServiceTest {
     @Test
     void testCalculate_Success_WithTransactionValue() {
         // given
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(new BigDecimal("500.00"));
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.of(mockTariffRate));
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
-                .thenReturn(new BigDecimal("0.05"));
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("200.00"));
         when(countryRepository.findByCountryCodeIgnoreCase("SG")).thenReturn(Optional.empty());
 
         // when
@@ -127,13 +125,9 @@ class TariffCalculatorServiceTest {
         // given
         validRequest.setVatOrGstOverride(new BigDecimal("0.09")); // 9% GST
 
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(new BigDecimal("512.50"));
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.of(mockTariffRate));
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
-                .thenReturn(new BigDecimal("0.05"));
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("200.00"));
 
         // when
         TariffCalculationResultDTO result = tariffCalculatorService.calculate(validRequest);
@@ -147,13 +141,9 @@ class TariffCalculatorServiceTest {
     @Test
     void testCalculate_NoVatWhenNotProvided() {
         // given
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(new BigDecimal("512.50"));
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.of(mockTariffRate));
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
-                .thenReturn(new BigDecimal("0.05"));
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("200.00"));
         when(countryRepository.findByCountryCodeIgnoreCase("SG")).thenReturn(Optional.empty());
 
         // when
@@ -169,13 +159,9 @@ class TariffCalculatorServiceTest {
         // given
         validRequest.setVatOrGstOverride(new BigDecimal("0.20")); // 20% VAT override
 
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(new BigDecimal("512.50"));
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.of(mockTariffRate));
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
-                .thenReturn(new BigDecimal("0.05"));
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("200.00"));
 
         // when
         TariffCalculationResultDTO result = tariffCalculatorService.calculate(validRequest);
@@ -189,13 +175,9 @@ class TariffCalculatorServiceTest {
     @Test
     void testCalculate_VatFromCountryDatabase() {
         // given
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(new BigDecimal("512.50"));
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.of(mockTariffRate));
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
-                .thenReturn(new BigDecimal("0.05"));
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("200.00"));
         when(countryRepository.findByCountryCodeIgnoreCase("SG")).thenReturn(Optional.of(mockCountry));
 
         // when
@@ -230,13 +212,9 @@ class TariffCalculatorServiceTest {
         validRequest.setFreight(null);
         validRequest.setInsurance(null);
 
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(new BigDecimal("500.00"));
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.of(mockTariffRate));
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
-                .thenReturn(new BigDecimal("0.05"));
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("200.00"));
         when(countryRepository.findByCountryCodeIgnoreCase("SG")).thenReturn(Optional.empty());
 
         // when
@@ -255,13 +233,11 @@ class TariffCalculatorServiceTest {
         // given
         validRequest.setProductValue(BigDecimal.ZERO);
 
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(BigDecimal.ZERO);
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.of(mockTariffRate));
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
+        lenient().when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
                 .thenReturn(BigDecimal.ZERO);
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(BigDecimal.ZERO);
         when(countryRepository.findByCountryCodeIgnoreCase("SG")).thenReturn(Optional.empty());
 
         // when
@@ -277,13 +253,9 @@ class TariffCalculatorServiceTest {
         // given
         validRequest.setProductValue(new BigDecimal("999999999.99"));
 
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(new BigDecimal("50000000.00"));
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.of(mockTariffRate));
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
-                .thenReturn(new BigDecimal("0.05"));
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("5000.00"));
         when(countryRepository.findByCountryCodeIgnoreCase("SG")).thenReturn(Optional.empty());
 
         // when
@@ -297,13 +269,9 @@ class TariffCalculatorServiceTest {
     @Test
     void testCalculate_NoTariffRateDate() {
         // given
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(new BigDecimal("512.50"));
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.empty()); // No tariff rate found
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
-                .thenReturn(new BigDecimal("0.05"));
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("200.00"));
         when(countryRepository.findByCountryCodeIgnoreCase("SG")).thenReturn(Optional.empty());
 
         // when
@@ -319,13 +287,9 @@ class TariffCalculatorServiceTest {
     @Test
     void testCalculate_TotalCostCalculation() {
         // given
-        when(tariffValidationService.validateTariffRequest(any())).thenReturn(new ArrayList<>());
         when(tariffRateService.calculateTariffAmount(any())).thenReturn(new BigDecimal("512.50"));
-        when(tariffRateService.getTariffRate(anyString(), anyString(), anyString()))
+        when(tariffRateService.getTariffRateWithYear(anyString(), anyString(), anyString(), any()))
                 .thenReturn(Optional.of(mockTariffRate));
-        when(tariffRateService.getAdValoremRate(anyString(), anyString(), anyString()))
-                .thenReturn(new BigDecimal("0.05"));
-        when(shippingCostService.calculateShippingCost(any())).thenReturn(new BigDecimal("200.00"));
         when(countryRepository.findByCountryCodeIgnoreCase("SG")).thenReturn(Optional.of(mockCountry));
 
         // when

@@ -106,7 +106,9 @@ public class TariffCalculatorService {
 
         // Use override if provided (for testing), otherwise fetch from Country table
         if (request.getVatOrGstOverride() != null) {
-            vatRatePercentage = request.getVatOrGstOverride();
+            // Override is provided as decimal (e.g., 0.09 for 9%)
+            // Convert to percentage for display (multiply by 100)
+            vatRatePercentage = request.getVatOrGstOverride().multiply(new BigDecimal("100"));
             logger.debug("Using VAT override: {}", vatRatePercentage);
         } else {
             Optional<Country> importingCountry = countryRepository.findByCountryCodeIgnoreCase(request.getImportingCountry());
