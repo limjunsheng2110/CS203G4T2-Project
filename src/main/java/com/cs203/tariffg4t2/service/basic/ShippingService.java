@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -21,20 +22,28 @@ public class ShippingService {
     private final CountryRepository countryRepository;
 
     public BigDecimal getShippingRate(String shippingMode, String importingCountry, String exportingCountry) {
-        ShippingRate shippingRate = shippingRateRepository
-                .findByImportingAndExportingCountry(importingCountry, exportingCountry)
-                .orElse(null);
+        List<ShippingRate> shippingRates = shippingRateRepository
+                .findByImportingAndExportingCountry(importingCountry, exportingCountry);
 
-        if (shippingRate == null || shippingMode == null) {
+        // If no shipping rate found or no shipping mode specified, return null
+        if (shippingRates.isEmpty() || shippingMode == null) {
             return null;
         }
+
+        // Get the first (most recent) shipping rate
+        ShippingRate shippingRate = shippingRates.get(0);
 
         return switch (shippingMode.toUpperCase()) {
             case "AIR" -> shippingRate.getAirRate();
             case "SEA" -> shippingRate.getSeaRate();
-            case "LAND" -> shippingRate.getLandRate();
             default -> null;
         };
+    }
+
+    public List<ShippingRateDTO> getAllShippingRates() {
+        return shippingRateRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 
     public Optional<ShippingRateDTO> getShippingRateById(Long id) {
@@ -67,12 +76,11 @@ public class ShippingService {
 
     private ShippingRateDTO convertToDTO(ShippingRate entity) {
         return new ShippingRateDTO(
+                entity.getId(),
                 entity.getImportingCountry().getCountryCode(),
                 entity.getExportingCountry().getCountryCode(),
                 entity.getAirRate(),
-                entity.getSeaRate(),
-                entity.getLandRate(),
-                entity.getDistance()
+                entity.getSeaRate()
         );
     }
 
@@ -92,14 +100,6 @@ public class ShippingService {
         entity.setExportingCountry(exportingCountry);
         entity.setAirRate(dto.getAirRate());
         entity.setSeaRate(dto.getSeaRate());
-        entity.setLandRate(dto.getLandRate());
-        entity.setDistance(dto.getDistance());
     }
 
-    public BigDecimal getDistance(String importingCountry, String exportingCountry) {
-        BigDecimal distance = shippingRateRepository
-                .findDistanceByImportingAndExportingCountry(importingCountry, exportingCountry)
-                .orElse(null);
-        return distance;
-    }
 }
