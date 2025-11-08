@@ -112,6 +112,17 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
               colours={colours}
             />
 
+            <FormField
+              label="Year (Optional)"
+              name="year"
+              type="number"
+              value={formData.year}
+              onChange={handleInputChange}
+              placeholder="e.g., 2025"
+              required={false}
+              colours={colours}
+            />
+
             <div>
               <label className={`block text-sm font-medium ${colours.textSecondary} mb-2`}>
                 Shipping Mode (Optional)

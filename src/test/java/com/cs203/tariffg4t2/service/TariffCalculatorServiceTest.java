@@ -65,13 +65,13 @@ class TariffCalculatorServiceTest {
         mockTariffRate.setHsCode("010329");
         mockTariffRate.setImportingCountryCode("SG");
         mockTariffRate.setExportingCountryCode("US");
-        mockTariffRate.setDate("2024-11-01");
+        mockTariffRate.setYear(2024);
 
         // Setup mock country with VAT rate
         mockCountry = new Country();
         mockCountry.setCountryCode("SG");
         mockCountry.setCountryName("Singapore");
-        mockCountry.setVatRate(new BigDecimal("0.09")); // 9% GST
+        mockCountry.setVatRate(new BigDecimal("9")); // 9% GST (stored as whole number)
     }
 
     // basic calculation tests
@@ -96,7 +96,7 @@ class TariffCalculatorServiceTest {
         assertEquals(new BigDecimal("10250.00"), result.getCustomsValue()); // 10000 + 200 + 50
         assertEquals(new BigDecimal("525.31"), result.getBaseDuty());
         assertEquals(new BigDecimal("200.00"), result.getShippingCost());
-        assertEquals("2024-11-01", result.getDate());
+        assertEquals(Integer.valueOf(2024), result.getYear());
         assertNotNull(result.getCalculationDate());
     }
 
@@ -311,7 +311,7 @@ class TariffCalculatorServiceTest {
 
         // then
         assertNotNull(result);
-        assertNull(result.getDate()); // Date should be null when no tariff rate found
+        assertNull(result.getYear()); // Year should be null when no tariff rate found
     }
 
     // total cost verification tests

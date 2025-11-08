@@ -23,6 +23,7 @@ public class TariffCalculationRequestDTO {
     @NotNull private BigDecimal weight;   // in kg
 
     // OPTIONAL (user)
+    private Integer year;                      // Year for tariff rate lookup (e.g., 2025)
     private String shippingMode;               // "SEA" | "AIR" | "LAND"
     private BigDecimal freight;                // may be null
     private BigDecimal insurance;              // may be null

@@ -140,6 +140,11 @@ const TariffResultCard = ({ result, formData, selectedProduct, theme, colours })
             <div>
               <span className="font-medium">HS Code:</span> {result.hsCode}
             </div>
+            {result.year && (
+              <div>
+                <span className="font-medium">Tariff Year:</span> {result.year}
+              </div>
+            )}
             {selectedProduct && (
               <>
                 <div>

@@ -84,15 +84,14 @@ public class TariffCalculatorService {
         // ------------------------------------------------------------
         BigDecimal baseDuty = tariffRateService.calculateTariffAmount(request);
 
-        // Retrieve the TariffRate to get the date information
-        Optional<TariffRate> tariffRateOptional = tariffRateService.getTariffRate(
+        // Get the actual tariff rate that was used (with year information)
+        Optional<TariffRate> usedTariffRate = tariffRateService.getTariffRateWithYear(
             request.getHsCode(),
             request.getImportingCountry(),
-            request.getExportingCountry()
+            request.getExportingCountry(),
+            request.getYear()
         );
-        String tariffDate = tariffRateOptional
-            .map(TariffRate::getDate)
-            .orElse(null);
+        Integer actualYear = usedTariffRate.map(TariffRate::getYear).orElse(null);
 
         if (invoiceValueDest.compareTo(BigDecimal.ZERO) > 0) {
             // Scale any percent components from productValue to customsValue
@@ -160,7 +159,7 @@ public class TariffCalculatorService {
                 // Meta
                 .tradeAgreement(null) // fill if you track which FTA applied
                 .calculationDate(LocalDateTime.now())
-                .date(tariffDate) // Include date from scraped tariff data
+                .year(actualYear) // Use the actual year from the tariff rate that was found
 
                 // Optional rate echoes if your services expose them
                 .adValoremRate(tariffRateService.getAdValoremRate(

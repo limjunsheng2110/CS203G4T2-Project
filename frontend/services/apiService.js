@@ -128,7 +128,8 @@ export const tariffApi = {
         exportingCountry: calculationParams.exportCountry,
         hsCode: calculationParams.hsCode,
         productValue: parseFloat(calculationParams.value),
-        shippingMode: calculationParams.shippingMode || null
+        shippingMode: calculationParams.shippingMode || null,
+        year: calculationParams.year ? parseInt(calculationParams.year) : null
       });
       return response.data;
     } catch (error) {

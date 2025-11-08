@@ -67,7 +67,7 @@ public class TariffControllerTest {
                 .totalCost(new BigDecimal("11718.88"))
                 .adValoremRate(new BigDecimal("0.05"))
                 .calculationDate(LocalDateTime.now())
-                .date("2024-11-01")
+                .year(2024)
                 .build();
     }
 

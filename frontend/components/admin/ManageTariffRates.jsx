@@ -129,7 +129,7 @@ const ManageTariffRates = ({ theme }) => {
                     Ad Valorem Rate
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Date
+                    Year
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
@@ -157,7 +157,7 @@ const ManageTariffRates = ({ theme }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-gray-300">
-                        {rate.date || 'N/A'}
+                        {rate.year || 'N/A'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -229,7 +229,7 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
     importingCountryCode: rate?.importingCountryCode || '',
     exportingCountryCode: rate?.exportingCountryCode || '',
     baseRate: rate?.adValoremRate || '',
-    date: rate?.date || new Date().getFullYear().toString()
+    year: rate?.year || new Date().getFullYear()
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -250,7 +250,7 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
         importingCountryCode: formData.importingCountryCode,
         exportingCountryCode: formData.exportingCountryCode,
         baseRate: formData.baseRate ? parseFloat(formData.baseRate) : null,
-        date: formData.date
+        year: formData.year ? parseInt(formData.year) : null
       };
 
       console.log('Submitting tariff rate:', payload);
@@ -357,8 +357,8 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
                 type="number"
                 min="1900"
                 max="2100"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                value={formData.year}
+                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white"
                 placeholder="e.g., 2024"
               />
@@ -394,4 +394,3 @@ const TariffRateModal = ({ rate, onClose, onSuccess }) => {
 };
 
 export default ManageTariffRates;
-

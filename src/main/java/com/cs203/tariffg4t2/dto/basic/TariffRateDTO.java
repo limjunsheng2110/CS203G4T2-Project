@@ -16,5 +16,5 @@ public class TariffRateDTO {
     private String exportingCountryCode;
     private BigDecimal baseRate;
     private String tariffType;
-    private String date;
+    private Integer year;
 }
