@@ -171,7 +171,7 @@ public class TariffRateCRUDService {
         entity.setImportingCountryCode(dto.getImportingCountryCode().trim().toUpperCase());
         entity.setExportingCountryCode(dto.getExportingCountryCode().trim().toUpperCase());
         entity.setAdValoremRate(dto.getBaseRate());
-        entity.setDate(dto.getDate());
+        entity.setDate(dto.getDate() != null ? dto.getDate().trim() : null);
         return entity;
     }
 }

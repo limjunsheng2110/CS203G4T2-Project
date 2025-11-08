@@ -62,16 +62,16 @@ class ExchangeRateIntegrationTest {
         
         // Ensure test countries exist with proper ISO3 codes
         if (!countryRepository.existsById("US")) {
-            countryRepository.save(new Country("US", "United States", "USA"));
+            countryRepository.save(new Country("US", "United States", "USA", null));
         }
         if (!countryRepository.existsById("CN")) {
-            countryRepository.save(new Country("CN", "China", "CHN"));
+            countryRepository.save(new Country("CN", "China", "CHN", null));
         }
         if (!countryRepository.existsById("GB")) {
-            countryRepository.save(new Country("GB", "United Kingdom", "GBR"));
+            countryRepository.save(new Country("GB", "United Kingdom", "GBR", null));
         }
         if (!countryRepository.existsById("JP")) {
-            countryRepository.save(new Country("JP", "Japan", "JPN"));
+            countryRepository.save(new Country("JP", "Japan", "JPN", null));
         }
 
         // Force flush to ensure data is persisted
@@ -90,7 +90,7 @@ class ExchangeRateIntegrationTest {
             ExchangeRate rate = new ExchangeRate();
             rate.setFromCurrency("CNY");
             rate.setToCurrency("USD");
-            rate.setRate(new BigDecimal("0.138").add(new BigDecimal(Math.random() * 0.01)));
+            rate.setRate(new BigDecimal("0.138").add(BigDecimal.valueOf(Math.random() * 0.01)));
             rate.setRateDate(startDate.plusDays(i));
             rates.add(rate);
         }
@@ -100,7 +100,7 @@ class ExchangeRateIntegrationTest {
             ExchangeRate rate = new ExchangeRate();
             rate.setFromCurrency("GBP");
             rate.setToCurrency("USD");
-            rate.setRate(new BigDecimal("1.25").add(new BigDecimal(Math.random() * 0.05)));
+            rate.setRate(new BigDecimal("1.25").add(BigDecimal.valueOf(Math.random() * 0.05)));
             rate.setRateDate(startDate.plusDays(i));
             rates.add(rate);
         }
@@ -156,7 +156,7 @@ class ExchangeRateIntegrationTest {
         ExchangeRateAnalysisResponse response = objectMapper.readValue(responseJson, ExchangeRateAnalysisResponse.class);
         
         assertNotNull(response.getCurrentRate());
-        assertTrue(response.getHistoricalRates().size() > 0);
+        assertFalse(response.getHistoricalRates().isEmpty());
         assertTrue(response.getMinRate().compareTo(response.getMaxRate()) <= 0);
     }
 
@@ -295,7 +295,7 @@ class ExchangeRateIntegrationTest {
 
         // Verify data validity
         assertTrue(response.getMinRate().compareTo(response.getMaxRate()) <= 0);
-        assertTrue(response.getHistoricalRates().size() > 0);
+        assertFalse(response.getHistoricalRates().isEmpty());
         assertTrue(List.of("increasing", "decreasing", "stable").contains(response.getTrendAnalysis()));
         
         // Verify recommendation contains meaningful text

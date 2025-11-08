@@ -18,10 +18,10 @@ public class TariffCalculationRequestDTO {
     @NotBlank private String hsCode;
 
     @NotNull private BigDecimal productValue;
-    @NotNull private Boolean rooEligible;
 
     @NotNull private Integer heads;      // number of units/items
     @NotNull private BigDecimal weight;   // in kg
+
     // OPTIONAL (user)
     private String shippingMode;               // "SEA" | "AIR" | "LAND"
     private BigDecimal freight;                // may be null
@@ -29,16 +29,7 @@ public class TariffCalculationRequestDTO {
 
     // ---- Tester overrides only (optional)
     private String valuationOverride;          // "CIF"/"TRANSACTION" for testing
-    private BigDecimal vatOrGstOverride;       // for testing
-
-    // ---- INTERNAL (DB-fetched). Do NOT document as input in Swagger.
-    // Keep them here so the service can carry values around; they are NOT user inputs.
-    private BigDecimal section301Rate;
-    private BigDecimal antiDumpingRate;
-    private BigDecimal countervailingRate;
-    private BigDecimal safeguardRate;
-
-    private BigDecimal trqRemaining;
+    private BigDecimal vatOrGstOverride;       // for testing - overrides Country VAT rate
 
     // Track missing or defaulted fields
     @Builder.Default

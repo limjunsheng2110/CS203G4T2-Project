@@ -2,11 +2,9 @@ package com.cs203.tariffg4t2.service.tariffLogic;
 
 import com.cs203.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 import com.cs203.tariffg4t2.dto.response.TariffCalculationResultDTO;
-import com.cs203.tariffg4t2.repository.basic.CountryProfileRepository;
-import com.cs203.tariffg4t2.model.enums.ValuationBasis;
-import com.cs203.tariffg4t2.repository.basic.AdditionalDutyMapRepository;
-import com.cs203.tariffg4t2.repository.basic.TariffRateRepository;
 import com.cs203.tariffg4t2.model.basic.TariffRate;
+import com.cs203.tariffg4t2.model.basic.Country;
+import com.cs203.tariffg4t2.repository.basic.CountryRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +16,6 @@ import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Orchestrates the full tariff calculation flow:
@@ -26,9 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 2) Base Duty (MFN) using duty type (ad valorem / specific / compound / mixed)
  * 3) Apply FTA if RoO-eligible
  * 4) TRQ split (placeholder – wire to TariffRateDetail if available)
- * 5) Additional stacked duties (301/ADD/CVD/SG)
- * 6) VAT/GST on correct base
- * 7) Shipping and totals
+ * 5) VAT/GST on correct base (from Country VAT rate)
+ * 6) Shipping and totals
  *
  * Assumptions:
  * - request.productValue is already in the destination currency.
@@ -45,13 +41,10 @@ public class TariffCalculatorService {
     private ShippingCostService shippingCostService;
 
     @Autowired
-    private CountryProfileRepository countryProfileRepository;
-
-    @Autowired
-    private AdditionalDutyMapRepository additionalDutyMapRepository;
-
-    @Autowired
     private TariffValidationService tariffValidationService;
+
+    @Autowired
+    private CountryRepository countryRepository;
 
     Logger logger = LoggerFactory.getLogger(TariffCalculatorService.class);
 
@@ -77,19 +70,14 @@ public class TariffCalculatorService {
         }
 
         // ------------------------------------------------------------
-        // 1) Valuation (Customs Value)
+        // 1) Valuation (Customs Value) - Default to CIF
         // ------------------------------------------------------------
-        var basis = resolveValuationBasis(request.getImportingCountry(), request.getValuationOverride());
-
-        // By design choice here, productValue is already in destination currency.
         BigDecimal invoiceValueDest = safeBD(request.getProductValue());
         BigDecimal freight = safeBD(request.getFreight());
         BigDecimal insurance = safeBD(request.getInsurance());
 
-        BigDecimal customsValue = invoiceValueDest;
-        if (basis == ValuationBasis.CIF) {
-            customsValue = customsValue.add(freight).add(insurance);
-        }
+        // Default to CIF valuation (includes freight and insurance)
+        BigDecimal customsValue = invoiceValueDest.add(freight).add(insurance);
 
         // ------------------------------------------------------------
         // 2) Base Duty (MFN) – computed by duty type; percent legs later scaled to Customs Value
@@ -113,55 +101,37 @@ public class TariffCalculatorService {
         }
 
         // ------------------------------------------------------------
-        // 5) Additional stacked duties (e.g., Section 301 / ADD / CVD / Safeguard)
-        //     For most jurisdictions these apply on Customs Value (confirm per country profile).
+        // 3) VAT/GST - Fetch from Country table for importing country
         // ------------------------------------------------------------
+        BigDecimal vatRatePercentage = BigDecimal.ZERO;
 
-        java.time.LocalDate today = java.time.LocalDate.now();
-        additionalDutyMapRepository
-        .findFirstByImportingCountryAndExportingCountryAndHsCodeAndEffectiveFromLessThanEqualAndEffectiveToGreaterThanEqual(
-                request.getImportingCountry(), request.getExportingCountry(), request.getHsCode(), today, today)
-        .ifPresent(map -> {
-
-                //20 % for us and china
-                request.setSection301Rate(map.getSection301Rate());
-                //exporting from really cheap country to well-to-do, add dumping rate
-                request.setAntiDumpingRate(map.getAntiDumpingRate());
-                //if the exporting country get subsidies from government
-                request.setCountervailingRate(map.getCountervailingRate());
-                request.setSafeguardRate(map.getSafeguardRate());
-        });
-
-        BigDecimal additional = BigDecimal.ZERO;
-        if (isPositive(request.getSection301Rate())) {
-            additional = additional.add(customsValue.multiply(request.getSection301Rate()));
-        }
-        if (isPositive(request.getAntiDumpingRate())) {
-            additional = additional.add(customsValue.multiply(request.getAntiDumpingRate()));
-        }
-        if (isPositive(request.getCountervailingRate())) {
-            additional = additional.add(customsValue.multiply(request.getCountervailingRate()));
-        }
-        if (isPositive(request.getSafeguardRate())) {
-            additional = additional.add(customsValue.multiply(request.getSafeguardRate()));
+        // Use override if provided (for testing), otherwise fetch from Country table
+        if (request.getVatOrGstOverride() != null) {
+            vatRatePercentage = request.getVatOrGstOverride();
+            logger.debug("Using VAT override: {}", vatRatePercentage);
+        } else {
+            Optional<Country> importingCountry = countryRepository.findByCountryCodeIgnoreCase(request.getImportingCountry());
+            if (importingCountry.isPresent() && importingCountry.get().getVatRate() != null) {
+                vatRatePercentage = importingCountry.get().getVatRate();
+                logger.debug("Using VAT rate from Country {}: {}%", request.getImportingCountry(), vatRatePercentage);
+            } else {
+                logger.debug("No VAT rate found for country {}, defaulting to 0", request.getImportingCountry());
+            }
         }
 
-        // ------------------------------------------------------------
-        // 6) VAT/GST (EU/SG style usually on CV + all duties; US typically none)
-        // ------------------------------------------------------------
-        BigDecimal vatRate = resolveVatRate(request.getImportingCountry(), request.getVatOrGstOverride());
-        boolean vatIncludesDuties = resolveVatIncludesDuties(request.getImportingCountry());
-        BigDecimal vatBase = vatIncludesDuties
-                ? customsValue.add(baseDuty).add(additional)
-                : customsValue;
-        BigDecimal vatOrGst = vatRate.multiply(vatBase);
+        // Convert percentage to decimal (e.g., 10% -> 0.10)
+        BigDecimal vatRate = vatRatePercentage.divide(new BigDecimal("100"), 10, RoundingMode.HALF_UP);
+
+        // VAT is applied on (customsValue + baseDuty)
+        BigDecimal vatBase = customsValue.add(baseDuty);
+        BigDecimal vatOrGst = vatRate.multiply(vatBase).setScale(2, RoundingMode.HALF_UP);
 
         // ------------------------------------------------------------
-        // 7) Shipping & Totals
+        // 4) Shipping & Totals
         // ------------------------------------------------------------
         BigDecimal shippingCost = shippingCostService.calculateShippingCost(request);
 
-        BigDecimal tariffAmount = baseDuty.add(additional);
+        BigDecimal tariffAmount = baseDuty;
 
         BigDecimal totalCost = customsValue.add(tariffAmount).add(vatOrGst).add(shippingCost);
 
@@ -180,7 +150,6 @@ public class TariffCalculatorService {
                 // Breakdown
                 .customsValue(scale2(customsValue))
                 .baseDuty(scale2(baseDuty))
-                .additionalDuties(scale2(additional))
                 .vatOrGst(scale2(vatOrGst))
                 .shippingCost(scale2(shippingCost))
 
@@ -199,6 +168,7 @@ public class TariffCalculatorService {
                         request.getImportingCountry(),
                         request.getExportingCountry())
                 )
+                .vatRate(vatRatePercentage)  // Store as percentage (10 for 10%), not decimal (0.10)
                 .build();
 
         // Add tracking information to result if needed
@@ -214,7 +184,6 @@ public class TariffCalculatorService {
     // Helpers
     // ------------------------------
 
-
     private BigDecimal safeBD(BigDecimal x) {
         return x == null ? BigDecimal.ZERO : x;
     }
@@ -226,30 +195,4 @@ public class TariffCalculatorService {
     private boolean isPositive(BigDecimal x) {
         return x != null && x.compareTo(BigDecimal.ZERO) > 0;
     }
-
-
-    //removed to CountryProfileService later
-    private ValuationBasis resolveValuationBasis(String importingCountry, String override) {
-        if (override != null) {
-            String up = override.trim().toUpperCase();
-            if ("CIF".equals(up)) return ValuationBasis.CIF;
-            if ("TRANSACTION".equals(up)) return ValuationBasis.TRANSACTION;
-        }
-        var cp = countryProfileRepository.findByCountryCode(importingCountry);
-//        if (cp != null && cp.getValuationBasis() != null) return cp.getValuationBasis();
-        return ValuationBasis.CIF;
-    }
-
-    private BigDecimal resolveVatRate(String importingCountry, BigDecimal override) {
-        if (override != null) return override;
-        var cp = countryProfileRepository.findByCountryCode(importingCountry);
-        if (cp != null && cp.getVatOrGstRate() != null) return cp.getVatOrGstRate();
-        return BigDecimal.ZERO;
-    }
-
-    private boolean resolveVatIncludesDuties(String importingCountry) {
-        var cp = countryProfileRepository.findByCountryCode(importingCountry);
-        return cp == null || cp.getVatIncludesDuties(); // default true
-    }
-
 }
