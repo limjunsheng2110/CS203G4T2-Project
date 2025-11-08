@@ -4,7 +4,7 @@ import com.cs203.tariffg4t2.dto.request.UserRequestDTO;
 import com.cs203.tariffg4t2.dto.request.UserUpdateRequestDTO;
 import com.cs203.tariffg4t2.dto.basic.UserDTO;
 import com.cs203.tariffg4t2.model.basic.User;
-import com.cs203.tariffg4t2.repository.UserRepository;
+import com.cs203.tariffg4t2.repository.basic.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;

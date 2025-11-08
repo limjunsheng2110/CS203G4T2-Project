@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import com.cs203.tariffg4t2.dto.request.TariffCalculationRequestDTO;
 
 import java.math.BigDecimal;
-import java.util.Objects;
+import java.math.RoundingMode;
 
 @Service
 public class ShippingCostService {
@@ -15,50 +15,25 @@ public class ShippingCostService {
     @Autowired
     private ShippingService shippingService;
 
+    /**
+     * Calculate shipping cost using flat rates from database
+     * The flat rate (e.g., $10, $15) is applied directly as the shipping cost
+     * Only supports AIR and SEA modes
+     */
     public BigDecimal calculateShippingCost(TariffCalculationRequestDTO request) {
+        // Get flat shipping rate based on shipping mode and country pair
+        BigDecimal shippingRate = shippingService.getShippingRate(
+                request.getShippingMode(),
+                request.getImportingCountry(),
+                request.getExportingCountry()
+        );
 
-
-        //find shippingCost using the ShippingCost Entity
-        //air rate, sea rate, land rate
-        //air rate would be something like 0.3, so if its 0.3 then it would be like 0.3 dollars per kg
-        //so if its 10kg it would be 3 dollars
-        //so we would need to get the shipping mode from the request
-        //then we would need to get the importing country and exporting country from the request
-        //then we would need to get the quantity
-        //distance is baked into shipping rate, so pairs of countries further apart would have higher rates.
-        BigDecimal shippingCostRate = shippingService.getShippingRate(
-                request.getShippingMode(), request.getImportingCountry(), request.getExportingCountry());
-
-        if (shippingCostRate == null) {
-            return new BigDecimal(0);
+        // If no shipping rate found or no shipping mode specified, return zero
+        if (shippingRate == null) {
+            return BigDecimal.ZERO;
         }
 
-        if (Objects.equals(request.getShippingMode(), "LAND")) {
-
-            //no existent of landrate, return error
-            if (shippingCostRate.compareTo(BigDecimal.ZERO) == 0) {
-                throw new IllegalArgumentException("No land shipping route between " + request.getImportingCountry() + " and " + request.getExportingCountry());
-            }
-            BigDecimal distance = shippingService.getDistance(request.getImportingCountry(), request.getExportingCountry());
-            Integer numberofHeads = request.getHeads();
-
-
-            // Calculate shipping cost based on distance and weight (total Weight)
-            BigDecimal shippingCost = shippingCostRate.multiply(distance).multiply(request.getWeight());
-
-            System.out.println("Distance: " + distance);
-            System.out.println("Shipping Cost Rate: " + shippingCostRate);
-            System.out.println("Quantity: " + request.getWeight());
-            System.out.println("Calculated Shipping Cost for land: " + shippingCost);
-
-            return shippingCost.setScale(2, BigDecimal.ROUND_HALF_UP);
-        }
-
-        // Calculate shipping cost based on WEIGHT only for air and sea
-        //air and sea is simpler, just rate * weight
-        BigDecimal shippingCost = shippingCostRate.multiply(request.getWeight());
-        return shippingCost.setScale(2, BigDecimal.ROUND_HALF_UP);
+        // Return the flat rate as the shipping cost
+        return shippingRate.setScale(2, RoundingMode.HALF_UP);
     }
 }
-
-

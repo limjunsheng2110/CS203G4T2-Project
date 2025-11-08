@@ -27,6 +27,7 @@ const App = () => {
     value: '',
     quantity: '',
     unit: '',
+    year: '',
     shippingMode: ''
   });
 
@@ -72,6 +73,7 @@ const App = () => {
       value: '',
       quantity: '',
       unit: '',
+      year: '',
       shippingMode: ''
     });
   };
@@ -124,6 +126,7 @@ const App = () => {
         exportCountry: formData.exportCountry,
         hsCode: formData.hsCode,
         value: formData.value,
+        year: formData.year ? parseInt(formData.year) : null,
         shippingMode: formData.shippingMode
       });
 

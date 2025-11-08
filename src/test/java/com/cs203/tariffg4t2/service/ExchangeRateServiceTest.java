@@ -49,8 +49,8 @@ class ExchangeRateServiceTest {
     @BeforeEach
     void setUp() {
         // Set up test data
-        usCountry = new Country("US", "United States", "USA");
-        cnCountry = new Country("CN", "China", "CHN");
+        usCountry = new Country("US", "United States", "USA", null);
+        cnCountry = new Country("CN", "China", "CHN", null);
 
         currentRate = new ExchangeRate();
         currentRate.setFromCurrency("CNY");
@@ -65,7 +65,7 @@ class ExchangeRateServiceTest {
             ExchangeRate rate = new ExchangeRate();
             rate.setFromCurrency("CNY");
             rate.setToCurrency("USD");
-            rate.setRate(new BigDecimal("0.138").add(new BigDecimal(Math.random() * 0.01)));
+            rate.setRate(new BigDecimal("0.138").add(BigDecimal.valueOf(Math.random() * 0.01)));
             rate.setRateDate(startDate.plusDays(i));
             historicalRates.add(rate);
         }
@@ -109,7 +109,7 @@ class ExchangeRateServiceTest {
         assertNotNull(response.getRecommendedPurchaseDate());
         assertNotNull(response.getRecommendation());
         assertNotNull(response.getTrendAnalysis());
-        assertTrue(response.getHistoricalRates().size() > 0);
+        assertFalse(response.getHistoricalRates().isEmpty()); // Should contain historical data
 
         // Verify interactions
         verify(countryRepository, times(1)).findById("US");
@@ -131,9 +131,8 @@ class ExchangeRateServiceTest {
         when(countryRepository.findById("CN")).thenReturn(Optional.of(cnCountry));
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> {
-            exchangeRateService.analyzeExchangeRates(request);
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            exchangeRateService.analyzeExchangeRates(request));
     }
 
     @Test
@@ -149,9 +148,8 @@ class ExchangeRateServiceTest {
         when(currencyCodeService.getCurrencyCode("US")).thenReturn(null); // No currency mapping
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> {
-            exchangeRateService.analyzeExchangeRates(request);
-        });
+        assertThrows(IllegalArgumentException.class, () ->
+            exchangeRateService.analyzeExchangeRates(request));
     }
 
     @Test
@@ -173,9 +171,8 @@ class ExchangeRateServiceTest {
             .thenReturn(new ArrayList<>()); // Empty list
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> {
-            exchangeRateService.analyzeExchangeRates(request);
-        });
+        assertThrows(RuntimeException.class, () ->
+            exchangeRateService.analyzeExchangeRates(request));
     }
 
     @Test
@@ -285,4 +282,3 @@ class ExchangeRateServiceTest {
         assertEquals("decreasing", response.getTrendAnalysis());
     }
 }
-

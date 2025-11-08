@@ -42,16 +42,124 @@ public class TariffRateCRUDService {
         logger.debug("Looking up tariff rate for HS: {}, importing: {}, exporting: {}",
                 hsCode, importingCountryCode, exportingCountryCode);
 
-        Optional<TariffRate> result = tariffRateRepository.findByHsCodeAndImportingCountryCodeAndExportingCountryCode(
+        List<TariffRate> results = tariffRateRepository.findByHsCodeAndImportingCountryCodeAndExportingCountryCode(
                 hsCode, importingCountryCode, exportingCountryCode);
 
-        if (result.isPresent()) {
-            logger.debug("Found tariff rate with ID: {}", result.get().getId());
+        if (!results.isEmpty()) {
+            // Return the most recent year or first result
+            TariffRate result = results.stream()
+                .sorted((a, b) -> {
+                    if (a.getYear() == null && b.getYear() == null) return 0;
+                    if (a.getYear() == null) return 1;
+                    if (b.getYear() == null) return -1;
+                    return b.getYear().compareTo(a.getYear()); // Most recent first
+                })
+                .findFirst()
+                .orElse(results.get(0));
+
+            logger.debug("Found tariff rate with ID: {}, year: {}", result.getId(), result.getYear());
+            return Optional.of(result);
         } else {
             logger.debug("No tariff rate found for given parameters");
         }
 
-        return result;
+        return Optional.empty();
+    }
+
+    /**
+     * Get all tariff rates by details (for multiple years)
+     * Returns list sorted by year with requested year first, then other years
+     */
+    public List<TariffRate> getAllTariffRatesByDetails(String hsCode, String importingCountryCode, String exportingCountryCode, Integer requestedYear) {
+        logger.debug("Looking up all tariff rates for HS: {}, importing: {}, exporting: {}, requested year: {}",
+                hsCode, importingCountryCode, exportingCountryCode, requestedYear);
+
+        List<TariffRate> results = tariffRateRepository.findByHsCodeAndImportingCountryCodeAndExportingCountryCode(
+                hsCode, importingCountryCode, exportingCountryCode);
+
+        if (results.isEmpty()) {
+            logger.debug("No tariff rates found for given parameters");
+            return results;
+        }
+
+        // Sort results: requested year first, then by year descending
+        results.sort((a, b) -> {
+            Integer yearA = a.getYear();
+            Integer yearB = b.getYear();
+
+            // Requested year gets priority
+            if (requestedYear != null) {
+                boolean aIsRequested = requestedYear.equals(yearA);
+                boolean bIsRequested = requestedYear.equals(yearB);
+
+                if (aIsRequested && !bIsRequested) return -1;
+                if (!aIsRequested && bIsRequested) return 1;
+            }
+
+            // Otherwise sort by year descending (most recent first)
+            if (yearA == null && yearB == null) return 0;
+            if (yearA == null) return 1;
+            if (yearB == null) return -1;
+            return yearB.compareTo(yearA);
+        });
+
+        logger.debug("Found {} tariff rate(s)", results.size());
+        return results;
+    }
+
+    /**
+     * Get tariff rate by details with year-aware logic
+     * If year is specified, try exact match first, then find closest year
+     * If year is null, use the original method
+     */
+    public Optional<TariffRate> getTariffRateByDetails(String hsCode, String importingCountryCode, String exportingCountryCode, Integer year) {
+        if (year == null) {
+            // No year specified, use original method
+            return getTariffRateByDetails(hsCode, importingCountryCode, exportingCountryCode);
+        }
+
+        logger.debug("Looking up tariff rate for HS: {}, importing: {}, exporting: {}, year: {}",
+                hsCode, importingCountryCode, exportingCountryCode, year);
+
+        // Try exact match with year
+        Optional<TariffRate> exactMatch = tariffRateRepository.findByHsCodeAndImportingCountryCodeAndExportingCountryCodeAndYear(
+                hsCode, importingCountryCode, exportingCountryCode, year);
+
+        if (exactMatch.isPresent()) {
+            logger.debug("Found exact year match with ID: {}", exactMatch.get().getId());
+            return exactMatch;
+        }
+
+        // Try to find closest year
+        logger.debug("Exact year not found, searching for closest year...");
+        List<TariffRate> closestYearRates = tariffRateRepository.findClosestYearTariffRate(
+                hsCode, importingCountryCode, exportingCountryCode, year);
+
+        if (!closestYearRates.isEmpty()) {
+            TariffRate closest = closestYearRates.get(0);
+            logger.info("Found closest year match: requested year={}, found year={}, ID={}",
+                    year, closest.getYear(), closest.getId());
+            return Optional.of(closest);
+        }
+
+        logger.debug("No tariff rate found for any year");
+        return Optional.empty();
+    }
+
+    /**
+     * Get tariff rate by HS code only (broad match)
+     */
+    public Optional<TariffRate> getTariffRateByHsCode(String hsCode) {
+        logger.debug("Looking up tariff rate by HS code only: {}", hsCode);
+        List<TariffRate> rates = tariffRateRepository.findByHsCodeAndImportingCountryCodeAndExportingCountryCodeOrderByYearDesc(
+                hsCode, null, null);
+
+        if (!rates.isEmpty()) {
+            logger.debug("Found tariff rate with ID: {}", rates.get(0).getId());
+            return Optional.of(rates.get(0));
+        }
+
+        return Optional.empty();
     }
 
     public void deleteTariffRate(Long id) {
@@ -64,22 +172,21 @@ public class TariffRateCRUDService {
 
     public TariffRate updateTariffRate(Long id, TariffRateDTO tariffRateDto) {
         logger.debug("Updating tariff rate with ID: {}", id);
-        logger.debug("Received DTO: hsCode={}, importingCountryCode={}, exportingCountryCode={}, baseRate={}, date={}",
+        logger.debug("Received DTO: hsCode={}, importingCountryCode={}, exportingCountryCode={}, baseRate={}",
                     tariffRateDto.getHsCode(),
                     tariffRateDto.getImportingCountryCode(),
                     tariffRateDto.getExportingCountryCode(),
-                    tariffRateDto.getBaseRate(),
-                    tariffRateDto.getDate());
+                    tariffRateDto.getBaseRate());
 
         TariffRate existingRate = tariffRateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("TariffRate not found with id: " + id));
 
-        logger.debug("Existing rate before update: hsCode={}, importingCountryCode={}, exportingCountryCode={}, adValoremRate={}, date={}",
+        logger.debug("Existing rate before update: hsCode={}, importingCountryCode={}, exportingCountryCode={}, adValoremRate={}, year={}",
                     existingRate.getHsCode(),
                     existingRate.getImportingCountryCode(),
                     existingRate.getExportingCountryCode(),
                     existingRate.getAdValoremRate(),
-                    existingRate.getDate());
+                    existingRate.getYear());
 
         // Validate and update fields
         if (tariffRateDto.getHsCode() != null && !tariffRateDto.getHsCode().trim().isEmpty()) {
@@ -110,18 +217,19 @@ public class TariffRateCRUDService {
             logger.debug("Updated adValoremRate to: {}", tariffRateDto.getBaseRate());
         }
 
-        if (tariffRateDto.getDate() != null && !tariffRateDto.getDate().trim().isEmpty()) {
-            existingRate.setDate(tariffRateDto.getDate().trim());
-            logger.debug("Updated date to: {}", tariffRateDto.getDate());
+        // Update year if provided
+        if (tariffRateDto.getYear() != null) {
+            existingRate.setYear(tariffRateDto.getYear());
+            logger.debug("Updated year to: {}", tariffRateDto.getYear());
         }
 
         TariffRate savedRate = tariffRateRepository.save(existingRate);
-        logger.debug("Saved rate: hsCode={}, importingCountryCode={}, exportingCountryCode={}, adValoremRate={}, date={}",
+        logger.debug("Saved rate: hsCode={}, importingCountryCode={}, exportingCountryCode={}, adValoremRate={}, year={}",
                     savedRate.getHsCode(),
                     savedRate.getImportingCountryCode(),
                     savedRate.getExportingCountryCode(),
                     savedRate.getAdValoremRate(),
-                    savedRate.getDate());
+                    savedRate.getYear());
 
         return savedRate;
     }
@@ -171,7 +279,6 @@ public class TariffRateCRUDService {
         entity.setImportingCountryCode(dto.getImportingCountryCode().trim().toUpperCase());
         entity.setExportingCountryCode(dto.getExportingCountryCode().trim().toUpperCase());
         entity.setAdValoremRate(dto.getBaseRate());
-        entity.setDate(dto.getDate());
         return entity;
     }
 }

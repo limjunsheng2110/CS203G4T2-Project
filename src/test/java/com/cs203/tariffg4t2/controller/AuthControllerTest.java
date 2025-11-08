@@ -3,7 +3,7 @@ package com.cs203.tariffg4t2.controller;
 import com.cs203.tariffg4t2.dto.auth.LoginRequest;
 import com.cs203.tariffg4t2.dto.auth.RegisterRequest;
 import com.cs203.tariffg4t2.model.basic.User;
-import com.cs203.tariffg4t2.repository.UserRepository;
+import com.cs203.tariffg4t2.repository.basic.UserRepository;
 import com.cs203.tariffg4t2.security.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;

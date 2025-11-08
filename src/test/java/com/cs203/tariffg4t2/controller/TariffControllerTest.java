@@ -50,6 +50,7 @@ public class TariffControllerTest {
                 .freight(new BigDecimal("200.00"))
                 .insurance(new BigDecimal("50.00"))
                 .heads(100)
+                .weight(new BigDecimal("50.00"))
                 .build();
 
         // Setup mock result using the actual DTO builder
@@ -60,14 +61,13 @@ public class TariffControllerTest {
                 .productValue(new BigDecimal("10000.00"))
                 .customsValue(new BigDecimal("10250.00"))
                 .baseDuty(new BigDecimal("512.50"))
-                .additionalDuties(BigDecimal.ZERO)
                 .vatOrGst(new BigDecimal("756.38"))
                 .shippingCost(new BigDecimal("200.00"))
                 .tariffAmount(new BigDecimal("512.50"))
                 .totalCost(new BigDecimal("11718.88"))
                 .adValoremRate(new BigDecimal("0.05"))
                 .calculationDate(LocalDateTime.now())
-                .date("2024-11-01")
+                .year(2024)
                 .build();
     }
 
@@ -101,6 +101,8 @@ public class TariffControllerTest {
                 .exportingCountry("US")
                 .hsCode("010329")
                 .productValue(new BigDecimal("5000.00"))
+                .heads(100)
+                .weight(new BigDecimal("25.00"))
                 .build();
 
         TariffCalculationResultDTO minimalResult = TariffCalculationResultDTO.builder()
@@ -110,7 +112,6 @@ public class TariffControllerTest {
                 .productValue(new BigDecimal("5000.00"))
                 .customsValue(new BigDecimal("5000.00"))
                 .baseDuty(new BigDecimal("250.00"))
-                .additionalDuties(BigDecimal.ZERO)
                 .vatOrGst(new BigDecimal("367.50"))
                 .shippingCost(BigDecimal.ZERO)
                 .tariffAmount(new BigDecimal("250.00"))
@@ -190,36 +191,6 @@ public class TariffControllerTest {
     }
 
     @Test
-    void testCalculateTariff_WithAdditionalDuties() throws Exception {
-        // given - result with additional duties (Section 301, Anti-Dumping, etc.)
-        TariffCalculationResultDTO resultWithAdditional = TariffCalculationResultDTO.builder()
-                .importingCountry("US")
-                .exportingCountry("CN")
-                .hsCode("010329")
-                .productValue(new BigDecimal("10000.00"))
-                .customsValue(new BigDecimal("10250.00"))
-                .baseDuty(new BigDecimal("512.50"))
-                .additionalDuties(new BigDecimal("2050.00")) // Section 301: 20%
-                .vatOrGst(BigDecimal.ZERO)
-                .shippingCost(new BigDecimal("200.00"))
-                .tariffAmount(new BigDecimal("2562.50"))
-                .totalCost(new BigDecimal("13012.50"))
-                .calculationDate(LocalDateTime.now())
-                .build();
-
-        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
-                .thenReturn(resultWithAdditional);
-
-        // when and then
-        mockMvc.perform(post("/api/tariff/calculate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.additionalDuties").value(2050.00))
-                .andExpect(jsonPath("$.tariffAmount").value(2562.50));
-    }
-
-    @Test
     void testCalculateTariff_WithFreightAndInsurance() throws Exception {
         // given
         when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
@@ -256,6 +227,8 @@ public class TariffControllerTest {
                 .exportingCountry("US")
                 .hsCode("010329")
                 .productValue(new BigDecimal("999999999.99"))
+                .heads(100)
+                .weight(new BigDecimal("1000.00"))
                 .build();
 
         TariffCalculationResultDTO largeValueResult = TariffCalculationResultDTO.builder()
@@ -265,7 +238,6 @@ public class TariffControllerTest {
                 .productValue(new BigDecimal("999999999.99"))
                 .customsValue(new BigDecimal("999999999.99"))
                 .baseDuty(new BigDecimal("49999999.99"))
-                .additionalDuties(BigDecimal.ZERO)
                 .vatOrGst(new BigDecimal("73499999.99"))
                 .shippingCost(BigDecimal.ZERO)
                 .tariffAmount(new BigDecimal("49999999.99"))
@@ -284,4 +256,3 @@ public class TariffControllerTest {
                 .andExpect(jsonPath("$.totalCost").exists());
     }
 }
-

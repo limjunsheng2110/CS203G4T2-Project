@@ -404,11 +404,21 @@ public class CountryService {
                 ? apiResponse.getName().getCommon() : "Unknown";
             String iso3Code = apiResponse.getIso3Code() != null ? apiResponse.getIso3Code() : null;
 
-            return new Country(code, name, iso3Code);
+            Country country = new Country();
+            country.setCountryCode(code);
+            country.setCountryName(name);
+            country.setIso3Code(iso3Code);
+            country.setVatRate(null); // VAT rate will be set separately if available
+            return country;
 
         } catch (Exception e) {
             System.err.println("Error mapping country: " + e.getMessage());
-            return new Country("ERR", "Error Country", null);
+            Country errorCountry = new Country();
+            errorCountry.setCountryCode("ERR");
+            errorCountry.setCountryName("Error Country");
+            errorCountry.setIso3Code(null);
+            errorCountry.setVatRate(null);
+            return errorCountry;
         }
     }
 
