@@ -68,19 +68,19 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-purple-950 to-black px-4">
       <div className="max-w-md w-full space-y-8">
         {/* Logo/Header */}
         <div className="text-center">
           <img
             src="/TariffNomLogo.png"
             alt="TariffNom Logo"
-            className="mx-auto h-24 w-auto"
+            className="mx-auto w-[480px] h-auto"
           />
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
-            Welcome Back
+          <h2 className="mt-6 text-[4.5rem] font-extrabold text-white">
+            Welcome!
           </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-[1.2rem] text-gray-400">
             Sign in to calculate tariffs
           </p>
         </div>
@@ -90,7 +90,7 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
           <div className="rounded-md shadow-sm space-y-4">
             {/* Username */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-1">
                 Username
               </label>
               <input
@@ -100,7 +100,7 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
                 required
                 value={formData.username}
                 onChange={handleInputChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 sm:text-sm"
+                className="appearance-none relative block w-full px-3 py-2 border border-zinc-700 placeholder-gray-500 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-zinc-800 sm:text-sm"
                 placeholder="Enter your username"
                 disabled={isLoading}
               />
@@ -108,7 +108,7 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
                 Password
               </label>
               <input
@@ -118,7 +118,7 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
                 required
                 value={formData.password}
                 onChange={handleInputChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 sm:text-sm"
+                className="appearance-none relative block w-full px-3 py-2 border border-zinc-700 placeholder-gray-500 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-zinc-800 sm:text-sm"
                 placeholder="Enter your password"
                 disabled={isLoading}
               />
@@ -127,7 +127,7 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
 
           {/* Error Message */}
           {error && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-4">
+            <div className="rounded-md bg-red-900/30 border border-red-800 p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -135,7 +135,7 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                  <p className="text-sm font-medium text-red-200">
                     {error}
                   </p>
                 </div>
@@ -148,7 +148,7 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (
                 <span className="flex items-center">
@@ -166,12 +166,12 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
 
           {/* Register Link */}
           <div className="text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-400">
               Don't have an account?{' '}
               <button
                 type="button"
                 onClick={onSwitchToRegister}
-                className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                className="font-medium text-purple-400 hover:text-purple-300"
               >
                 Register here
               </button>

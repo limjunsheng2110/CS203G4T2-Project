@@ -14,7 +14,6 @@ const App = () => {
   const [currentPage, setCurrentPage] = useState('login');
   const [authPage, setAuthPage] = useState('login'); // 'login' or 'register'
   const [user, setUser] = useState(null);
-  const [theme, setTheme] = useState('light');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [tariffResults, setTariffResults] = useState(null);
@@ -208,16 +207,14 @@ const App = () => {
 
   // Main app content (only shown when authenticated)
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black">
       <div className="container mx-auto px-4 py-6">
         {/* User Info Component - shows at top of all pages */}
         <UserInfo user={user} onLogout={handleLogout} onAdminClick={handleAdminClick} />
 
         {currentPage === 'home' && (
           <HomePage 
-            onGetStarted={handleGetStarted} 
-            theme={theme} 
-            toggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} 
+            onGetStarted={handleGetStarted}
           />
         )}
 
@@ -227,8 +224,6 @@ const App = () => {
             handleInputChange={handleInputChange}
             handleSearch={handleSearch}
             onBack={handleBackToHome}
-            theme={theme}
-            toggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
             isLoading={isLoading}
             error={error}
             selectedProduct={selectedProduct}
@@ -241,14 +236,12 @@ const App = () => {
             formData={formData}
             selectedProduct={selectedProduct}
             handleBack={handleBack}
-            theme={theme}
-            toggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
           />
         )}
 
         {/* Admin dashboard - only for admin users */}
         {user && user.role === 'ADMIN' && currentPage === 'admin' && (
-          <AdminDashboard onBack={handleBackToHome} theme={theme} />
+          <AdminDashboard onBack={handleBackToHome} />
         )}
       </div>
     </div>

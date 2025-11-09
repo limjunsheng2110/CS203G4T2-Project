@@ -1,24 +1,20 @@
 import React from 'react';
 import { ArrowRight, Zap, Shield, Globe, TrendingDown } from 'lucide-react';
 import { getThemeColours } from '../utils/themeColours';
-import ThemeToggle from './ThemeToggle';
 
-const HomePage = ({ onGetStarted, theme, toggleTheme }) => {
-  const colours = getThemeColours(theme);
+const HomePage = ({ onGetStarted }) => {
+  const colours = getThemeColours();
 
   return (
-    <div className={`min-h-screen ${theme === 'light' ? 'bg-gradient-to-br from-amber-50 via-green-50 to-blue-50' : 'bg-gradient-to-br from-black via-gray-900 to-gray-800'} py-8 px-4`}>
+    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-end mb-4">
-          <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-        </div>
 
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
             <img
               src="/TariffNomLogo.png"
               alt="TariffNom Logo"
-              className="w-96 h-auto"
+              className="w-[768px] h-auto"
             />
           </div>
           
@@ -31,7 +27,7 @@ const HomePage = ({ onGetStarted, theme, toggleTheme }) => {
           
           <button
             onClick={onGetStarted}
-            className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-3 font-semibold text-lg shadow-lg hover:shadow-xl mx-auto"
+            className="px-8 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-3 font-semibold text-lg shadow-lg hover:shadow-xl mx-auto"
           >
             Get Started
             <ArrowRight size={24} />
@@ -94,7 +90,7 @@ const HomePage = ({ onGetStarted, theme, toggleTheme }) => {
           <h2 className={`text-3xl font-bold ${colours.text} mb-8 text-center`}>How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className={`w-12 h-12 rounded-full bg-green-600 text-white flex items-center justify-center text-xl font-bold mx-auto mb-4`}>
+              <div className="w-12 h-12 rounded-full bg-purple-600 text-white flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 1
               </div>
               <h3 className={`text-lg font-semibold ${colours.text} mb-2`}>Enter Trade Details</h3>
@@ -104,7 +100,7 @@ const HomePage = ({ onGetStarted, theme, toggleTheme }) => {
             </div>
 
             <div className="text-center">
-              <div className={`w-12 h-12 rounded-full bg-green-600 text-white flex items-center justify-center text-xl font-bold mx-auto mb-4`}>
+              <div className="w-12 h-12 rounded-full bg-purple-600 text-white flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 2
               </div>
               <h3 className={`text-lg font-semibold ${colours.text} mb-2`}>Calculate Tariffs</h3>
@@ -114,7 +110,7 @@ const HomePage = ({ onGetStarted, theme, toggleTheme }) => {
             </div>
 
             <div className="text-center">
-              <div className={`w-12 h-12 rounded-full bg-green-600 text-white flex items-center justify-center text-xl font-bold mx-auto mb-4`}>
+              <div className="w-12 h-12 rounded-full bg-purple-600 text-white flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 3
               </div>
               <h3 className={`text-lg font-semibold ${colours.text} mb-2`}>Review Results</h3>
@@ -135,7 +131,7 @@ const HomePage = ({ onGetStarted, theme, toggleTheme }) => {
           </p>
           <button
             onClick={onGetStarted}
-            className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-3 font-semibold text-lg shadow-lg hover:shadow-xl mx-auto"
+            className="px-8 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-3 font-semibold text-lg shadow-lg hover:shadow-xl mx-auto"
           >
             Calculate Tariffs Now
             <ArrowRight size={24} />

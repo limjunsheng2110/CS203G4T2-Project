@@ -1,28 +1,25 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { getThemeColours } from '../utils/themeColours';
-import ThemeToggle from './ThemeToggle';
 import ResultCard from './ResultCard';
 import ExchangeRateAnalysis from './ExchangeRateAnalysis';
 
-const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack, theme, toggleTheme }) => {
-  const colours = getThemeColours(theme);
+const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack }) => {
+  const colours = getThemeColours();
 
   // If no results are available, show a message
   if (!tariffResults) {
     return (
-      <div className={`min-h-screen ${colours.resultBg} py-8 px-4`}>
+      <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black py-8 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <button
               onClick={handleBack}
-              className="flex items-center gap-2 text-green-700 hover:text-green-800 font-medium"
+              className="flex items-center gap-2 text-purple-400 hover:text-purple-300 font-medium"
             >
               <ArrowLeft size={20} />
               Back to Search
             </button>
-
-            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
           </div>
 
           <div className="flex justify-center mb-6">
@@ -43,18 +40,16 @@ const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack, the
   }
 
   return (
-    <div className={`min-h-screen ${colours.resultBg} py-8 px-4`}>
+    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black py-8 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={handleBack}
-            className="flex items-center gap-2 text-green-700 hover:text-green-800 font-medium"
+            className="flex items-center gap-2 text-purple-400 hover:text-purple-300 font-medium"
           >
             <ArrowLeft size={20} />
             Back to Search
           </button>
-          
-          <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
         </div>
 
         <div className="flex justify-center mb-6">
@@ -69,7 +64,6 @@ const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack, the
         <ExchangeRateAnalysis 
           importingCountry={formData.importCountry}
           exportingCountry={formData.exportCountry}
-          theme={theme}
         />
 
         {/* Tariff Calculation Results */}
@@ -78,7 +72,6 @@ const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack, the
             result={tariffResults}
             formData={formData}
             selectedProduct={selectedProduct}
-            theme={theme}
             colours={colours}
           />
         </div>
@@ -88,7 +81,7 @@ const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack, the
 };
 
 // New component to display tariff calculation results
-const TariffResultCard = ({ result, formData, selectedProduct, theme, colours }) => {
+const TariffResultCard = ({ result, formData, selectedProduct, colours }) => {
   const formatCurrency = (amount) => {
     // Handle null, undefined, or 0
     if (amount === null || amount === undefined || amount === 0) return '$0.00';
@@ -127,7 +120,7 @@ const TariffResultCard = ({ result, formData, selectedProduct, theme, colours })
   return (
     <div className={`${colours.cardBg} rounded-lg shadow-lg border ${colours.border} overflow-hidden`}>
       {/* Header */}
-      <div className="bg-green-600 text-white p-6">
+      <div className="bg-purple-600 text-white p-6">
         <h2 className="text-2xl font-bold mb-4">Tariff Calculation Results</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
           <div>

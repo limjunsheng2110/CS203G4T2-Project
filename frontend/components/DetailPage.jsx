@@ -1,27 +1,23 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Search, ArrowLeft } from 'lucide-react';
 import { getThemeColours } from '../utils/themeColours';
-import ThemeToggle from './ThemeToggle';
 import FormField from './FormField';
 import CountrySelect from './CountrySelect';
 import ProductSelect from './ProductSelect';
 
-const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch, theme, toggleTheme, onBack, isLoading, error }) => {
-  const colours = getThemeColours(theme);
+const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch, onBack, isLoading, error }) => {
+  const colours = getThemeColours();
 
   return (
-    <div className={`min-h-screen ${theme === 'light' ? 'bg-amber-50' : 'bg-black'} py-8 px-4`}>
+    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="flex justify-end mb-4">
-          <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-        </div>
         
         <div className="text-center mb-6">
           <div className="flex justify-center">
             <img 
               src="/TariffNomLogo.png"
               alt="TariffNom Logo"
-              className="w-96 h-auto"
+              className="w-[768px] h-auto"
             />
           </div>
         </div>
@@ -137,7 +133,7 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
             />
 
             <div>
-              <label className={`block text-sm font-medium ${colours.textSecondary} mb-2`}>
+              <label className="block text-sm font-medium text-white mb-2">
                 Shipping Mode <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -164,14 +160,15 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
             <button
               onClick={onBack}
               disabled={isLoading}
-              className={`px-6 py-3 border-2 ${colours.buttonBorder} rounded-lg ${colours.textSecondary} ${colours.buttonBorderHover} transition-colors font-medium ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 font-medium shadow-md hover:shadow-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
+              <ArrowLeft size={18} />
               Back
             </button>
             <button
               onClick={handleSearch}
               disabled={isLoading}
-              className={`px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-medium shadow-md hover:shadow-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 font-medium shadow-md hover:shadow-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {isLoading ? (
                 <>
