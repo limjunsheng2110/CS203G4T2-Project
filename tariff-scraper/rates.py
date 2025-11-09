@@ -36,7 +36,7 @@ def extract_tariff_data_from_url(url: str, import_code: str, export_code: str) -
 
     try:
         page_response = requests.get(url, timeout=15)
-        page_response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+    if not openai_api_key or client is None:
     except requests.RequestException as e:
         raise Exception(f"Failed to fetch data from URL: {url} - {e}")
 
@@ -56,6 +56,7 @@ Extract information **only if both conditions are met**:
 2. Actual numeric tariff values or percentages are present
 
 Use this exact format per entry (one block per product):
+
 
 Exporting Country: {export_code}
 Importing Country: {import_code}

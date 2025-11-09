@@ -129,6 +129,7 @@ jobs:
               --network tariff-network \
               -p 5001:5001 \
               --restart unless-stopped \
+              -e OPENAI_API_KEY="${{ secrets.OPENAI_KEY }}" \
               ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
 
             # Deploy Spring Boot Backend
