@@ -1,10 +1,107 @@
-            # Deploy Nginx (if not running or force restart)
+# Deploy Nginx (if not running or force restart)
             if [ "${{ github.event.inputs.force_restart }}" = "true" ] || ! docker ps --format '{{.Names}}' | grep -q "^tariff-nginx$"; then
-              # Create nginx config directory and clean up any existing files
-              echo "📁 Setting up Nginx configuration..."
-              rm -rf /home/ubuntu/nginx
-              mkdir -p /home/ubuntu/nginx
+              echo "🌐 Starting Nginx Reverse Proxy..."
               
-              # Create nginx configuration
-              cat > /home/ubuntu/nginx/nginx.conf << 'EOF'
+              # Create a simple nginx config file in /tmp (same as main workflow)
+              cat > /tmp/nginx.conf << 'EOF'
+events {
+    worker_connections 1024;
+}
 
+http {
+    upstream backend {
+        server tariff-backend:8080;
+    }
+
+    upstream python-scraper {
+        server tariff-scraper:5001;
+    }
+
+    server {
+        listen 80;
+        server_name _;
+
+        # Enable CORS for frontend
+        add_header Access-Control-Allow-Origin "*" always;
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
+
+        # Handle preflight requests
+        if ($request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin "*";
+            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept";
+            add_header Content-Length 0;
+            add_header Content-Type text/plain;
+            return 204;
+        }
+
+        # Backend API routes
+        location /api/ {
+            proxy_pass http://backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Auth routes
+        location /auth/ {
+            proxy_pass http://backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Swagger/OpenAPI routes
+        location /swagger-ui/ {
+            proxy_pass http://backend/swagger-ui/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_redirect off;
+        }
+
+        location /swagger-ui {
+            return 301 /swagger-ui/;
+        }
+
+        location /v3/api-docs {
+            proxy_pass http://backend/v3/api-docs;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Python scraper routes
+        location /scrape/ {
+            proxy_pass http://python-scraper/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Health check
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+    }
+}
+EOF
+
+              echo "🌐 Starting Nginx with config file..."
+              docker run -d \
+                --name tariff-nginx \
+                --network tariff-network \
+                -p 80:80 \
+                -p 443:443 \
+                -v /tmp/nginx.conf:/etc/nginx/nginx.conf:ro \
+                --restart unless-stopped \
+                nginx:alpine
+            fi
