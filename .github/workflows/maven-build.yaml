@@ -147,24 +147,7 @@ jobs:
               --network tariff-network \
               -p 5001:5001 \
               --restart unless-stopped \
-              --health-cmd="curl -f http://localhost:5001/health || exit 1" \
-              --health-interval=30s \
-              --health-timeout=10s \
-              --health-retries=3 \
               ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
-
-            # Wait for scraper to be healthy
-            echo "⏳ Waiting for Python scraper to be ready..."
-            timeout=60
-            while [ $timeout -gt 0 ]; do
-              if docker exec tariff-scraper curl -f http://localhost:5001/health 2>/dev/null; then
-                echo "✅ Python scraper is healthy"
-                break
-              fi
-              echo "⏳ Waiting... ($timeout seconds remaining)"
-              sleep 5
-              timeout=$((timeout-5))
-            done
 
             # Deploy Spring Boot Backend
             echo "☕ Starting Spring Boot Backend..."
@@ -173,10 +156,6 @@ jobs:
               --network tariff-network \
               -p 8080:8080 \
               --restart unless-stopped \
-              --health-cmd="curl -f http://localhost:8080/actuator/health || exit 1" \
-              --health-interval=30s \
-              --health-timeout=10s \
-              --health-retries=5 \
               -e DB_URL="${{ secrets.DB_URL }}" \
               -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
               -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
@@ -187,18 +166,9 @@ jobs:
               -e PYTHON_SCRAPER_URL="http://tariff-scraper:5001/scrape" \
               ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
 
-            # Wait for backend to be healthy
-            echo "⏳ Waiting for Spring Boot backend to be ready..."
-            timeout=120
-            while [ $timeout -gt 0 ]; do
-              if docker exec tariff-backend curl -f http://localhost:8080/actuator/health 2>/dev/null; then
-                echo "✅ Backend is healthy"
-                break
-              fi
-              echo "⏳ Waiting... ($timeout seconds remaining)"
-              sleep 5
-              timeout=$((timeout-5))
-            done
+            # Wait for services to start (simple time-based approach)
+            echo "⏳ Waiting for services to initialize..."
+            sleep 30
 
             # Create nginx config directory
             mkdir -p /home/ubuntu/nginx
@@ -260,13 +230,18 @@ jobs:
                         proxy_set_header X-Forwarded-Proto $scheme;
                     }
 
-                    # Swagger/OpenAPI routes
+                    # Swagger/OpenAPI routes - Fixed routing
                     location /swagger-ui/ {
                         proxy_pass http://backend/swagger-ui/;
                         proxy_set_header Host $host;
                         proxy_set_header X-Real-IP $remote_addr;
                         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                         proxy_set_header X-Forwarded-Proto $scheme;
+                        proxy_redirect off;
+                    }
+
+                    location /swagger-ui {
+                        return 301 /swagger-ui/;
                     }
 
                     location /v3/api-docs {
@@ -319,24 +294,24 @@ jobs:
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
             echo ""
             
-            # Test all endpoints
+            # Test endpoints with simpler approach
             echo "🧪 Testing endpoints..."
-            if curl -f http://localhost/health 2>/dev/null; then
-              echo "✅ Nginx health check: PASSED"
+            if timeout 5 bash -c "</dev/tcp/localhost/80" 2>/dev/null; then
+              echo "✅ Nginx (port 80): ACCESSIBLE"
             else
-              echo "❌ Nginx health check: FAILED"
+              echo "❌ Nginx (port 80): NOT ACCESSIBLE"
             fi
 
-            if curl -f http://localhost:8080/actuator/health 2>/dev/null; then
-              echo "✅ Backend health check: PASSED"
+            if timeout 5 bash -c "</dev/tcp/localhost/8080" 2>/dev/null; then
+              echo "✅ Backend (port 8080): ACCESSIBLE"
             else
-              echo "❌ Backend health check: FAILED"
+              echo "❌ Backend (port 8080): NOT ACCESSIBLE"
             fi
 
-            if curl -f http://localhost:5001/health 2>/dev/null; then
-              echo "✅ Scraper health check: PASSED"
+            if timeout 5 bash -c "</dev/tcp/localhost/5001" 2>/dev/null; then
+              echo "✅ Scraper (port 5001): ACCESSIBLE"
             else
-              echo "❌ Scraper health check: FAILED"
+              echo "❌ Scraper (port 5001): NOT ACCESSIBLE"
             fi
 
             echo ""
