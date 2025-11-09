@@ -151,7 +151,7 @@ jobs:
 
             # Wait for services to start (simple time-based approach)
             echo "⏳ Waiting for services to initialize..."
-            sleep 30
+            sleep 60
 
             # Create nginx config with simpler approach that works reliably
             echo "🌐 Starting Nginx Reverse Proxy..."
