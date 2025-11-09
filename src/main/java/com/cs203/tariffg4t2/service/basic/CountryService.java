@@ -422,34 +422,6 @@ public class CountryService {
         }
     }
 
-    private String extractFirstCurrency(Object currencies) {
-        try {
-            if (currencies == null) {
-                return "Unknown";
-            }
-
-            // Handle if currencies is a Map (which it usually is from JSON)
-            if (currencies instanceof Map) {
-                Map<?, ?> currencyMap = (Map<?, ?>) currencies;
-                if (!currencyMap.isEmpty()) {
-                    // Get the first currency code (key)
-                    return currencyMap.keySet().iterator().next().toString();
-                }
-            }
-
-            // Fallback for string representation
-            String currencyStr = currencies.toString();
-            if (currencyStr.contains("=")) {
-                return currencyStr.split("=")[0].replace("{", "").trim();
-            }
-
-            return "Unknown";
-        } catch (Exception e) {
-            System.err.println("Error extracting currency: " + e.getMessage());
-            return "Unknown";
-        }
-    }
-
     public boolean deleteCountryByCode(String code) {
         if (code == null || code.isEmpty()) {
             throw new IllegalArgumentException("Country code cannot be null or empty");

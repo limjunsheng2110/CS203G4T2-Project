@@ -1,16 +1,12 @@
 package com.cs203.tariffg4t2.controller;
 
 import com.cs203.tariffg4t2.dto.request.TariffCalculationRequestDTO;
-import com.cs203.tariffg4t2.dto.response.TariffCalculationResponseDTO;
 import com.cs203.tariffg4t2.dto.response.TariffCalculationResultDTO;
 import com.cs203.tariffg4t2.service.tariffLogic.TariffCalculatorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-// If your project uses a global prefix like @RequestMapping("/api"), keep it.
-// Otherwise this class-level mapping is fine:
+
 @RestController
 @RequestMapping("/api/tariff")
 @CrossOrigin(origins = "*")
