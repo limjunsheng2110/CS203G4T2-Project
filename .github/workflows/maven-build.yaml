@@ -70,15 +70,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
 
-          # 🚨 INJECT APPLICATION SECRETS AS BUILD ARGUMENTS 🚨
-          # These are mapped from GitHub Secrets to ARGs in your Dockerfile
-          build-args: |
-            SPRING_DATASOURCE_URL=${{ secrets.DB_URL }}
-            SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
-            SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
-            OPENAI_API_KEY=${{ secrets.OPENAI_KEY }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            OPENEXCHANGERATES_API_KEY=${{ secrets.OPENEXCHANGERATES_API_KEY }}
 
       # -----------------------------------------------------------------------
       # 4. BUILD AND PUSH PYTHON SCRAPER IMAGE

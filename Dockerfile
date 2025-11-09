@@ -13,19 +13,7 @@ RUN mvn clean package -DskipTests
 # --------------------------------------------------------------------------
 FROM eclipse-temurin:21-jre-alpine AS runtime
 
-# Define ARG variables to receive secrets from GitHub Actions build-args
-ARG SPRING_DATASOURCE_URL
-ARG SPRING_DATASOURCE_USERNAME
-ARG SPRING_DATASOURCE_PASSWORD
-ARG OPENAI_API_KEY
-
 WORKDIR /app
-
-# Convert the ARG values into ENV variables for the running container
-ENV SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL
-ENV SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME
-ENV SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD
-ENV OPENAI_API_KEY=$OPENAI_API_KEY
 
 # Copy the JAR artifact from the 'builder' stage
 COPY --from=builder /app/target/tariffg4t2-0.0.1-SNAPSHOT.jar app.jar
@@ -34,4 +22,5 @@ COPY --from=builder /app/target/tariffg4t2-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 
 # Define the command to run the app
+# All environment variables will be passed at runtime via docker run -e flags
 ENTRYPOINT ["java", "-jar", "app.jar"]
