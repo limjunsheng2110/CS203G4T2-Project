@@ -13,10 +13,15 @@ try:
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     if not openai_api_key:
         print("Warning: OPENAI_API_KEY environment variable not set. OpenAI functions will fail.")
-    client = OpenAI(api_key=openai_api_key)
+        client = None
+    else:
+        client = OpenAI(api_key=openai_api_key)
 except ImportError:
     print("Error: Required 'openai' library is missing. Run: pip install openai")
-    sys.exit(1)
+    client = None
+except Exception as e:
+    print(f"Error initializing OpenAI client: {e}")
+    client = None
 
 
 # ==================================
@@ -31,12 +36,12 @@ def extract_tariff_data_from_url(url: str, import_code: str, export_code: str) -
     print(f"-> Extracting Chapter 1 (HS 01) data from: {url}")
     print(f"-> Expected: {export_code} exporting TO {import_code} importing")
 
-    if not openai_api_key:
+    if not openai_api_key or client is None:
          raise Exception("OpenAI API Key is missing. Cannot perform data extraction.")
 
     try:
         page_response = requests.get(url, timeout=15)
-    if not openai_api_key or client is None:
+        page_response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
     except requests.RequestException as e:
         raise Exception(f"Failed to fetch data from URL: {url} - {e}")
 
