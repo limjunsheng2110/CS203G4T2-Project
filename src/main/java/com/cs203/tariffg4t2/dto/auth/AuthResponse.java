@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -13,7 +12,10 @@ import lombok.NoArgsConstructor;
 public class AuthResponse {
     
     private String accessToken;
+    
+    @Builder.Default
     private String tokenType = "Bearer";
+    
     private Long expiresIn; // shud be milliseconds
     private UserInfo user;
 
