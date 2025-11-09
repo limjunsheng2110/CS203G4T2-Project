@@ -58,9 +58,9 @@ const HomePage = ({ onGetStarted, theme, toggleTheme }) => {
                 <Zap className="text-blue-600" size={32} />
               </div>
             </div>
-            <h3 className={`text-lg font-semibold ${colours.text} mb-2`}>Instant Results</h3>
+            <h3 className={`text-lg font-semibold ${colours.text} mb-2`}>Live Updates</h3>
             <p className={`text-sm ${colours.textMuted}`}>
-              Get accurate tariff calculations in seconds
+              Live updated tariffs based on requests
             </p>
           </div>
 
