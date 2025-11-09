@@ -49,6 +49,10 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
 
+                // Health check endpoints (needed for Docker health checks)
+                .requestMatchers("/actuator/health/**").permitAll()
+                .requestMatchers("/health").permitAll()
+
                 // Public read-only endpoints for reference data
                 .requestMatchers("/api/countries/**").permitAll()
                 .requestMatchers("/api/exchange-rates/**").permitAll()

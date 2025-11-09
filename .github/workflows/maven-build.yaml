@@ -136,27 +136,47 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
             docker pull nginx:alpine
 
-            # Stop and remove existing containers
-            docker stop tariff-backend tariff-scraper tariff-nginx || true
-            docker rm tariff-backend tariff-scraper tariff-nginx || true
+            # Stop and remove existing containers gracefully
+            docker stop tariff-nginx tariff-backend tariff-scraper 2>/dev/null || true
+            docker rm tariff-nginx tariff-backend tariff-scraper 2>/dev/null || true
 
             # Deploy Python Scraper first
+            echo "🐍 Starting Python Scraper..."
             docker run -d \
               --name tariff-scraper \
               --network tariff-network \
               -p 5001:5001 \
               --restart unless-stopped \
+              --health-cmd="curl -f http://localhost:5001/health || exit 1" \
+              --health-interval=30s \
+              --health-timeout=10s \
+              --health-retries=3 \
               ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
 
-            # Wait for scraper to be ready
-            sleep 10
+            # Wait for scraper to be healthy
+            echo "⏳ Waiting for Python scraper to be ready..."
+            timeout=60
+            while [ $timeout -gt 0 ]; do
+              if docker exec tariff-scraper curl -f http://localhost:5001/health 2>/dev/null; then
+                echo "✅ Python scraper is healthy"
+                break
+              fi
+              echo "⏳ Waiting... ($timeout seconds remaining)"
+              sleep 5
+              timeout=$((timeout-5))
+            done
 
             # Deploy Spring Boot Backend
+            echo "☕ Starting Spring Boot Backend..."
             docker run -d \
               --name tariff-backend \
               --network tariff-network \
               -p 8080:8080 \
               --restart unless-stopped \
+              --health-cmd="curl -f http://localhost:8080/actuator/health || exit 1" \
+              --health-interval=30s \
+              --health-timeout=10s \
+              --health-retries=5 \
               -e DB_URL="${{ secrets.DB_URL }}" \
               -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
               -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
@@ -167,8 +187,18 @@ jobs:
               -e PYTHON_SCRAPER_URL="http://tariff-scraper:5001/scrape" \
               ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
 
-            # Wait for backend to be ready
-            sleep 15
+            # Wait for backend to be healthy
+            echo "⏳ Waiting for Spring Boot backend to be ready..."
+            timeout=120
+            while [ $timeout -gt 0 ]; do
+              if docker exec tariff-backend curl -f http://localhost:8080/actuator/health 2>/dev/null; then
+                echo "✅ Backend is healthy"
+                break
+              fi
+              echo "⏳ Waiting... ($timeout seconds remaining)"
+              sleep 5
+              timeout=$((timeout-5))
+            done
 
             # Create nginx config directory
             mkdir -p /home/ubuntu/nginx
@@ -216,6 +246,9 @@ jobs:
                         proxy_set_header X-Real-IP $remote_addr;
                         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                         proxy_set_header X-Forwarded-Proto $scheme;
+                        proxy_connect_timeout 60s;
+                        proxy_send_timeout 60s;
+                        proxy_read_timeout 60s;
                     }
             
                     # Auth routes
@@ -229,7 +262,7 @@ jobs:
 
                     # Swagger/OpenAPI routes
                     location /swagger-ui/ {
-                        proxy_pass http://backend;
+                        proxy_pass http://backend/swagger-ui/;
                         proxy_set_header Host $host;
                         proxy_set_header X-Real-IP $remote_addr;
                         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -237,7 +270,7 @@ jobs:
                     }
 
                     location /v3/api-docs {
-                        proxy_pass http://backend;
+                        proxy_pass http://backend/v3/api-docs;
                         proxy_set_header Host $host;
                         proxy_set_header X-Real-IP $remote_addr;
                         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -267,6 +300,7 @@ jobs:
             EOF
 
             # Deploy Nginx Reverse Proxy
+            echo "🌐 Starting Nginx Reverse Proxy..."
             docker run -d \
               --name tariff-nginx \
               --network tariff-network \
@@ -276,21 +310,44 @@ jobs:
               --restart unless-stopped \
               nginx:alpine
 
-            # Verify deployment
-            echo "🚀 Deployment completed! Checking services..."
-            docker ps
-            sleep 5
+            # Wait for nginx to start
+            sleep 10
+
+            # Final verification
+            echo "🔍 Final deployment verification..."
+            echo "==================================="
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            echo ""
             
-            # Test endpoints
-            echo "Testing health endpoints..."
-            curl -f http://localhost/health || echo "❌ Nginx health check failed"
-            curl -f http://localhost:8080/actuator/health || echo "❌ Backend health check failed"
-            curl -f http://localhost:5001/health || echo "❌ Scraper health check failed"
+            # Test all endpoints
+            echo "🧪 Testing endpoints..."
+            if curl -f http://localhost/health 2>/dev/null; then
+              echo "✅ Nginx health check: PASSED"
+            else
+              echo "❌ Nginx health check: FAILED"
+            fi
+
+            if curl -f http://localhost:8080/actuator/health 2>/dev/null; then
+              echo "✅ Backend health check: PASSED"
+            else
+              echo "❌ Backend health check: FAILED"
+            fi
+
+            if curl -f http://localhost:5001/health 2>/dev/null; then
+              echo "✅ Scraper health check: PASSED"
+            else
+              echo "❌ Scraper health check: FAILED"
+            fi
 
             echo ""
+            echo "🚀 Deployment Summary:"
+            echo "====================="
             echo "🌐 Your microservices are deployed at:"
             echo "✅ Backend API: http://52.65.58.208/api/"
             echo "✅ Authentication: http://52.65.58.208/auth/"
             echo "✅ Python Scraper: http://52.65.58.208/scrape/"
             echo "✅ Swagger UI: http://52.65.58.208/swagger-ui/"
             echo "✅ Health Check: http://52.65.58.208/health"
+            echo ""
+            echo "📊 Service Status:"
+            docker ps --filter "name=tariff-" --format "{{.Names}}: {{.Status}}"
