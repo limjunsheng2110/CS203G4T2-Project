@@ -170,13 +170,16 @@ jobs:
             echo "⏳ Waiting for services to initialize..."
             sleep 30
 
-            # Create nginx config directory and clean up any existing files
-            echo "📁 Setting up Nginx configuration..."
-            rm -rf /home/ubuntu/nginx
-            mkdir -p /home/ubuntu/nginx
-            
-            # Create nginx configuration for microservices routing
-            cat > /home/ubuntu/nginx/nginx.conf << 'EOF'
+            # Create nginx config with embedded configuration (avoid file mounting issues)
+            echo "🌐 Starting Nginx Reverse Proxy with embedded config..."
+            docker run -d \
+              --name tariff-nginx \
+              --network tariff-network \
+              -p 80:80 \
+              -p 443:443 \
+              --restart unless-stopped \
+              nginx:alpine sh -c '
+              cat > /etc/nginx/nginx.conf << "NGINXEOF"
             events {
                 worker_connections 1024;
             }
@@ -201,7 +204,7 @@ jobs:
                     add_header Access-Control-Allow-Credentials "true" always;
             
                     # Handle preflight requests
-                    if ($request_method = 'OPTIONS') {
+                    if ($$request_method = "OPTIONS") {
                         add_header Access-Control-Allow-Origin "*";
                         add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
                         add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept";
@@ -214,10 +217,10 @@ jobs:
                     # Backend API routes
                     location /api/ {
                         proxy_pass http://backend;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Real-IP $remote_addr;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                        proxy_set_header X-Forwarded-Proto $scheme;
+                        proxy_set_header Host $$host;
+                        proxy_set_header X-Real-IP $$remote_addr;
+                        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $$scheme;
                         proxy_connect_timeout 60s;
                         proxy_send_timeout 60s;
                         proxy_read_timeout 60s;
@@ -226,19 +229,19 @@ jobs:
                     # Auth routes
                     location /auth/ {
                         proxy_pass http://backend;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Real-IP $remote_addr;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                        proxy_set_header X-Forwarded-Proto $scheme;
+                        proxy_set_header Host $$host;
+                        proxy_set_header X-Real-IP $$remote_addr;
+                        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $$scheme;
                     }
 
-                    # Swagger/OpenAPI routes - Fixed routing
+                    # Swagger/OpenAPI routes
                     location /swagger-ui/ {
                         proxy_pass http://backend/swagger-ui/;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Real-IP $remote_addr;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                        proxy_set_header X-Forwarded-Proto $scheme;
+                        proxy_set_header Host $$host;
+                        proxy_set_header X-Real-IP $$remote_addr;
+                        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $$scheme;
                         proxy_redirect off;
                     }
 
@@ -248,19 +251,19 @@ jobs:
 
                     location /v3/api-docs {
                         proxy_pass http://backend/v3/api-docs;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Real-IP $remote_addr;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                        proxy_set_header X-Forwarded-Proto $scheme;
+                        proxy_set_header Host $$host;
+                        proxy_set_header X-Real-IP $$remote_addr;
+                        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $$scheme;
                     }
             
                     # Python scraper routes
                     location /scrape/ {
                         proxy_pass http://python-scraper/;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Real-IP $remote_addr;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                        proxy_set_header X-Forwarded-Proto $scheme;
+                        proxy_set_header Host $$host;
+                        proxy_set_header X-Real-IP $$remote_addr;
+                        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $$scheme;
                         proxy_connect_timeout 120s;
                         proxy_send_timeout 120s;
                         proxy_read_timeout 120s;
@@ -274,18 +277,8 @@ jobs:
                     }
                 }
             }
-            EOF
-
-            # Deploy Nginx Reverse Proxy
-            echo "🌐 Starting Nginx Reverse Proxy..."
-            docker run -d \
-              --name tariff-nginx \
-              --network tariff-network \
-              -p 80:80 \
-              -p 443:443 \
-              -v /home/ubuntu/nginx/nginx.conf:/etc/nginx/nginx.conf \
-              --restart unless-stopped \
-              nginx:alpine
+            NGINXEOF
+            nginx -g "daemon off;"'
 
             # Wait for nginx to start
             sleep 10
