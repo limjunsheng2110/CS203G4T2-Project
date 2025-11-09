@@ -6,11 +6,13 @@ import com.cs203.tariffg4t2.dto.request.UserRequestDTO;
 import com.cs203.tariffg4t2.dto.request.UserUpdateRequestDTO;
 import com.cs203.tariffg4t2.model.basic.User;
 import com.cs203.tariffg4t2.service.basic.UserService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "Bearer Authentication")
 public class UserController {
 
     private final UserService userService;
@@ -85,6 +88,7 @@ public class UserController {
     /**
      * POST /api/users - Create new user
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<?> createUser(@Valid @RequestBody UserRequestDTO request) {
         try {

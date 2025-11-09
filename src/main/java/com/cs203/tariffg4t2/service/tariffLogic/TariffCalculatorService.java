@@ -181,9 +181,7 @@ public class TariffCalculatorService {
         return result;
     }
 
-    // ------------------------------
-    // Helpers
-    // ------------------------------
+    // utility methods for calculations
 
     private BigDecimal safeBD(BigDecimal x) {
         return x == null ? BigDecimal.ZERO : x;
@@ -193,7 +191,4 @@ public class TariffCalculatorService {
         return x == null ? null : x.setScale(2, RoundingMode.HALF_UP);
     }
 
-    private boolean isPositive(BigDecimal x) {
-        return x != null && x.compareTo(BigDecimal.ZERO) > 0;
-    }
 }

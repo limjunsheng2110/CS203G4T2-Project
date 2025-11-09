@@ -4,7 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,8 +11,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import com.cs203.tariffg4t2.model.basic.User;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -42,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // extract jwt token
             String jwt = authHeader.substring(7);
-
+            
             // validate token
             if (jwtService.isTokenValid(jwt)) {
                 String username = jwtService.getUsername(jwt);
@@ -64,8 +61,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     //set authentication in security context
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    
-                    logger.info("Set authentication for user: " + username + " with authorities: " + userDetails.getAuthorities());
                 }
             }
         } catch (Exception e) {

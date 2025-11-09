@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 
+
+// crud endpoints for tariff rates
 @RestController
 @RequestMapping("/api/tariff-rates")
 public class TariffRateController {

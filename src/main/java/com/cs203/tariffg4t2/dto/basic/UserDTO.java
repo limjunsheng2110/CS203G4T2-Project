@@ -4,8 +4,6 @@ import com.cs203.tariffg4t2.model.basic.User;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.Setter;
-
 import java.time.LocalDateTime;
 
 @Data
