@@ -1,10 +1,3 @@
-#on:
-#  push:
-#    branches:
-#      - main
-#  pull_request:
-#    branches:
-#      - main
 name: CI/CD Pipeline - Full Stack Microservices Deployment
 
 on:
@@ -15,7 +8,6 @@ on:
   # 2. Continuous Delivery (Run ONLY on push to stable branch, after merge)
   push:
     branches: [ main ] # Change 'main' to your default branch if different
-
 
 jobs:
   build_and_publish:
@@ -105,7 +97,6 @@ jobs:
           name: jar-artifacts
           path: target/tariffg4t2-0.0.1-SNAPSHOT.jar # <--- Confirmed JAR Name
 
-
   # -----------------------------------------------------------------------
   # 5. DEPLOY MICROSERVICES TO EC2
   # -----------------------------------------------------------------------
@@ -175,96 +166,96 @@ jobs:
             
             # Create a simple nginx config file on the host first
             cat > /tmp/nginx.conf << 'EOF'
-events {
-    worker_connections 1024;
-}
+            events {
+                worker_connections 1024;
+            }
 
-http {
-    upstream backend {
-        server tariff-backend:8080;
-    }
+            http {
+                upstream backend {
+                    server tariff-backend:8080;
+                }
 
-    upstream python-scraper {
-        server tariff-scraper:5001;
-    }
+                upstream python-scraper {
+                    server tariff-scraper:5001;
+                }
 
-    server {
-        listen 80;
-        server_name _;
+                server {
+                    listen 80;
+                    server_name _;
 
-        # Enable CORS for frontend
-        add_header Access-Control-Allow-Origin "*" always;
-        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
-        add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
+                    # Enable CORS for frontend
+                    add_header Access-Control-Allow-Origin "*" always;
+                    add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+                    add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
 
-        # Handle preflight requests
-        if ($request_method = 'OPTIONS') {
-            add_header Access-Control-Allow-Origin "*";
-            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
-            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept";
-            add_header Content-Length 0;
-            add_header Content-Type text/plain;
-            return 204;
-        }
+                    # Handle preflight requests
+                    if ($request_method = 'OPTIONS') {
+                        add_header Access-Control-Allow-Origin "*";
+                        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+                        add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept";
+                        add_header Content-Length 0;
+                        add_header Content-Type text/plain;
+                        return 204;
+                    }
 
-        # Backend API routes
-        location /api/ {
-            proxy_pass http://backend;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
+                    # Backend API routes
+                    location /api/ {
+                        proxy_pass http://backend;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Real-IP $remote_addr;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $scheme;
+                    }
 
-        # Auth routes
-        location /auth/ {
-            proxy_pass http://backend;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
+                    # Auth routes
+                    location /auth/ {
+                        proxy_pass http://backend;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Real-IP $remote_addr;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $scheme;
+                    }
 
-        # Swagger/OpenAPI routes
-        location /swagger-ui/ {
-            proxy_pass http://backend/swagger-ui/;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_redirect off;
-        }
+                    # Swagger/OpenAPI routes
+                    location /swagger-ui/ {
+                        proxy_pass http://backend/swagger-ui/;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Real-IP $remote_addr;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $scheme;
+                        proxy_redirect off;
+                    }
 
-        location /swagger-ui {
-            return 301 /swagger-ui/;
-        }
+                    location /swagger-ui {
+                        return 301 /swagger-ui/;
+                    }
 
-        location /v3/api-docs {
-            proxy_pass http://backend/v3/api-docs;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
+                    location /v3/api-docs {
+                        proxy_pass http://backend/v3/api-docs;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Real-IP $remote_addr;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $scheme;
+                    }
 
-        # Python scraper routes
-        location /scrape/ {
-            proxy_pass http://python-scraper/;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
+                    # Python scraper routes
+                    location /scrape/ {
+                        proxy_pass http://python-scraper/;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Real-IP $remote_addr;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $scheme;
+                    }
 
-        # Health check
-        location /health {
-            access_log off;
-            return 200 "healthy\n";
-            add_header Content-Type text/plain;
-        }
-    }
-}
-EOF
+                    # Health check
+                    location /health {
+                        access_log off;
+                        return 200 "healthy\n";
+                        add_header Content-Type text/plain;
+                    }
+                }
+            }
+            EOF
 
             # Start nginx with the config file
             docker run -d \
