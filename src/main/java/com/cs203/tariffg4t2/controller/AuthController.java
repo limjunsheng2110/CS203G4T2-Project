@@ -17,7 +17,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -43,7 +42,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest  request) {
 
-        // check if username alreadyt exists
+        // check if username already exists
         if (userRepository.existsByUsername(request.getUsername())) {
             return ResponseEntity.badRequest().body("Error: Username is already taken!");
         }

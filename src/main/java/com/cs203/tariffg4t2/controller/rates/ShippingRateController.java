@@ -14,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ShippingRateController {
 
+    // create CRUD operations endpoints for ShippingRate
     private final ShippingService shippingService;
 
     /**
