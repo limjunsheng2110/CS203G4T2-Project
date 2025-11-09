@@ -14,6 +14,8 @@ const FormField = ({ label, name, type, value, onChange, placeholder, required, 
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        min={type === 'number' ? '0' : undefined}
+        step={type === 'number' && name === 'value' ? '0.01' : undefined}
         className={`w-full px-4 py-3 border-2 ${colours.border} rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${colours.inputBg} ${colours.text} transition-all ${colours.borderHover}`}
       />
     </div>

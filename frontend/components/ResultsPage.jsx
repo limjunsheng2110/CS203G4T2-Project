@@ -90,12 +90,17 @@ const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack, the
 // New component to display tariff calculation results
 const TariffResultCard = ({ result, formData, selectedProduct, theme, colours }) => {
   const formatCurrency = (amount) => {
-    if (!amount) return '$0.00';
+    // Handle null, undefined, or 0
+    if (amount === null || amount === undefined || amount === 0) return '$0.00';
+    
+    // Ensure amount is never negative
+    const safeAmount = Math.max(0, Number(amount));
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2
-    }).format(amount);
+    }).format(safeAmount);
   };
 
   const formatDate = (dateString) => {
@@ -196,7 +201,9 @@ const TariffResultCard = ({ result, formData, selectedProduct, theme, colours })
 
           <div className={`${colours.inputBg} rounded-lg p-4 text-center`}>
             <div className={`text-xl font-semibold ${colours.text} mb-1`}>
-              {result.adValoremRate ? `${(result.adValoremRate).toFixed(2)}%` : 'N/A'}
+              {(result.adValoremRate !== null && result.adValoremRate !== undefined) 
+                ? `${Number(result.adValoremRate).toFixed(2)}%` 
+                : '0.00%'}
             </div>
             <div className={`text-sm ${colours.textMuted}`}>Tariff Rate</div>
           </div>

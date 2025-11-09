@@ -77,6 +77,16 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
               colours={colours}
             />
 
+            {/* Warning if same country selected */}
+            {formData.importCountry && formData.exportCountry && 
+             formData.importCountry === formData.exportCountry && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-red-600 dark:text-red-400 text-sm font-medium">
+                  ⚠️ Import and export countries cannot be the same
+                </p>
+              </div>
+            )}
+
             <ProductSelect
               label="Product (HS Code)"
               name="hsCode"
@@ -107,10 +117,13 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
               type="number"
               value={formData.value}
               onChange={handleInputChange}
-              placeholder="Enter total value"
+              placeholder="Enter total value (must be positive)"
               required={true}
               colours={colours}
             />
+            {formData.value && parseFloat(formData.value) <= 0 && (
+              <p className="text-red-500 text-sm mt-1">Value must be greater than 0</p>
+            )}
 
             <FormField
               label="Year"
@@ -125,7 +138,7 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
 
             <div>
               <label className={`block text-sm font-medium ${colours.textSecondary} mb-2`}>
-                Shipping Mode
+                Shipping Mode <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
