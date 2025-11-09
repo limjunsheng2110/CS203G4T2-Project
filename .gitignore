@@ -77,6 +77,12 @@ frontend/yarn-error.log*
 frontend/pnpm-debug.log*
 frontend/lerna-debug.log*
 
+# SSH Keys (NEVER commit these!)
+*.pem
+*.ppk
+id_rsa
+id_rsa.pub
+
 # Frontend - Dependencies
 frontend/node_modules
 

@@ -5,7 +5,7 @@
 #  pull_request:
 #    branches:
 #      - main
-name: CI/CD Pipeline - Maven Build, Test, Dockerize, and Publish
+name: CI/CD Pipeline - Full Stack Microservices Deployment
 
 on:
   # 1. Continuous Integration (Run on PRs for validation)
@@ -31,9 +31,8 @@ jobs:
         uses: actions/checkout@v4
 
       # -----------------------------------------------------------------------
-      # 1. CONTINUOUS INTEGRATION (CI) PHASE: Build and Test Java Application
+      # 1. BUILD AND TEST SPRING BOOT BACKEND
       # -----------------------------------------------------------------------
-
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -47,7 +46,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Build and Test application
+      - name: Build and Test Spring Boot application
         env:
           # Only pass non-database secrets for tests
           # Tests use H2 in-memory database configured in src/test/resources/application.properties
@@ -57,9 +56,8 @@ jobs:
         run: mvn clean package
 
       # -----------------------------------------------------------------------
-      # 2. CONTINUOUS DELIVERY (CD) PHASE: Dockerize and Publish
+      # 2. SETUP DOCKER FOR MULTI-SERVICE BUILD
       # -----------------------------------------------------------------------
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -69,22 +67,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }} # Use your Docker registry password secret
 
-      - name: Extract metadata (tags, labels) for Docker Image
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/tariff-app # <--- RENAME YOUR APP HERE
-          tags: |
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and Push Docker Image (with Secrets)
+      # -----------------------------------------------------------------------
+      # 3. BUILD AND PUSH SPRING BOOT BACKEND IMAGE
+      # -----------------------------------------------------------------------
+      - name: Build and Push Backend Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
 
           # 🚨 INJECT APPLICATION SECRETS AS BUILD ARGUMENTS 🚨
           # These are mapped from GitHub Secrets to ARGs in your Dockerfile
@@ -94,12 +86,18 @@ jobs:
             SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
             OPENAI_API_KEY=${{ secrets.OPENAI_KEY }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
-            OPENEXCHANGERATES_API_KEY: ${{ secrets.OPENEXCHANGERATES_API_KEY }}
-
+            OPENEXCHANGERATES_API_KEY=${{ secrets.OPENEXCHANGERATES_API_KEY }}
 
       # -----------------------------------------------------------------------
-      # 3. CLEANUP (Optional)
+      # 4. BUILD AND PUSH PYTHON SCRAPER IMAGE
       # -----------------------------------------------------------------------
+      - name: Build and Push Python Scraper Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./tariff-scraper
+          file: ./tariff-scraper/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
 
       - name: Upload JAR as an Artifact (For backup/review)
         uses: actions/upload-artifact@v4
@@ -108,15 +106,15 @@ jobs:
           path: target/tariffg4t2-0.0.1-SNAPSHOT.jar # <--- Confirmed JAR Name
 
 
-  #Deploy
-    # ... (after the 'build_and_publish' job ends)
-
+  # -----------------------------------------------------------------------
+  # 5. DEPLOY MICROSERVICES TO EC2
+  # -----------------------------------------------------------------------
   deploy:
     runs-on: ubuntu-latest
     needs: build_and_publish # This dependency ensures the job only runs if the image push succeeded
 
     steps:
-      - name: Deploy via SSH and Restart Container
+      - name: Deploy Microservices via SSH
         # Uses the community action to execute commands on the remote EC2 server
         uses: appleboy/ssh-action@v1.0.1
         with:
@@ -127,28 +125,172 @@ jobs:
 
           # 🚨 Deployment Script (Run these commands on the EC2 server) 🚨
           script: |
-            # 1. Log into Docker Hub on the EC2 instance to pull the image
+            # Login to Docker Hub
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-            # 2. Define image name (Must match the name pushed in the first job)
-            IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/tariff-app:latest
-            CONTAINER_NAME=tariff-app-container
+            # Create docker network if it doesn't exist
+            docker network create tariff-network || true
 
-            echo "Pulling new image: $IMAGE_NAME"
-            docker pull $IMAGE_NAME
+            # Pull latest images
+            docker pull ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
+            docker pull nginx:alpine
 
-            # 3. Stop and remove old container (if running)
-            echo "Restarting application container..."
-            docker stop $CONTAINER_NAME || true 
-            docker rm $CONTAINER_NAME || true 
+            # Stop and remove existing containers
+            docker stop tariff-backend tariff-scraper tariff-nginx || true
+            docker rm tariff-backend tariff-scraper tariff-nginx || true
 
-            # 4. Run the new container, mapping the application port
+            # Deploy Python Scraper first
             docker run -d \
-              --name $CONTAINER_NAME \
-              -e SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
-              -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}" \
-              -e SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
+              --name tariff-scraper \
+              --network tariff-network \
+              -p 5001:5001 \
+              --restart unless-stopped \
+              ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
+
+            # Wait for scraper to be ready
+            sleep 10
+
+            # Deploy Spring Boot Backend
+            docker run -d \
+              --name tariff-backend \
+              --network tariff-network \
+              -p 8080:8080 \
+              --restart unless-stopped \
+              -e DB_URL="${{ secrets.DB_URL }}" \
+              -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+              -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_EXPIRATION_MS="900000" \
               -e OPENAI_API_KEY="${{ secrets.OPENAI_KEY }}" \
               -e OPENEXCHANGERATES_API_KEY="${{ secrets.OPENEXCHANGERATES_API_KEY }}" \
-              -p 8080:8080 \
-              $IMAGE_NAME
+              -e PYTHON_SCRAPER_URL="http://tariff-scraper:5001/scrape" \
+              ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
+
+            # Wait for backend to be ready
+            sleep 15
+
+            # Create nginx config directory
+            mkdir -p /home/ubuntu/nginx
+            
+            # Create nginx configuration for microservices routing
+            cat > /home/ubuntu/nginx/nginx.conf << 'EOF'
+            events {
+                worker_connections 1024;
+            }
+            
+            http {
+                upstream backend {
+                    server tariff-backend:8080;
+                }
+            
+                upstream python-scraper {
+                    server tariff-scraper:5001;
+                }
+            
+                server {
+                    listen 80;
+                    server_name _;
+            
+                    # Enable CORS for frontend
+                    add_header Access-Control-Allow-Origin "*" always;
+                    add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+                    add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
+                    add_header Access-Control-Allow-Credentials "true" always;
+            
+                    # Handle preflight requests
+                    if ($request_method = 'OPTIONS') {
+                        add_header Access-Control-Allow-Origin "*";
+                        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+                        add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept";
+                        add_header Access-Control-Allow-Credentials "true";
+                        add_header Content-Length 0;
+                        add_header Content-Type text/plain;
+                        return 204;
+                    }
+            
+                    # Backend API routes
+                    location /api/ {
+                        proxy_pass http://backend;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Real-IP $remote_addr;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $scheme;
+                    }
+            
+                    # Auth routes
+                    location /auth/ {
+                        proxy_pass http://backend;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Real-IP $remote_addr;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $scheme;
+                    }
+
+                    # Swagger/OpenAPI routes
+                    location /swagger-ui/ {
+                        proxy_pass http://backend;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Real-IP $remote_addr;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $scheme;
+                    }
+
+                    location /v3/api-docs {
+                        proxy_pass http://backend;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Real-IP $remote_addr;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $scheme;
+                    }
+            
+                    # Python scraper routes
+                    location /scrape/ {
+                        proxy_pass http://python-scraper/;
+                        proxy_set_header Host $host;
+                        proxy_set_header X-Real-IP $remote_addr;
+                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                        proxy_set_header X-Forwarded-Proto $scheme;
+                        proxy_connect_timeout 120s;
+                        proxy_send_timeout 120s;
+                        proxy_read_timeout 120s;
+                    }
+            
+                    # Health check
+                    location /health {
+                        access_log off;
+                        return 200 "healthy\n";
+                        add_header Content-Type text/plain;
+                    }
+                }
+            }
+            EOF
+
+            # Deploy Nginx Reverse Proxy
+            docker run -d \
+              --name tariff-nginx \
+              --network tariff-network \
+              -p 80:80 \
+              -p 443:443 \
+              -v /home/ubuntu/nginx/nginx.conf:/etc/nginx/nginx.conf \
+              --restart unless-stopped \
+              nginx:alpine
+
+            # Verify deployment
+            echo "🚀 Deployment completed! Checking services..."
+            docker ps
+            sleep 5
+            
+            # Test endpoints
+            echo "Testing health endpoints..."
+            curl -f http://localhost/health || echo "❌ Nginx health check failed"
+            curl -f http://localhost:8080/actuator/health || echo "❌ Backend health check failed"
+            curl -f http://localhost:5001/health || echo "❌ Scraper health check failed"
+
+            echo ""
+            echo "🌐 Your microservices are deployed at:"
+            echo "✅ Backend API: http://52.65.58.208/api/"
+            echo "✅ Authentication: http://52.65.58.208/auth/"
+            echo "✅ Python Scraper: http://52.65.58.208/scrape/"
+            echo "✅ Swagger UI: http://52.65.58.208/swagger-ui/"
+            echo "✅ Health Check: http://52.65.58.208/health"
