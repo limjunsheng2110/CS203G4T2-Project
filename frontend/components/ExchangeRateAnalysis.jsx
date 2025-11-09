@@ -70,7 +70,7 @@ const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => 
         <button
           onClick={fetchExchangeRateAnalysis}
           disabled={loading}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? 'Analyzing...' : 'Analyze Exchange Rates'}
         </button>
@@ -205,7 +205,7 @@ const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => 
                     </span>
                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                       <div 
-                        className="bg-green-600 h-2 rounded-full" 
+                        className="bg-purple-600 h-2 rounded-full" 
                         style={{ 
                           width: `${(point.rate / analysisData.maxRate) * 100}%` 
                         }}
