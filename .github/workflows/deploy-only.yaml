@@ -1,0 +1,10 @@
+            # Deploy Nginx (if not running or force restart)
+            if [ "${{ github.event.inputs.force_restart }}" = "true" ] || ! docker ps --format '{{.Names}}' | grep -q "^tariff-nginx$"; then
+              # Create nginx config directory and clean up any existing files
+              echo "📁 Setting up Nginx configuration..."
+              rm -rf /home/ubuntu/nginx
+              mkdir -p /home/ubuntu/nginx
+              
+              # Create nginx configuration
+              cat > /home/ubuntu/nginx/nginx.conf << 'EOF'
+

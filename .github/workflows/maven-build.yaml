@@ -170,7 +170,9 @@ jobs:
             echo "⏳ Waiting for services to initialize..."
             sleep 30
 
-            # Create nginx config directory
+            # Create nginx config directory and clean up any existing files
+            echo "📁 Setting up Nginx configuration..."
+            rm -rf /home/ubuntu/nginx
             mkdir -p /home/ubuntu/nginx
             
             # Create nginx configuration for microservices routing
