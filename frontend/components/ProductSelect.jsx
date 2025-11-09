@@ -87,7 +87,7 @@ const ProductSelect = ({ label, name, value, onChange, required, colours }) => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <label className={`block text-sm font-medium ${colours.textSecondary} mb-2`}>
+      <label className="block text-sm font-medium text-white mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
 

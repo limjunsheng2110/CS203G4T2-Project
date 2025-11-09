@@ -14,7 +14,6 @@ const App = () => {
   const [currentPage, setCurrentPage] = useState('login');
   const [authPage, setAuthPage] = useState('login'); // 'login' or 'register'
   const [user, setUser] = useState(null);
-  const [theme, setTheme] = useState('light');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [tariffResults, setTariffResults] = useState(null);
@@ -114,6 +113,35 @@ const App = () => {
       return;
     }
 
+    // Validate import and export countries are different
+    if (formData.importCountry === formData.exportCountry) {
+      setError('Import country and export country cannot be the same');
+      return;
+    }
+
+    // Validate value is positive
+    const valueNum = parseFloat(formData.value);
+    if (isNaN(valueNum) || valueNum <= 0) {
+      setError('Product value must be greater than 0');
+      return;
+    }
+
+    // Validate shipping mode is selected
+    if (!formData.shippingMode) {
+      setError('Please select a shipping mode (Air or Sea)');
+      return;
+    }
+
+    // Validate year if provided
+    if (formData.year) {
+      const yearNum = parseInt(formData.year);
+      const currentYear = new Date().getFullYear();
+      if (isNaN(yearNum) || yearNum < 2000 || yearNum > currentYear + 1) {
+        setError(`Year must be between 2000 and ${currentYear + 1}`);
+        return;
+      }
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -179,13 +207,15 @@ const App = () => {
 
   // Main app content (only shown when authenticated)
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black">
       <div className="container mx-auto px-4 py-6">
         {/* User Info Component - shows at top of all pages */}
         <UserInfo user={user} onLogout={handleLogout} onAdminClick={handleAdminClick} />
 
         {currentPage === 'home' && (
-          <HomePage onGetStarted={handleGetStarted} theme={theme} setTheme={setTheme} />
+          <HomePage 
+            onGetStarted={handleGetStarted}
+          />
         )}
 
         {currentPage === 'detail' && (
@@ -193,9 +223,7 @@ const App = () => {
             formData={formData}
             handleInputChange={handleInputChange}
             handleSearch={handleSearch}
-            handleBackToHome={handleBackToHome}
-            theme={theme}
-            setTheme={setTheme}
+            onBack={handleBackToHome}
             isLoading={isLoading}
             error={error}
             selectedProduct={selectedProduct}
@@ -208,15 +236,12 @@ const App = () => {
             formData={formData}
             selectedProduct={selectedProduct}
             handleBack={handleBack}
-            handleBackToHome={handleBackToHome}
-            theme={theme}
-            setTheme={setTheme}
           />
         )}
 
         {/* Admin dashboard - only for admin users */}
         {user && user.role === 'ADMIN' && currentPage === 'admin' && (
-          <AdminDashboard onBack={handleBackToHome} theme={theme} />
+          <AdminDashboard onBack={handleBackToHome} />
         )}
       </div>
     </div>
