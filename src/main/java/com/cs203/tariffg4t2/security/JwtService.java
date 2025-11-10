@@ -48,6 +48,20 @@ public class JwtService {
                 .parseClaimsJws(token);
     }
 
+    // parse token even if expired (for refresh endpoint)
+    public Claims parseExpiredToken(String token) throws JwtException {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException e) {
+            // Token is expired but signature is valid - return claims anyway
+            return e.getClaims();
+        }
+    }
+
     // check if token is valid
     public boolean isTokenValid(String token) {
         try {

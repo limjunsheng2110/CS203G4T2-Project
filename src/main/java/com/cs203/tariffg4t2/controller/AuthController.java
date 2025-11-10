@@ -145,5 +145,60 @@ public class AuthController {
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String authHeader) {
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid authorization header");
+            }
+
+            String oldToken = authHeader.substring(7);
+            
+            // Extract username from the old token (even if expired)
+            io.jsonwebtoken.Claims claims = jwtService.parseExpiredToken(oldToken);
+            String username = claims.getSubject();
+            
+            if (username == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            }
+
+            // Fetch user details
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Check if user is still active
+            if (!user.getIsActive()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User account is inactive");
+            }
+
+            // Generate new token
+            String newToken = jwtService.generateToken(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole().name()
+            );
+
+            // Build response with new token
+            AuthResponse authResponse = AuthResponse.builder()
+                    .accessToken(newToken)
+                    .tokenType("Bearer")
+                    .expiresIn(jwtExpirationMs)
+                    .user(AuthResponse.UserInfo.builder()
+                            .id(user.getId())
+                            .username(user.getUsername())
+                            .email(user.getEmail())
+                            .role(user.getRole().name())
+                            .build())
+                    .build();
+
+            return ResponseEntity.ok(authResponse);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Failed to refresh token: " + e.getMessage());
+        }
+    }
     
 }

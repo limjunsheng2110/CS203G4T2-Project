@@ -48,9 +48,15 @@ const App = () => {
     }
   }, []);
 
+  // Check if session expired (from URL query parameter)
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionExpired = urlParams.get('sessionExpired') === 'true';
+
   const handleLoginSuccess = (userData) => {
     setUser(userData);
     setCurrentPage('home');
+    // Clear the sessionExpired query parameter from URL
+    window.history.replaceState({}, document.title, '/');
   };
 
   const handleRegisterSuccess = (userData) => {
@@ -193,6 +199,7 @@ const App = () => {
         <LoginPage
           onLoginSuccess={handleLoginSuccess}
           onSwitchToRegister={() => setAuthPage('register')}
+          sessionExpired={sessionExpired}
         />
       );
     } else {

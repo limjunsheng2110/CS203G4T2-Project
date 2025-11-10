@@ -27,15 +27,24 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for handling common errors
+// Response interceptor for handling auth errors
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
+  async (error) => {
+    // If error is 401 or 403 (token expired/invalid), logout and redirect to login
+    const isAuthError = error.response?.status === 401 || error.response?.status === 403;
+    
+    if (isAuthError) {
+      // Clear auth data
       localStorage.removeItem('authToken');
-      // Could redirect to login page here
+      localStorage.removeItem('user');
+      
+      // Redirect to login page with session expired flag
+      window.location.href = '/?sessionExpired=true';
+      
+      return Promise.reject(error);
     }
+
     return Promise.reject(error);
   }
 );

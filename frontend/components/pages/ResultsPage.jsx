@@ -302,25 +302,25 @@ const TariffResultCard = ({ result, formData, selectedProduct, colours }) => {
             <h4 className={`font-medium ${colours.text} mb-3`}>Additional Information</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className={`font-medium ${colours.textSecondary}`}>Trade Status:</span>
+                <span className={`font-medium ${colours.text}`}>Trade Status:</span>
                 <span className={`ml-2 ${colours.text}`}>{getTradeAgreementStatus()}</span>
               </div>
 
               {result.TariffType && (
                 <div>
-                  <span className={`font-medium ${colours.textSecondary}`}>Tariff Type:</span>
+                  <span className={`font-medium ${colours.text}`}>Tariff Type:</span>
                   <span className={`ml-2 ${colours.text}`}>{result.TariffType}</span>
                 </div>
               )}
 
               <div>
-                <span className={`font-medium ${colours.textSecondary}`}>Calculation Date:</span>
+                <span className={`font-medium ${colours.text}`}>Calculation Date:</span>
                 <span className={`ml-2 ${colours.text}`}>{formatDate(result.calculationDate)}</span>
               </div>
 
               {result.totalWeight && (
                 <div>
-                  <span className={`font-medium ${colours.textSecondary}`}>Total Weight:</span>
+                  <span className={`font-medium ${colours.text}`}>Total Weight:</span>
                   <span className={`ml-2 ${colours.text}`}>{result.totalWeight} kg</span>
                 </div>
               )}
