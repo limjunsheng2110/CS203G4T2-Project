@@ -94,11 +94,9 @@ export const exchangeRateApi = {
     }
 
     try {
-      const response = await apiClient.get('/exchange-rates/analyze', {
-        params: {
-          importingCountry,
-          exportingCountry
-        }
+      const response = await apiClient.post('/exchange-rates/analyze', {
+        importingCountry,
+        exportingCountry
       });
       return response.data;
     } catch (error) {
