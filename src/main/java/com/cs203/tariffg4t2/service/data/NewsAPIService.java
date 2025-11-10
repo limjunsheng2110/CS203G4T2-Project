@@ -50,24 +50,30 @@ public class NewsAPIService {
         LocalDateTime fromDate = LocalDateTime.now().minusDays(daysBack);
         String fromDateStr = fromDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
         
-        // Build query with trade keywords
-        String query = String.join(" OR ", TRADE_KEYWORDS);
+        // Simplified query - just use "trade" instead of OR combination
+        String query = "trade";
         
         // News API endpoint: /everything
-        String url = String.format("%s/everything?q=%s&from=%s&language=en&sortBy=publishedAt&apiKey=%s",
+        String url = String.format("%s/everything?q=%s&from=%s&language=en&sortBy=publishedAt&pageSize=100&apiKey=%s",
                                    apiUrl, 
-                                   query.replace(" ", "%20"),
+                                   query,
                                    fromDateStr,
                                    apiKey);
         
         logger.info("Fetching trade news from News API (past {} days)", daysBack);
+        logger.info("Query: '{}', From date: {}", query, fromDateStr);
         logger.debug("API URL: {}", url.replace(apiKey, "***"));
         
         try {
             String response = restTemplate.getForObject(url, String.class);
-            return parseNewsArticles(response);
+            logger.info("DEBUG: Got response from News API, length: {} chars", response != null ? response.length() : 0);
+            
+            List<NewsArticle> articles = parseNewsArticles(response);
+            logger.info("DEBUG: Parsed {} articles successfully", articles.size());
+            
+            return articles;
         } catch (Exception e) {
-            logger.error("Failed to fetch news from API: {}", e.getMessage());
+            logger.error("Failed to fetch news from API: {}", e.getMessage(), e);
             throw new Exception("News API request failed: " + e.getMessage(), e);
         }
     }
@@ -82,38 +88,54 @@ public class NewsAPIService {
             JsonNode root = objectMapper.readTree(jsonResponse);
             
             // Check API response status
-            String status = root.get("status").asText();
+            String status = root.has("status") ? root.get("status").asText() : "unknown";
+            logger.info("DEBUG: News API response status: {}", status);
+            
             if (!"ok".equals(status)) {
                 String message = root.has("message") ? root.get("message").asText() : "Unknown error";
-                throw new Exception("News API error: " + message);
+                String code = root.has("code") ? root.get("code").asText() : "unknown";
+                throw new Exception("News API error [" + code + "]: " + message);
             }
+            
+            // Check total results
+            int totalResults = root.has("totalResults") ? root.get("totalResults").asInt() : 0;
+            logger.info("DEBUG: News API returned totalResults: {}", totalResults);
             
             // Parse articles array
             JsonNode articlesNode = root.get("articles");
             if (articlesNode == null || !articlesNode.isArray()) {
-                logger.warn("No articles found in API response");
+                logger.warn("No articles array found in API response");
+                logger.debug("DEBUG: Response structure: {}", root.toPrettyString().substring(0, Math.min(500, root.toPrettyString().length())));
                 return articles;
             }
+            
+            logger.info("DEBUG: Articles array has {} items", articlesNode.size());
+            
+            int parsedCount = 0;
+            int duplicateCount = 0;
             
             for (JsonNode articleNode : articlesNode) {
                 try {
                     NewsArticle article = parseArticle(articleNode);
                     
                     // Avoid duplicates
-                    if (!newsArticleRepository.existsByUrl(article.getUrl())) {
+                    if (article.getUrl() != null && !newsArticleRepository.existsByUrl(article.getUrl())) {
                         articles.add(article);
+                        parsedCount++;
+                    } else {
+                        duplicateCount++;
                     }
                 } catch (Exception e) {
                     logger.warn("Failed to parse article: {}", e.getMessage());
                 }
             }
             
-            logger.info("Successfully parsed {} new articles", articles.size());
+            logger.info("Successfully parsed {} new articles ({} duplicates skipped)", parsedCount, duplicateCount);
             return articles;
             
         } catch (Exception e) {
             logger.error("Error parsing News API response: {}", e.getMessage());
-            throw new Exception("Failed to parse news articles", e);
+            throw new Exception("Failed to parse news articles: " + e.getMessage(), e);
         }
     }
     

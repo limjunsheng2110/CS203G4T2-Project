@@ -113,6 +113,39 @@ public class PredictiveAnalysisController {
     }
     
     /**
+     * DEBUG: Test News API connection and fetch
+     */
+    @GetMapping("/debug/fetch-news")
+    @Operation(summary = "DEBUG: Fetch news from API", 
+               description = "Test endpoint to manually trigger news fetching and see detailed errors")
+    public ResponseEntity<?> debugFetchNews() {
+        Map<String, Object> debug = new HashMap<>();
+        
+        try {
+            logger.info("DEBUG: Manually triggering news fetch...");
+            
+            // Try to fetch news
+            var articles = predictiveAnalysisService.debugFetchNews();
+            
+            debug.put("status", "SUCCESS");
+            debug.put("articlesFetched", articles.size());
+            debug.put("message", "Successfully fetched and stored news articles");
+            
+            return ResponseEntity.ok(debug);
+            
+        } catch (Exception e) {
+            logger.error("DEBUG: News fetch failed", e);
+            
+            debug.put("status", "FAILED");
+            debug.put("error", e.getMessage());
+            debug.put("errorType", e.getClass().getSimpleName());
+            debug.put("details", e.getCause() != null ? e.getCause().getMessage() : "No additional details");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(debug);
+        }
+    }
+    
+    /**
      * Helper method to create error response
      */
     private Map<String, Object> createErrorResponse(String error, String details) {

@@ -358,6 +358,42 @@ public class PredictiveAnalysisService {
     }
     
     /**
+     * DEBUG: Manually fetch news to test API connection
+     */
+    public List<NewsArticle> debugFetchNews() throws Exception {
+        logger.info("DEBUG: Attempting to fetch news from API...");
+        
+        // Fetch news
+        List<NewsArticle> articles = newsAPIService.fetchTradeNews(7);
+        logger.info("DEBUG: Fetched {} articles from API", articles.size());
+        
+        if (articles.isEmpty()) {
+            logger.warn("DEBUG: No articles returned from API");
+            throw new Exception("News API returned 0 articles. Check API key and query parameters.");
+        }
+        
+        // Process sentiment
+        sentimentAnalysisService.processArticleSentiments(articles);
+        logger.info("DEBUG: Processed and saved {} articles with sentiment scores", articles.size());
+        
+        // Calculate weekly sentiment (flush to ensure data is committed)
+        LocalDate weekEnd = LocalDate.now();
+        LocalDate weekStart = weekEnd.minusDays(6);
+        
+        SentimentAnalysis analysis = sentimentAnalysisService.calculateWeeklySentiment(weekStart, weekEnd);
+        
+        if (analysis != null) {
+            logger.info("DEBUG: Created weekly analysis: avg={}, articles={}", 
+                       analysis.getAverageSentiment(), analysis.getArticleCount());
+        } else {
+            logger.warn("DEBUG: Weekly analysis returned null - might need to wait for transaction commit");
+            // This is OK - the articles are saved, just return them
+        }
+        
+        return articles;
+    }
+    
+    /**
      * Inner class to hold prediction result
      */
     private static class PredictionResult {
