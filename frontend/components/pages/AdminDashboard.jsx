@@ -1,9 +1,9 @@
 // frontend/components/AdminDashboard.jsx
 import React, { useState } from 'react';
 import { ArrowLeft, Users, DollarSign, Settings, Ship } from 'lucide-react';
-import ManageUsers from './admin/ManageUsers';
-import ManageTariffRates from './admin/ManageTariffRates';
-import ManageShippingRates from './admin/ManageShippingRates';
+import ManageUsers from '../admin/ManageUsers';
+import ManageTariffRates from '../admin/ManageTariffRates';
+import ManageShippingRates from '../admin/ManageShippingRates';
 
 const AdminDashboard = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('users');

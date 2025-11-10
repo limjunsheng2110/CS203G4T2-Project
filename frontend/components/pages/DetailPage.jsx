@@ -1,9 +1,9 @@
 import React from 'react';
 import { Search, ArrowLeft } from 'lucide-react';
-import { getThemeColours } from '../utils/themeColours';
-import FormField from './FormField';
-import CountrySelect from './CountrySelect';
-import ProductSelect from './ProductSelect';
+import { getThemeColours } from '../../utils/themeColours';
+import FormField from '../forms/FormField';
+import CountrySelect from '../forms/CountrySelect';
+import ProductSelect from '../forms/ProductSelect';
 
 const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch, onBack, isLoading, error }) => {
   const colours = getThemeColours();

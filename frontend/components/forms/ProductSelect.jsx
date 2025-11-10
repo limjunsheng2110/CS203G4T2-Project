@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Search, Package } from 'lucide-react';
-import apiService from '../services/apiService';
+import React, { useState, useEffect } from 'react';
+import { Search, ChevronDown, Package } from 'lucide-react';
+import apiService from '../../services/apiService';
 
 const ProductSelect = ({ label, name, value, onChange, required, colours }) => {
   const [products, setProducts] = useState([]);

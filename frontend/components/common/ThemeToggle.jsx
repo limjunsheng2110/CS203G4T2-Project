@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { getThemeColours } from '../utils/themeColours';
+import { getThemeColours } from '../../utils/themeColours';
 
 const ThemeToggle = ({ theme, toggleTheme }) => {
   const colours = getThemeColours(theme);

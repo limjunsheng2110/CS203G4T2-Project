@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowRight, Zap, Shield, Globe, TrendingDown } from 'lucide-react';
-import { getThemeColours } from '../utils/themeColours';
+import { getThemeColours } from '../../utils/themeColours';
 
 const HomePage = ({ onGetStarted }) => {
   const colours = getThemeColours();

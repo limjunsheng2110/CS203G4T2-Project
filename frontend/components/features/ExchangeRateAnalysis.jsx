@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, Minus, Calendar, DollarSign, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react';
-import { getThemeColours } from '../utils/themeColours';
-import apiService from '../services/apiService';
+import { getThemeColours } from '../../utils/themeColours';
+import apiService from '../../services/apiService';
 
 const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => {
   const [analysisData, setAnalysisData] = useState(null);
