@@ -1,8 +1,8 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { getThemeColours } from '../utils/themeColours';
-import ResultCard from './ResultCard';
-import ExchangeRateAnalysis from './ExchangeRateAnalysis';
+import { getThemeColours } from '../../utils/themeColours';
+import ResultCard from '../features/ResultCard';
+import ExchangeRateAnalysis from '../features/ExchangeRateAnalysis';
 
 const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack }) => {
   const colours = getThemeColours();

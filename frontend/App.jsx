@@ -1,13 +1,13 @@
 // frontend/App.jsx
 
 import React, { useState, useEffect } from 'react';
-import HomePage from './components/HomePage';
-import DetailPage from './components/DetailPage';
-import ResultsPage from './components/ResultsPage';
-import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
-import UserInfo from './components/UserInfo';
-import AdminDashboard from './components/AdminDashboard';
+import HomePage from './components/pages/HomePage';
+import DetailPage from './components/pages/DetailPage';
+import ResultsPage from './components/pages/ResultsPage';
+import LoginPage from './components/pages/LoginPage';
+import RegisterPage from './components/pages/RegisterPage';
+import UserInfo from './components/common/UserInfo';
+import AdminDashboard from './components/pages/AdminDashboard';
 import apiService from './services/apiService';
 
 const App = () => {
