@@ -24,7 +24,7 @@ public class SentimentAnalysis {
     @Column(name = "week_end_date", nullable = false)
     private LocalDate weekEndDate;
     
-    @Column(name = "average_sentiment", precision = 5, scale = 4, nullable = false)
+    @Column(name = "average_sentiment", nullable = false)
     private Double averageSentiment;  // Weekly average: -1.0 to +1.0
     
     @Column(name = "article_count")

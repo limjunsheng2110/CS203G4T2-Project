@@ -32,7 +32,7 @@ public class NewsArticle {
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
     
-    @Column(name = "sentiment_score", precision = 5, scale = 4)
+    @Column(name = "sentiment_score")
     private Double sentimentScore;  // Range: -1.0 (negative) to +1.0 (positive)
     
     @Column(name = "keywords")
