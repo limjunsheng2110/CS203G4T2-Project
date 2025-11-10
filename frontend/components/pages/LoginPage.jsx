@@ -1,7 +1,7 @@
 // frontend/components/LoginPage.jsx
 import React, { useState } from 'react';
 
-const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
+const LoginPage = ({ onLoginSuccess, onSwitchToRegister, sessionExpired = false }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -77,11 +77,14 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister }) => {
             alt="TariffNom Logo"
             className="mx-auto w-[480px] h-auto"
           />
-          <h2 className="mt-6 text-[4.5rem] font-extrabold text-white">
-            Welcome!
+          <h2 className={`mt-6 font-extrabold text-white ${sessionExpired ? 'text-[3.8rem]' : 'text-[4.5rem]'}`}>
+            {sessionExpired ? 'Welcome back!' : 'Welcome!'}
           </h2>
           <p className="mt-2 text-[1.2rem] text-gray-400">
-            Sign in to calculate tariffs
+            {sessionExpired 
+              ? "You've been away for awhile. Relogin to continue calculating tariffs!"
+              : 'Sign in to calculate tariffs'
+            }
           </p>
         </div>
 
