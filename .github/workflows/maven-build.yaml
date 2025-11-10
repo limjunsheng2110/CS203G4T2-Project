@@ -151,7 +151,7 @@ jobs:
 
             # Wait for services to start (simple time-based approach)
             echo "⏳ Waiting for services to initialize..."
-            sleep 60
+            sleep 30
 
             # Create nginx config with simpler approach that works reliably
             echo "🌐 Starting Nginx Reverse Proxy..."
@@ -249,17 +249,31 @@ jobs:
             }
             EOF
 
+            # Test nginx config before starting container
+            echo "🔧 Testing nginx configuration..."
+            docker run --rm -v /tmp/nginx.conf:/etc/nginx/nginx.conf:ro nginx:alpine nginx -t
+
             # Start nginx with the config file
             docker run -d \
               --name tariff-nginx \
               --network tariff-network \
               -p 80:80 \
-              -p 443:443 \
               -v /tmp/nginx.conf:/etc/nginx/nginx.conf:ro \
               --restart unless-stopped \
               nginx:alpine
 
-            # Wait for nginx to start
+            # Wait for nginx to start and check its status immediately
+            sleep 5
+            echo "🔍 Checking nginx status immediately after start..."
+            docker ps --filter "name=tariff-nginx" --format "{{.Names}}: {{.Status}}"
+            
+            # If nginx is not running, show logs
+            if ! docker ps --filter "name=tariff-nginx" --filter "status=running" | grep -q tariff-nginx; then
+              echo "❌ Nginx failed to start! Showing logs:"
+              docker logs tariff-nginx
+            fi
+
+            # Wait a bit more and check again
             sleep 10
 
             # Final verification
