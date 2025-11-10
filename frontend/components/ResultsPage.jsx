@@ -4,6 +4,7 @@ import { getThemeColours } from '../utils/themeColours';
 import ThemeToggle from './ThemeToggle';
 import ResultCard from './ResultCard';
 import ExchangeRateAnalysis from './ExchangeRateAnalysis';
+import PredictiveAnalysis from './PredictiveAnalysis';
 
 const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack, theme, toggleTheme }) => {
   const colours = getThemeColours(theme);
@@ -67,6 +68,13 @@ const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack, the
 
         {/* Exchange Rate Analysis Section */}
         <ExchangeRateAnalysis 
+          importingCountry={formData.importCountry}
+          exportingCountry={formData.exportCountry}
+          theme={theme}
+        />
+
+        {/* Predictive Analysis Section (News Sentiment-Based) */}
+        <PredictiveAnalysis 
           importingCountry={formData.importCountry}
           exportingCountry={formData.exportCountry}
           theme={theme}
