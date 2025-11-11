@@ -96,6 +96,18 @@ jobs:
     needs: build_and_publish # This dependency ensures the job only runs if the image push succeeded
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy nginx.conf to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "nginx.conf"
+          target: "/tmp/"
+
       - name: Deploy Microservices via SSH
         # Uses the community action to execute commands on the remote EC2 server
         uses: appleboy/ssh-action@v1.0.1
@@ -153,107 +165,14 @@ jobs:
             echo "⏳ Waiting for services to initialize..."
             sleep 30
 
-            # Create nginx config with simpler approach that works reliably
+            # Deploy Nginx using the config file from the repository
             echo "🌐 Starting Nginx Reverse Proxy..."
             
-            # Create a simple nginx config file on the host first
-            cat > /tmp/nginx.conf << 'EOF'
-            events {
-                worker_connections 1024;
-            }
-
-            http {
-                upstream backend {
-                    server tariff-backend:8080;
-                }
-
-                upstream python-scraper {
-                    server tariff-scraper:5001;
-                }
-
-                server {
-                    listen 80;
-                    server_name _;
-
-                    # Enable CORS for frontend
-                    add_header Access-Control-Allow-Origin "*" always;
-                    add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
-                    add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
-
-                    # Handle preflight requests
-                    if ($request_method = 'OPTIONS') {
-                        add_header Access-Control-Allow-Origin "*";
-                        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
-                        add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept";
-                        add_header Content-Length 0;
-                        add_header Content-Type text/plain;
-                        return 204;
-                    }
-
-                    # Backend API routes
-                    location /api/ {
-                        proxy_pass http://backend;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Real-IP $remote_addr;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                        proxy_set_header X-Forwarded-Proto $scheme;
-                    }
-
-                    # Auth routes
-                    location /auth/ {
-                        proxy_pass http://backend;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Real-IP $remote_addr;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                        proxy_set_header X-Forwarded-Proto $scheme;
-                    }
-
-                    # Swagger/OpenAPI routes
-                    location /swagger-ui/ {
-                        proxy_pass http://backend/swagger-ui/;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Real-IP $remote_addr;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                        proxy_set_header X-Forwarded-Proto $scheme;
-                        proxy_redirect off;
-                    }
-
-                    location /swagger-ui {
-                        return 301 /swagger-ui/;
-                    }
-
-                    location /v3/api-docs {
-                        proxy_pass http://backend/v3/api-docs;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Real-IP $remote_addr;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                        proxy_set_header X-Forwarded-Proto $scheme;
-                    }
-
-                    # Python scraper routes
-                    location /scrape/ {
-                        proxy_pass http://python-scraper/;
-                        proxy_set_header Host $host;
-                        proxy_set_header X-Real-IP $remote_addr;
-                        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                        proxy_set_header X-Forwarded-Proto $scheme;
-                    }
-
-                    # Health check
-                    location /health {
-                        access_log off;
-                        return 200 "healthy\n";
-                        add_header Content-Type text/plain;
-                    }
-                }
-            }
-            EOF
-
             # Test nginx config before starting container
             echo "🔧 Testing nginx configuration..."
             docker run --rm -v /tmp/nginx.conf:/etc/nginx/nginx.conf:ro nginx:alpine nginx -t
 
-            # Start nginx with the config file
+            # Start nginx with the config file from the repository
             docker run -d \
               --name tariff-nginx \
               --network tariff-network \
