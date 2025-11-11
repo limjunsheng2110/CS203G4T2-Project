@@ -125,28 +125,28 @@ jobs:
             # Create docker network if it doesn't exist
             docker network create tariff-network || true
 
-            # Pull latest images
-            docker pull ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
-            docker pull nginx:alpine
-
             # Stop and remove existing containers gracefully
-            docker run -d \
             echo "🛑 Stopping existing containers..."
-              --name tariff-scraper \
-              --network tariff-network \
-              -p 5001:5001 \
+            docker stop tariff-nginx tariff-backend tariff-scraper 2>/dev/null || true
+            docker rm tariff-nginx tariff-backend tariff-scraper 2>/dev/null || true
+
             # Remove old images to force fresh pull
             echo "🧹 Cleaning up old images..."
             docker rmi ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest 2>/dev/null || true
             docker rmi ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest 2>/dev/null || true
 
-            # Pull latest images with --no-cache
+            # Pull latest images (docker pull doesn't support --no-cache, that's for build)
             echo "📥 Pulling latest images..."
-            docker pull --no-cache ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
-            docker pull --no-cache ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
             docker pull nginx:alpine
 
+            # Deploy Python Scraper first
+            echo "🐍 Starting Python Scraper..."
+            docker run -d \
+              --name tariff-scraper \
+              --network tariff-network \
+              -p 5001:5001 \
               --restart unless-stopped \
               -e OPENAI_API_KEY="${{ secrets.OPENAI_KEY }}" \
               ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
@@ -158,21 +158,21 @@ jobs:
               --network tariff-network \
               -p 8080:8080 \
               --restart unless-stopped \
-              -e DB_URL="${{ secrets.DB_URL }}" \
-              -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
-              -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
-              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-              -e JWT_EXPIRATION_MS="900000" \
-              -e OPENAI_API_KEY="${{ secrets.OPENAI_KEY }}" \
               -e SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
               -e SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
               -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_EXPIRATION_MS="900000" \
+              -e OPENAI_API_KEY="${{ secrets.OPENAI_KEY }}" \
+              -e OPENEXCHANGERATES_API_KEY="${{ secrets.OPENEXCHANGERATES_API_KEY }}" \
+              -e PYTHON_SCRAPER_URL="http://tariff-scraper:5001/scrape" \
+              -e SPRING_PROFILES_ACTIVE="prod" \
+              ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
 
-            # Wait for services to start (simple time-based approach)
+            # Wait for services to start
             echo "⏳ Waiting for services to initialize..."
             sleep 30
 
-              -e SPRING_PROFILES_ACTIVE="prod" \
             # Deploy Nginx using the config file from the repository
             echo "🌐 Starting Nginx Reverse Proxy..."
             
@@ -189,9 +189,9 @@ jobs:
               --restart unless-stopped \
               nginx:alpine
 
-            # Wait for nginx to start and check its status immediately
+            # Wait for nginx to start and check its status
             sleep 5
-            echo "🔍 Checking nginx status immediately after start..."
+            echo "🔍 Checking nginx status..."
             docker ps --filter "name=tariff-nginx" --format "{{.Names}}: {{.Status}}"
             
             # If nginx is not running, show logs
@@ -203,17 +203,17 @@ jobs:
             # Wait a bit more and check again
             sleep 10
 
+            # Cleanup old unused images
+            echo "🧹 Cleaning up old unused images..."
+            docker image prune -f
+
             # Final verification
             echo "🔍 Final deployment verification..."
             echo "==================================="
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
             echo ""
             
-            # Cleanup old unused images
-            echo "🧹 Cleaning up old unused images..."
-            docker image prune -f
-
-            # Test endpoints with simpler approach
+            # Test endpoints
             echo "🧪 Testing endpoints..."
             if timeout 5 bash -c "</dev/tcp/localhost/80" 2>/dev/null; then
               echo "✅ Nginx (port 80): ACCESSIBLE"
