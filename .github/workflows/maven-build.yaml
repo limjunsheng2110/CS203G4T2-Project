@@ -131,15 +131,22 @@ jobs:
             docker pull nginx:alpine
 
             # Stop and remove existing containers gracefully
-            docker stop tariff-nginx tariff-backend tariff-scraper 2>/dev/null || true
-            docker rm tariff-nginx tariff-backend tariff-scraper 2>/dev/null || true
-
-            # Deploy Python Scraper first
-            echo "🐍 Starting Python Scraper..."
             docker run -d \
+            echo "🛑 Stopping existing containers..."
               --name tariff-scraper \
               --network tariff-network \
               -p 5001:5001 \
+            # Remove old images to force fresh pull
+            echo "🧹 Cleaning up old images..."
+            docker rmi ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest 2>/dev/null || true
+            docker rmi ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest 2>/dev/null || true
+
+            # Pull latest images with --no-cache
+            echo "📥 Pulling latest images..."
+            docker pull --no-cache ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
+            docker pull --no-cache ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
+            docker pull nginx:alpine
+
               --restart unless-stopped \
               -e OPENAI_API_KEY="${{ secrets.OPENAI_KEY }}" \
               ${{ secrets.DOCKER_USERNAME }}/tariff-scraper:latest
@@ -157,14 +164,15 @@ jobs:
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               -e JWT_EXPIRATION_MS="900000" \
               -e OPENAI_API_KEY="${{ secrets.OPENAI_KEY }}" \
-              -e OPENEXCHANGERATES_API_KEY="${{ secrets.OPENEXCHANGERATES_API_KEY }}" \
-              -e PYTHON_SCRAPER_URL="http://tariff-scraper:5001/scrape" \
-              ${{ secrets.DOCKER_USERNAME }}/tariff-backend:latest
+              -e SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
+              -e SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
+              -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}" \
 
             # Wait for services to start (simple time-based approach)
             echo "⏳ Waiting for services to initialize..."
             sleep 30
 
+              -e SPRING_PROFILES_ACTIVE="prod" \
             # Deploy Nginx using the config file from the repository
             echo "🌐 Starting Nginx Reverse Proxy..."
             
@@ -201,6 +209,10 @@ jobs:
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
             echo ""
             
+            # Cleanup old unused images
+            echo "🧹 Cleaning up old unused images..."
+            docker image prune -f
+
             # Test endpoints with simpler approach
             echo "🧪 Testing endpoints..."
             if timeout 5 bash -c "</dev/tcp/localhost/80" 2>/dev/null; then
