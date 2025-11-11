@@ -16,24 +16,57 @@ public class ShippingCostService {
     private ShippingService shippingService;
 
     /**
-     * Calculate shipping cost using flat rates from database
-     * The flat rate (e.g., $10, $15) is applied directly as the shipping cost
+     * Calculate shipping cost based on weight and per-kg rate from database
+     * Formula: shippingCost = ratePerKg * weight
+     * The rate (e.g., $5/kg for AIR, $2/kg for SEA) is multiplied by the weight
      * Only supports AIR and SEA modes
      */
     public BigDecimal calculateShippingCost(TariffCalculationRequestDTO request) {
-        // Get flat shipping rate based on shipping mode and country pair
-        BigDecimal shippingRate = shippingService.getShippingRate(
+        // Get per-kg shipping rate based on shipping mode and country pair
+        BigDecimal ratePerKg = shippingService.getShippingRate(
                 request.getShippingMode(),
                 request.getImportingCountry(),
                 request.getExportingCountry()
         );
 
         // If no shipping rate found or no shipping mode specified, return zero
-        if (shippingRate == null) {
+        if (ratePerKg == null) {
             return BigDecimal.ZERO;
         }
 
-        // Return the flat rate as the shipping cost
-        return shippingRate.setScale(2, RoundingMode.HALF_UP);
+        // Get weight from request (in kg)
+        BigDecimal weight = request.getWeight();
+
+        // If no weight specified, return zero
+        if (weight == null || weight.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        // Calculate shipping cost: rate per kg * weight
+        BigDecimal shippingCost = ratePerKg.multiply(weight);
+
+        // Return the calculated shipping cost
+        return shippingCost.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Get the shipping rate per kg from database
+     * @param request The tariff calculation request containing shipping mode and countries
+     * @return The rate per kilogram, or zero if not found
+     */
+    public BigDecimal getShippingRatePerKg(TariffCalculationRequestDTO request) {
+        // Get per-kg shipping rate based on shipping mode and country pair
+        BigDecimal ratePerKg = shippingService.getShippingRate(
+                request.getShippingMode(),
+                request.getImportingCountry(),
+                request.getExportingCountry()
+        );
+
+        // If no shipping rate found or no shipping mode specified, return zero
+        if (ratePerKg == null) {
+            return BigDecimal.ZERO;
+        }
+
+        return ratePerKg.setScale(2, RoundingMode.HALF_UP);
     }
 }

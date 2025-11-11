@@ -136,6 +136,7 @@ export const tariffApi = {
         exportingCountry: calculationParams.exportCountry,
         hsCode: calculationParams.hsCode,
         productValue: parseFloat(calculationParams.value),
+        weight: parseFloat(calculationParams.weight),
         shippingMode: calculationParams.shippingMode || null,
         year: calculationParams.year ? parseInt(calculationParams.year) : null
       });

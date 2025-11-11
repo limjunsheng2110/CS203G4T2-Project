@@ -122,6 +122,20 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
             )}
 
             <FormField
+              label="Weight (kg)"
+              name="weight"
+              type="number"
+              value={formData.weight}
+              onChange={handleInputChange}
+              placeholder="Enter weight in kilograms"
+              required={true}
+              colours={colours}
+            />
+            {formData.weight && parseFloat(formData.weight) <= 0 && (
+              <p className="text-red-500 text-sm mt-1">Weight must be greater than 0</p>
+            )}
+
+            <FormField
               label="Year"
               name="year"
               type="number"

@@ -39,4 +39,5 @@ public class TariffCalculationResultDTO {
     // Rates shown for transparency
     private BigDecimal adValoremRate;
     private BigDecimal vatRate;  // VAT/GST rate as percentage
+    private BigDecimal shippingRatePerKg;  // Shipping rate per kilogram
 }
