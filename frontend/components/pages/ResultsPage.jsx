@@ -207,7 +207,7 @@ const TariffResultCard = ({ result, formData, selectedProduct, colours }) => {
           </div>
         </div>
 
-        {/* VAT Rate Display - New Section */}
+        {/* VAT Rate Display  */}
         {result.vatRate && result.vatRate > 0 && (
           <div className={`${colours.inputBg} rounded-lg p-4 mb-6 border-l-4 border-green-500`}>
             <div className="flex items-center justify-between">
@@ -224,7 +224,7 @@ const TariffResultCard = ({ result, formData, selectedProduct, colours }) => {
           </div>
         )}
 
-        {/* Shipping Rate Display - New Section */}
+        {/* Shipping Rate Display */}
         {result.shippingCost && result.shippingCost > 0 && formData.shippingMode && (
           <div className={`${colours.inputBg} rounded-lg p-4 mb-6 border-l-4 border-blue-500`}>
             <div className="flex items-center justify-between">
