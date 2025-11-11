@@ -60,9 +60,9 @@ public class SecurityConfig {
 
                 // Swagger/OpenAPI endpoints
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                
+
                 // USER role - can access tariff calculation endpoints (both USER and ADMIN)
-                .requestMatchers("/api/tariff/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/tariff/**").permitAll()
 
                 // ADMIN role only - can manage users and tariff rates
                 .requestMatchers("/api/users/**").hasRole("ADMIN")

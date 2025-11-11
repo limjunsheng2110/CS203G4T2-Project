@@ -27,7 +27,8 @@ const App = () => {
     quantity: '',
     unit: '',
     year: '',
-    shippingMode: ''
+    shippingMode: '',
+    weight: ''
   });
 
   // Check for existing auth on mount
@@ -114,7 +115,7 @@ const App = () => {
 
   const handleSearch = async () => {
     // Validate required fields
-    if (!formData.importCountry || !formData.exportCountry || !formData.hsCode || !formData.value) {
+    if (!formData.importCountry || !formData.exportCountry || !formData.hsCode || !formData.value || !formData.weight) {
       setError('Please fill in all required fields');
       return;
     }
@@ -129,6 +130,13 @@ const App = () => {
     const valueNum = parseFloat(formData.value);
     if (isNaN(valueNum) || valueNum <= 0) {
       setError('Product value must be greater than 0');
+      return;
+    }
+
+    // Validate weight is positive
+    const weightNum = parseFloat(formData.weight);
+    if (isNaN(weightNum) || weightNum <= 0) {
+      setError('Weight must be greater than 0');
       return;
     }
 
@@ -160,6 +168,7 @@ const App = () => {
         exportCountry: formData.exportCountry,
         hsCode: formData.hsCode,
         value: formData.value,
+        weight: formData.weight,
         year: formData.year ? parseInt(formData.year) : null,
         shippingMode: formData.shippingMode
       });

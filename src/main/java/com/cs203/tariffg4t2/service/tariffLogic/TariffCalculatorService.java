@@ -128,9 +128,10 @@ public class TariffCalculatorService {
         BigDecimal vatOrGst = vatRate.multiply(vatBase).setScale(2, RoundingMode.HALF_UP);
 
         // ------------------------------------------------------------
-        // 4) Shipping & Totals
+        // 4) Shipping & Totals (uses weight from request)
         // ------------------------------------------------------------
         BigDecimal shippingCost = shippingCostService.calculateShippingCost(request);
+        BigDecimal shippingRatePerKg = shippingCostService.getShippingRatePerKg(request);
 
         BigDecimal tariffAmount = baseDuty;
 
@@ -145,6 +146,7 @@ public class TariffCalculatorService {
                 .exportingCountry(request.getExportingCountry())
                 .hsCode(request.getHsCode())
                 .productValue(scale2(invoiceValueDest))
+                .totalWeight(scale2(request.getWeight()))  // Include weight in response
                 .heads(request.getHeads() == null ? null : request.getHeads())
                 .TariffType(null) // optionally fill from your TariffRate if you expose it here
 
@@ -170,6 +172,7 @@ public class TariffCalculatorService {
                         request.getExportingCountry())
                 )
                 .vatRate(vatRatePercentage)  // Store as percentage (10 for 10%), not decimal (0.10)
+                .shippingRatePerKg(scale2(shippingRatePerKg))  // Include shipping rate per kg
                 .build();
 
         // Add tracking information to result if needed

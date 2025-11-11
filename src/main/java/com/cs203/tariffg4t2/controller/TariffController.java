@@ -30,14 +30,15 @@ public class TariffController {
             @RequestParam("importingCountry") String importingCountry,
             @RequestParam("exportingCountry") String exportingCountry,
             @RequestParam("hsCode") String hsCode,
-            @RequestParam("productValue") String productValue // use String to avoid 400s then parse below
+            @RequestParam("productValue") String productValue,
+            @RequestParam("weight") String weight
     ) {
         TariffCalculationRequestDTO req = TariffCalculationRequestDTO.builder()
                 .importingCountry(importingCountry)
                 .exportingCountry(exportingCountry)
                 .hsCode(hsCode)
                 .productValue(new java.math.BigDecimal(productValue))
-                // Add other optional query params if you want (freight, insurance, heads, weight…)
+                .weight(new java.math.BigDecimal(weight))
                 .build();
 
         TariffCalculationResultDTO result = tariffCalculatorService.calculate(req);

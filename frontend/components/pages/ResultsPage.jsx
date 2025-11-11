@@ -143,6 +143,11 @@ const TariffResultCard = ({ result, formData, selectedProduct, colours }) => {
                 <span className="font-medium">Tariff Year:</span> {result.year}
               </div>
             )}
+            {result.totalWeight && (
+              <div>
+                <span className="font-medium">Total Weight:</span> {Number(result.totalWeight).toFixed(2)} kg
+              </div>
+            )}
             {selectedProduct && (
               <>
                 <div>
@@ -224,9 +229,14 @@ const TariffResultCard = ({ result, formData, selectedProduct, colours }) => {
           <div className={`${colours.inputBg} rounded-lg p-4 mb-6 border-l-4 border-blue-500`}>
             <div className="flex items-center justify-between">
               <div>
-                <span className={`font-medium ${colours.text}`}>Shipping Rate Applied:</span>
+                <span className={`font-medium ${colours.text}`}>Shipping Cost:</span>
                 <span className={`ml-2 ${colours.textMuted} text-sm`}>
                   ({formData.shippingMode.toUpperCase()})
+                  {result.shippingRatePerKg && result.shippingRatePerKg > 0 && (
+                    <span className="ml-1">
+                      (${Number(result.shippingRatePerKg).toFixed(2)} per kg)
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="text-xl font-bold text-blue-600">
