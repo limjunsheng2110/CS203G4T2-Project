@@ -77,7 +77,7 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister, sessionExpired = false 
             alt="TariffNom Logo"
             className="mx-auto w-[480px] h-auto"
           />
-          <h2 className={`mt-6 font-extrabold text-white ${sessionExpired ? 'text-[3.8rem]' : 'text-[4.5rem]'}`}>
+          <h2 className={`mt-6 font-extrabold text-white whitespace-nowrap ${sessionExpired ? 'text-[3.8rem]' : 'text-[4.5rem]'}`}>
             {sessionExpired ? 'Welcome back!' : 'Welcome!'}
           </h2>
           <p className="mt-2 text-[1.2rem] text-gray-400">
