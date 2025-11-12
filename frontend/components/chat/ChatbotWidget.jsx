@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, MessageCircle, Send, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AlertCircle, CheckCircle2, Info, Loader2, MessageCircle, Send, X } from 'lucide-react';
+import apiService from '../../services/apiService';
 
 const CHAT_WIDGET_STORAGE_KEY = 'chatbot:isOpen';
 const CHAT_WIDGET_VISITED_KEY = 'chatbot:hasVisited';
@@ -13,6 +14,12 @@ const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [queryId, setQueryId] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
+  const [consentLogging, setConsentLogging] = useState(true);
+  const [pendingQuestions, setPendingQuestions] = useState([]);
+  const [previousAnswers, setPreviousAnswers] = useState([]);
+  const [errorMessage, setErrorMessage] = useState('');
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -119,23 +126,106 @@ const ChatbotWidget = () => {
     );
   };
 
-  const handleSendMessage = async () => {
-    const trimmed = inputValue.trim();
+  const appendMessage = (message) => {
+    setMessages((prev) => [...prev, message]);
+  };
+
+  const handleSendMessage = async (overrideValue) => {
+    const contentToSend = typeof overrideValue === 'string' ? overrideValue : inputValue;
+    const trimmed = contentToSend.trim();
     if (!trimmed || isTyping) {
       return;
     }
 
     addMessage('user', trimmed);
-    setInputValue('');
+    if (!overrideValue) {
+      setInputValue('');
+    }
     setIsTyping(true);
+    setErrorMessage('');
 
     try {
-      await simulateAssistantResponse();
+      const hsResponse = await apiService.chatbot.resolveHsCode({
+        queryId,
+        productName: trimmed.length > 60 ? trimmed.slice(0, 60) : trimmed,
+        description: trimmed,
+        attributes: [],
+        previousAnswers,
+        sessionId,
+        consentLogging,
+      });
+
+      if (!sessionId && hsResponse.sessionId) {
+        setSessionId(hsResponse.sessionId);
+      }
+      if (hsResponse.queryId) {
+        setQueryId(hsResponse.queryId);
+      }
+
+      if (hsResponse.candidates && hsResponse.candidates.length > 0) {
+        const formattedCandidates = hsResponse.candidates
+          .map(
+            (candidate, index) =>
+              `${index + 1}. ${candidate.hsCode} (confidence ${(candidate.confidence * 100).toFixed(
+                0
+              )}%)\n   ${candidate.rationale}`
+          )
+          .join('\n\n');
+
+        addMessage(
+          'assistant',
+          `Here are the HS code suggestions based on your description:\n\n${formattedCandidates}`
+        );
+      } else {
+        addMessage(
+          'assistant',
+          "I wasn't able to find a confident HS code match yet. Could you share more details about materials, function, or target market?"
+        );
+      }
+
+      if (hsResponse.disambiguationQuestions && hsResponse.disambiguationQuestions.length > 0) {
+        setPendingQuestions(hsResponse.disambiguationQuestions);
+        const questionText = hsResponse.disambiguationQuestions
+          .map((q) => `• ${q.question}`)
+          .join('\n');
+        addMessage(
+          'assistant',
+          `I need a bit more detail to narrow this down:\n${questionText}\n\nPlease select an option below.`
+        );
+      } else {
+        setPendingQuestions([]);
+      }
+
+      if (hsResponse.fallback) {
+        if (hsResponse.fallback.lastUsedCodes && hsResponse.fallback.lastUsedCodes.length > 0) {
+          const fallbackList = hsResponse.fallback.lastUsedCodes
+            .map((item) => `${item.hsCode} (from ${new Date(item.timestamp).toLocaleString()})`)
+            .join('\n');
+          addMessage(
+            'assistant',
+            `Previous HS codes you used:\n${fallbackList}\n\nNeed more help? ${hsResponse.fallback.manualSearchUrl}`
+          );
+        } else if (hsResponse.fallback.manualSearchUrl) {
+          addMessage(
+            'assistant',
+            `I can’t determine the code yet. You can continue describing the product or check the manual search: ${hsResponse.fallback.manualSearchUrl}`
+          );
+        }
+      }
+
+      if (hsResponse.notice && hsResponse.notice.message) {
+        addMessage('assistant', `${hsResponse.notice.message} More info: ${hsResponse.notice.privacyPolicyUrl}`);
+        if (hsResponse.notice.consentGranted != null) {
+          setConsentLogging(hsResponse.notice.consentGranted);
+        }
+      }
     } catch (error) {
       console.error('Chatbot simulation error:', error);
+      const message = error.message || 'Sorry, I could not process that. Please try again.';
+      setErrorMessage(message);
       addMessage(
         'assistant',
-        "Sorry, I couldn't process that just yet. Please try again in a moment."
+        'Something went wrong while fetching HS code suggestions. Please try again or give more description.'
       );
     } finally {
       setIsTyping(false);
@@ -147,6 +237,13 @@ const ChatbotWidget = () => {
       event.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleOptionSelect = async (questionId, answer) => {
+    const answerEntry = { questionId, answer };
+    setPreviousAnswers((prev) => [...prev, answerEntry]);
+    setPendingQuestions((prev) => prev.filter((question) => question.id !== questionId));
+    await handleSendMessage(answer);
   };
 
   const formattedTimestamp = (isoString) => {
@@ -214,6 +311,22 @@ const ChatbotWidget = () => {
               <div ref={messagesEndRef} />
             </div>
             <div className="border-t border-white/10 px-4 py-3 bg-black/20">
+              <div className="flex items-center justify-between gap-2 mb-2 text-[11px] text-white/50">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={consentLogging}
+                    onChange={(e) => setConsentLogging(e.target.checked)}
+                    className="accent-purple-500"
+                  />
+                  <span>
+                    We may store chat history to improve results.{' '}
+                    <a href="/privacy" className="underline text-purple-300">
+                      Privacy policy
+                    </a>
+                  </span>
+                </label>
+              </div>
               <label htmlFor="chatbot-input" className="sr-only">
                 Describe your product for HS code suggestions
               </label>
@@ -243,6 +356,33 @@ const ChatbotWidget = () => {
               <p id="chatbot-helper-text" className="mt-2 text-[11px] text-white/40">
                 Enter to send, Shift+Enter for newline.
               </p>
+              {pendingQuestions.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {pendingQuestions.map((question) => (
+                    <div key={question.id} className="bg-white/5 border border-white/10 rounded-lg p-3">
+                      <p className="text-xs text-white/80 mb-2">{question.question}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(question.options || ['Yes', 'No']).map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => handleOptionSelect(question.id, option)}
+                            className="px-3 py-1.5 rounded-full bg-purple-500/80 hover:bg-purple-400/90 text-xs text-white transition-colors"
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {errorMessage && (
+                <div className="mt-3 text-xs text-rose-300 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 mt-0.5" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

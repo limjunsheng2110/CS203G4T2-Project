@@ -211,6 +211,29 @@ export const productApi = {
   }
 };
 
+// Chatbot / HS Resolver endpoints
+export const chatbotApi = {
+  /**
+   * Resolve HS code suggestions for a given product description
+   * @param {Object} payload - HS resolver request payload
+   * @returns {Promise} Promise resolving to HS resolver response
+   */
+  resolveHsCode: async (payload) => {
+    try {
+      const response = await apiClient.post('/hs/resolve', payload);
+      return response.data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.details ||
+        error.response?.data?.message ||
+        'Unable to resolve HS code at the moment';
+      const customError = new Error(errorMessage);
+      customError.code = error.response?.status;
+      throw customError;
+    }
+  }
+};
+
 // Scraping API endpoints
 export const scrapingApi = {
   /**
@@ -308,6 +331,7 @@ const apiService = {
   scraping: scrapingApi,
   searchHistory: searchHistoryApi,
   auth: authApi,
+  chatbot: chatbotApi,
 };
 
 export default apiService;
