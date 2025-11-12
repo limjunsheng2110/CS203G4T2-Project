@@ -9,6 +9,7 @@ import RegisterPage from './components/pages/RegisterPage';
 import UserInfo from './components/common/UserInfo';
 import AdminDashboard from './components/pages/AdminDashboard';
 import apiService from './services/apiService';
+import ChatbotWidget from './components/chat/ChatbotWidget';
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('login');
@@ -260,6 +261,9 @@ const App = () => {
           <AdminDashboard onBack={handleBackToHome} />
         )}
       </div>
+
+      {/* HS Code Chatbot Assistant */}
+      <ChatbotWidget />
     </div>
   );
 };
