@@ -209,11 +209,20 @@ class ShippingCostServiceTest {
     @Test
     void getShippingRatePerKg_HighPrecision_RoundsCorrectly() {
         when(shippingService.getShippingRate("AIR", "US", "CN"))
-                .thenReturn(new BigDecimal("5.5555"));
+                .thenReturn(new BigDecimal("5.555"));
 
         BigDecimal result = shippingCostService.getShippingRatePerKg(testRequest);
 
-        assertEquals(new BigDecimal("5.56"), result);
+        assertEquals(new BigDecimal("5.56"), result); // Rounded to 2 decimal places
+    }
+
+    @Test
+    void getShippingRatePerKg_NullShippingMode_ReturnsZero() {
+        testRequest.setShippingMode(null);
+        when(shippingService.getShippingRate(null, "US", "CN")).thenReturn(null);
+
+        BigDecimal result = shippingCostService.getShippingRatePerKg(testRequest);
+
+        assertEquals(BigDecimal.ZERO, result);
     }
 }
-

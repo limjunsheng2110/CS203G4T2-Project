@@ -38,20 +38,24 @@ public class ScrapingController {
             return ResponseEntity.badRequest().body(createErrorResponse("Export code is required"));
         }
 
+        // Trim and uppercase the codes for further processing
+        String trimmedImportCode = importCode.trim().toUpperCase();
+        String trimmedExportCode = exportCode.trim().toUpperCase();
+
         // Validate country code format (should be 2-3 character codes)
-        if (importCode.length() < 2 || importCode.length() > 3) {
+        if (trimmedImportCode.length() < 2 || trimmedImportCode.length() > 3) {
             return ResponseEntity.badRequest().body(createErrorResponse("Import code must be 2-3 characters"));
         }
 
-        if (exportCode.length() < 2 || exportCode.length() > 3) {
+        if (trimmedExportCode.length() < 2 || trimmedExportCode.length() > 3) {
             return ResponseEntity.badRequest().body(createErrorResponse("Export code must be 2-3 characters"));
         }
 
         try {
             // Call the web scraping service
             ScrapedTariffResponse response = webScrapingService.scrapeTariffData(
-                    importCode.trim().toUpperCase(),
-                    exportCode.trim().toUpperCase()
+                    trimmedImportCode,
+                    trimmedExportCode
             );
 
             if ("error".equals(response.getStatus())) {

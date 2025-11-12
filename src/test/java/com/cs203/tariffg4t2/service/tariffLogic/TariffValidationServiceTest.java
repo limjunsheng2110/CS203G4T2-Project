@@ -304,57 +304,72 @@ class TariffValidationServiceTest {
     }
 
     @Test
-    void validateTariffRequest_CountryNameResolution_Success() {
+    void validateTariffRequest_CountryByName_ResolvesToCode() {
         testRequest.setImportingCountry("United States");
         testRequest.setExportingCountry("China");
+
         when(countryRepository.findByCountryNameIgnoreCase("United States")).thenReturn(Optional.of(usCountry));
         when(countryRepository.findByCountryNameIgnoreCase("China")).thenReturn(Optional.of(cnCountry));
 
         List<String> errors = validationService.validateTariffRequest(testRequest);
 
+        assertTrue(errors.isEmpty());
         assertEquals("US", testRequest.getImportingCountry());
         assertEquals("CN", testRequest.getExportingCountry());
     }
 
     @Test
-    void validateTariffRequest_ValidHsCode_NoError() {
+    void validateTariffRequest_InvalidHsCodeFormat_ReturnsError() {
+        testRequest.setHsCode("ABC");
+        when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
+        when(countryRepository.findByCountryCodeIgnoreCase("CN")).thenReturn(Optional.of(cnCountry));
+
+        List<String> errors = validationService.validateTariffRequest(testRequest);
+
+        assertFalse(errors.isEmpty());
+        assertTrue(errors.stream().anyMatch(e -> e.contains("Invalid HS code format")));
+    }
+
+    @Test
+    void validateTariffRequest_HsCodeWithNonDigits_Cleans() {
+        testRequest.setHsCode("12-34.56");
+        when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
+        when(countryRepository.findByCountryCodeIgnoreCase("CN")).thenReturn(Optional.of(cnCountry));
+
+        List<String> errors = validationService.validateTariffRequest(testRequest);
+
+        assertTrue(errors.isEmpty());
+        assertEquals("123456", testRequest.getHsCode());
+        assertTrue(testRequest.getDefaultedFields().stream()
+                .anyMatch(f -> f.contains("hsCode") && f.contains("cleaned")));
+    }
+
+    @Test
+    void validateTariffRequest_ValidHsCode6Digits_NoError() {
         testRequest.setHsCode("123456");
         when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
         when(countryRepository.findByCountryCodeIgnoreCase("CN")).thenReturn(Optional.of(cnCountry));
 
         List<String> errors = validationService.validateTariffRequest(testRequest);
 
+        assertTrue(errors.isEmpty());
         assertEquals("123456", testRequest.getHsCode());
     }
 
     @Test
-    void validateTariffRequest_HsCodeWithDots_CleanedSuccessfully() {
-        testRequest.setHsCode("12.34.56");
+    void validateTariffRequest_ValidHsCode10Digits_NoError() {
+        testRequest.setHsCode("1234567890");
         when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
         when(countryRepository.findByCountryCodeIgnoreCase("CN")).thenReturn(Optional.of(cnCountry));
 
         List<String> errors = validationService.validateTariffRequest(testRequest);
 
-        assertEquals("123456", testRequest.getHsCode());
-        assertTrue(testRequest.getDefaultedFields().stream()
-                .anyMatch(f -> f.contains("hsCode") && f.contains("cleaned")));
+        assertTrue(errors.isEmpty());
+        assertEquals("1234567890", testRequest.getHsCode());
     }
 
     @Test
-    void validateTariffRequest_HsCodeWithSpaces_CleanedSuccessfully() {
-        testRequest.setHsCode("12 34 56 78");
-        when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
-        when(countryRepository.findByCountryCodeIgnoreCase("CN")).thenReturn(Optional.of(cnCountry));
-
-        List<String> errors = validationService.validateTariffRequest(testRequest);
-
-        assertEquals("12345678", testRequest.getHsCode());
-        assertTrue(testRequest.getDefaultedFields().stream()
-                .anyMatch(f -> f.contains("hsCode") && f.contains("cleaned")));
-    }
-
-    @Test
-    void validateTariffRequest_InvalidHsCodeTooShort_ReturnsError() {
+    void validateTariffRequest_HsCodeTooShort_ReturnsError() {
         testRequest.setHsCode("12345");
         when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
         when(countryRepository.findByCountryCodeIgnoreCase("CN")).thenReturn(Optional.of(cnCountry));
@@ -366,20 +381,8 @@ class TariffValidationServiceTest {
     }
 
     @Test
-    void validateTariffRequest_InvalidHsCodeTooLong_ReturnsError() {
+    void validateTariffRequest_HsCodeTooLong_ReturnsError() {
         testRequest.setHsCode("12345678901");
-        when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
-        when(countryRepository.findByCountryCodeIgnoreCase("CN")).thenReturn(Optional.of(cnCountry));
-
-        List<String> errors = validationService.validateTariffRequest(testRequest);
-
-        assertFalse(errors.isEmpty());
-        assertTrue(errors.stream().anyMatch(e -> e.contains("Invalid HS code format")));
-    }
-
-    @Test
-    void validateTariffRequest_InvalidHsCodeWithLetters_ReturnsError() {
-        testRequest.setHsCode("ABC123");
         when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
         when(countryRepository.findByCountryCodeIgnoreCase("CN")).thenReturn(Optional.of(cnCountry));
 
@@ -410,17 +413,13 @@ class TariffValidationServiceTest {
     }
 
     @Test
-    void resolveToAlpha2_NullInput_ReturnsEmpty() {
-        Optional<String> result = validationService.resolveToAlpha2(null);
+    void resolveToAlpha2_CaseInsensitive_ReturnsCode() {
+        when(countryRepository.findByCountryCodeIgnoreCase("us")).thenReturn(Optional.of(usCountry));
 
-        assertFalse(result.isPresent());
-    }
+        Optional<String> result = validationService.resolveToAlpha2("us");
 
-    @Test
-    void resolveToAlpha2_BlankInput_ReturnsEmpty() {
-        Optional<String> result = validationService.resolveToAlpha2("   ");
-
-        assertFalse(result.isPresent());
+        assertTrue(result.isPresent());
+        assertEquals("US", result.get());
     }
 
     @Test
@@ -429,6 +428,27 @@ class TariffValidationServiceTest {
         when(countryRepository.findByCountryNameIgnoreCase("XX")).thenReturn(Optional.empty());
 
         Optional<String> result = validationService.resolveToAlpha2("XX");
+
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void resolveToAlpha2_BlankInput_ReturnsEmpty() {
+        Optional<String> result = validationService.resolveToAlpha2("");
+
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void resolveToAlpha2_NullInput_ReturnsEmpty() {
+        Optional<String> result = validationService.resolveToAlpha2(null);
+
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void resolveToAlpha2_WhitespaceInput_ReturnsEmpty() {
+        Optional<String> result = validationService.resolveToAlpha2("   ");
 
         assertFalse(result.isPresent());
     }
@@ -446,12 +466,25 @@ class TariffValidationServiceTest {
     @Test
     void isValidRequest_InvalidRequest_ReturnsFalse() {
         testRequest.setHsCode(null);
-        when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
-        when(countryRepository.findByCountryCodeIgnoreCase("CN")).thenReturn(Optional.of(cnCountry));
 
         boolean result = validationService.isValidRequest(testRequest);
 
         assertFalse(result);
     }
-}
 
+    @Test
+    void validateTariffRequest_CachedCountryLookup_UsesCache() {
+        when(countryRepository.findByCountryCodeIgnoreCase("US")).thenReturn(Optional.of(usCountry));
+        when(countryRepository.findByCountryCodeIgnoreCase("CN")).thenReturn(Optional.of(cnCountry));
+
+        // First call
+        validationService.validateTariffRequest(testRequest);
+
+        // Second call with same countries - should use cache
+        validationService.validateTariffRequest(testRequest);
+
+        // Should only call repository once per unique country due to caching
+        verify(countryRepository, times(1)).findByCountryCodeIgnoreCase("US");
+        verify(countryRepository, times(1)).findByCountryCodeIgnoreCase("CN");
+    }
+}
