@@ -2,20 +2,51 @@ import React, { useEffect, useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 
 const CHAT_WIDGET_STORAGE_KEY = 'chatbot:isOpen';
+const CHAT_WIDGET_VISITED_KEY = 'chatbot:hasVisited';
+const AUTO_OPEN_DELAY_MS = 2000;
+const AUTO_OPEN_ENABLED =
+  typeof import.meta !== 'undefined' &&
+  import.meta.env &&
+  import.meta.env.VITE_CHATBOT_AUTO_OPEN === 'true';
 
 const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Restore open state per session
   useEffect(() => {
+    let storedState = null;
+    let autoOpenTimer;
+
     try {
-      const stored = sessionStorage.getItem(CHAT_WIDGET_STORAGE_KEY);
-      if (stored !== null) {
-        setIsOpen(stored === 'true');
+      storedState = sessionStorage.getItem(CHAT_WIDGET_STORAGE_KEY);
+      if (storedState !== null) {
+        setIsOpen(storedState === 'true');
       }
     } catch (error) {
       console.warn('Unable to access sessionStorage for chatbot widget state:', error);
     }
+
+    try {
+      const hasVisited = localStorage.getItem(CHAT_WIDGET_VISITED_KEY) === 'true';
+
+      if (!hasVisited) {
+        localStorage.setItem(CHAT_WIDGET_VISITED_KEY, 'true');
+
+        if (AUTO_OPEN_ENABLED && storedState === null) {
+          autoOpenTimer = setTimeout(() => {
+            setIsOpen(true);
+          }, AUTO_OPEN_DELAY_MS);
+        }
+      }
+    } catch (error) {
+      console.warn('Unable to access localStorage for chatbot visit tracking:', error);
+    }
+
+    return () => {
+      if (autoOpenTimer) {
+        clearTimeout(autoOpenTimer);
+      }
+    };
   }, []);
 
   // Persist state when toggled
