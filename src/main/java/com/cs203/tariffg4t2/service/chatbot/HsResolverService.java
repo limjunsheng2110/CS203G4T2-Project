@@ -6,15 +6,25 @@ import com.cs203.tariffg4t2.dto.chatbot.HsCandidateDTO;
 import com.cs203.tariffg4t2.dto.chatbot.HsResolveRequestDTO;
 import com.cs203.tariffg4t2.dto.chatbot.HsResolveResponseDTO;
 import com.cs203.tariffg4t2.dto.chatbot.NoticeDTO;
+import com.cs203.tariffg4t2.model.chatbot.HsReference;
+import com.cs203.tariffg4t2.repository.chatbot.HsReferenceRepository;
+import java.util.Arrays;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class HsResolverService {
 
     private static final Logger logger = LoggerFactory.getLogger(HsResolverService.class);
@@ -22,6 +32,8 @@ public class HsResolverService {
     private static final double PRIMARY_CONFIDENCE = 0.82;
     private static final double SECONDARY_CONFIDENCE = 0.74;
     private static final double DISAMBIGUATION_THRESHOLD = 0.1;
+
+    private final HsReferenceRepository hsReferenceRepository;
 
     public HsResolveResponseDTO resolveHsCode(HsResolveRequestDTO request) {
         String sessionId = request.getSessionId() != null
@@ -34,7 +46,10 @@ public class HsResolverService {
 
         logger.debug("Resolving HS code for session={} query={}", sessionId, queryId);
 
-        List<HsCandidateDTO> candidates = buildCandidateMockResponses(request);
+        List<HsCandidateDTO> candidates = buildCandidatesFromReferenceData(request);
+        if (candidates.isEmpty()) {
+            candidates = buildCandidateMockFallback(request);
+        }
         List<DisambiguationQuestionDTO> disambiguationQuestions = buildDisambiguationQuestions(candidates);
         FallbackInfoDTO fallback = buildFallbackInfo();
 
@@ -54,55 +69,55 @@ public class HsResolverService {
                 .build();
     }
 
-    private List<HsCandidateDTO> buildCandidateMockResponses(HsResolveRequestDTO request) {
-        String normalizedName = request.getProductName().toLowerCase();
-        List<String> attributes = request.getAttributes() != null ? request.getAttributes() : List.of();
-
-        List<HsCandidateDTO> candidates = new ArrayList<>();
-
-        if (normalizedName.contains("laptop") || normalizedName.contains("computer")) {
-            candidates.add(HsCandidateDTO.builder()
-                    .hsCode("8471.30.01")
-                    .confidence(PRIMARY_CONFIDENCE)
-                    .rationale("Portable automatic data processing machine with keyboard and display.")
-                    .source("HYBRID")
-                    .attributesUsed(List.of("portable", "data processing", "with display"))
-                    .build());
-
-            candidates.add(HsCandidateDTO.builder()
-                    .hsCode("8471.41.00")
-                    .confidence(SECONDARY_CONFIDENCE)
-                    .rationale("Automatic data processing units without an integrated display.")
-                    .source("HYBRID")
-                    .attributesUsed(List.of("data processing"))
-                    .build());
-        } else if (normalizedName.contains("textile") || normalizedName.contains("fabric")) {
-            candidates.add(HsCandidateDTO.builder()
-                    .hsCode("5512.99.00")
-                    .confidence(PRIMARY_CONFIDENCE)
-                    .rationale("Woven fabrics of synthetic staple fibres, mixed materials.")
-                    .source("RULE")
-                    .attributesUsed(List.of("synthetic fibre", "woven fabric"))
-                    .build());
-
-            candidates.add(HsCandidateDTO.builder()
-                    .hsCode("5903.20.00")
-                    .confidence(SECONDARY_CONFIDENCE)
-                    .rationale("Textile fabrics impregnated or coated with polyurethane.")
-                    .source("RULE")
-                    .attributesUsed(List.of("coated fabric"))
-                    .build());
-        } else {
-            candidates.add(HsCandidateDTO.builder()
-                    .hsCode("0000.00.00")
-                    .confidence(0.55)
-                    .rationale("Insufficient data to provide a specific HS code — please provide more details.")
-                    .source("RULE")
-                    .attributesUsed(attributes)
-                    .build());
+    private List<HsCandidateDTO> buildCandidatesFromReferenceData(HsResolveRequestDTO request) {
+        Set<String> tokens = deriveSearchTokens(request);
+        if (tokens.isEmpty()) {
+            return List.of();
         }
 
-        return candidates;
+        Map<String, CandidateScore> scoreMap = new LinkedHashMap<>();
+
+        for (String token : tokens) {
+            List<HsReference> matches = hsReferenceRepository.searchByToken(token);
+            for (HsReference reference : matches) {
+                CandidateScore score = scoreMap.computeIfAbsent(reference.getHsCode(), code ->
+                        new CandidateScore(reference));
+                score.incrementMatchCount(token);
+            }
+        }
+
+        if (scoreMap.isEmpty()) {
+            return List.of();
+        }
+
+        int totalTokens = tokens.size();
+        List<CandidateScore> rankedScores = scoreMap.values().stream()
+                .peek(candidateScore -> candidateScore.calculateConfidence(totalTokens))
+                .sorted((a, b) -> Double.compare(b.getConfidence(), a.getConfidence()))
+                .limit(3)
+                .toList();
+
+        return rankedScores.stream()
+                .map(score -> HsCandidateDTO.builder()
+                        .hsCode(score.getReference().getHsCode())
+                        .confidence(score.getConfidence())
+                        .rationale(score.getReference().getDescription())
+                        .source("REFERENCE")
+                        .attributesUsed(score.getMatchedTokens())
+                        .build())
+                .toList();
+    }
+
+    private List<HsCandidateDTO> buildCandidateMockFallback(HsResolveRequestDTO request) {
+        List<String> attributes = request.getAttributes() != null ? request.getAttributes() : List.of();
+
+        return List.of(HsCandidateDTO.builder()
+                .hsCode("0000.00.00")
+                .confidence(0.55)
+                .rationale("Insufficient data to provide a specific HS code — please provide more details.")
+                .source("RULE")
+                .attributesUsed(attributes)
+                .build());
     }
 
     private List<DisambiguationQuestionDTO> buildDisambiguationQuestions(List<HsCandidateDTO> candidates) {
@@ -142,6 +157,53 @@ public class HsResolverService {
                 .lastUsedCodes(List.of(previous))
                 .manualSearchUrl("https://hts.usitc.gov/")
                 .build();
+    }
+
+    private Set<String> deriveSearchTokens(HsResolveRequestDTO request) {
+        String combined = String.format("%s %s %s",
+                request.getProductName(),
+                request.getDescription(),
+                request.getAttributes() != null ? String.join(" ", request.getAttributes()) : "");
+
+        return Arrays.stream(combined.toLowerCase(Locale.ENGLISH).split("\\W+"))
+                .filter(token -> token.length() > 3)
+                .limit(12)
+                .collect(Collectors.toSet());
+    }
+
+    private static class CandidateScore {
+        private final HsReference reference;
+        private final List<String> matchedTokens = new ArrayList<>();
+        private int matchCount = 0;
+        private double confidence = 0.0;
+
+        CandidateScore(HsReference reference) {
+            this.reference = reference;
+        }
+
+        void incrementMatchCount(String token) {
+            matchedTokens.add(token);
+            matchCount++;
+        }
+
+        void calculateConfidence(int totalTokens) {
+            double base = 0.45;
+            double tokenCoverage = totalTokens > 0 ? (double) matchCount / totalTokens : 0;
+            double descriptionLengthFactor = Math.min(0.25, reference.getDescription().length() / 1000.0);
+            this.confidence = Math.min(0.95, base + (tokenCoverage * 0.45) + descriptionLengthFactor);
+        }
+
+        public HsReference getReference() {
+            return reference;
+        }
+
+        public double getConfidence() {
+            return confidence;
+        }
+
+        public List<String> getMatchedTokens() {
+            return matchedTokens;
+        }
     }
 }
 
