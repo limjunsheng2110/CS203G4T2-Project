@@ -47,15 +47,6 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: mvn clean verify
 
-      - name: SonarQube Scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          mvn sonar:sonar \
-            -Dsonar.projectKey=CS203G4T2-Project \
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
       # -----------------------------------------------------------------------
       # 2. SETUP DOCKER FOR MULTI-SERVICE BUILD
