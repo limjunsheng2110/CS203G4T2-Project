@@ -1,11 +1,20 @@
 import React from 'react';
-import { Search, ArrowLeft } from 'lucide-react';
+import { Search, ArrowLeft, Info } from 'lucide-react';
 import { getThemeColours } from '../../utils/themeColours';
 import FormField from '../forms/FormField';
 import CountrySelect from '../forms/CountrySelect';
 import ProductSelect from '../forms/ProductSelect';
 
-const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch, onBack, isLoading, error }) => {
+const DetailPage = ({
+  formData,
+  selectedProduct,
+  handleInputChange,
+  handleSearch,
+  onBack,
+  isLoading,
+  error,
+  chatbotContext,
+}) => {
   const colours = getThemeColours();
 
   return (
@@ -72,6 +81,27 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
               required={true}
               colours={colours}
             />
+
+            {/* Chatbot context notice */}
+            {chatbotContext && chatbotContext.hsCode === formData.hsCode && (
+              <div className="p-3 bg-purple-500/10 border border-purple-400/40 rounded-lg text-sm text-white">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 mt-0.5 text-purple-200" />
+                  <div>
+                    <p className="font-semibold text-purple-100">
+                      HS code {chatbotContext.hsCode} suggested by assistant
+                      {chatbotContext.confidence != null &&
+                        ` (confidence ${(chatbotContext.confidence * 100).toFixed(0)}%)`}
+                    </p>
+                    {chatbotContext.rationale && (
+                      <p className="text-xs text-purple-100 mt-1 leading-relaxed">
+                        {chatbotContext.rationale}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Warning if same country selected */}
             {formData.importCountry && formData.exportCountry && 

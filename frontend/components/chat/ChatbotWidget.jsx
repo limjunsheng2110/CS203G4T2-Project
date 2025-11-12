@@ -10,7 +10,9 @@ const AUTO_OPEN_ENABLED =
   import.meta.env &&
   import.meta.env.VITE_CHATBOT_AUTO_OPEN === 'true';
 
-const ChatbotWidget = () => {
+const DEFAULT_CONFIDENCE_THRESHOLD = 0.7;
+
+const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -20,6 +22,7 @@ const ChatbotWidget = () => {
   const [pendingQuestions, setPendingQuestions] = useState([]);
   const [previousAnswers, setPreviousAnswers] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
+  const [confirmationCandidate, setConfirmationCandidate] = useState(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -176,11 +179,23 @@ const ChatbotWidget = () => {
           'assistant',
           `Here are the HS code suggestions based on your description:\n\n${formattedCandidates}`
         );
+
+        const primaryCandidate = hsResponse.candidates[0];
+        if (
+          primaryCandidate &&
+          primaryCandidate.confidence >= DEFAULT_CONFIDENCE_THRESHOLD &&
+          (!hsResponse.disambiguationQuestions || hsResponse.disambiguationQuestions.length === 0)
+        ) {
+          setConfirmationCandidate(primaryCandidate);
+        } else {
+          setConfirmationCandidate(null);
+        }
       } else {
         addMessage(
           'assistant',
           "I wasn't able to find a confident HS code match yet. Could you share more details about materials, function, or target market?"
         );
+        setConfirmationCandidate(null);
       }
 
       if (hsResponse.disambiguationQuestions && hsResponse.disambiguationQuestions.length > 0) {
@@ -213,10 +228,15 @@ const ChatbotWidget = () => {
         }
       }
 
-      if (hsResponse.notice && hsResponse.notice.message) {
-        addMessage('assistant', `${hsResponse.notice.message} More info: ${hsResponse.notice.privacyPolicyUrl}`);
+      if (hsResponse.notice) {
+        if (hsResponse.notice.message) {
+          addMessage(
+            'assistant',
+            `${hsResponse.notice.message}${hsResponse.notice.privacyPolicyUrl ? ` More info: ${hsResponse.notice.privacyPolicyUrl}` : ''}`
+          );
+        }
         if (hsResponse.notice.consentGranted != null) {
-          setConsentLogging(hsResponse.notice.consentGranted);
+          setConsentLogging(Boolean(hsResponse.notice.consentGranted));
         }
       }
     } catch (error) {
@@ -243,7 +263,23 @@ const ChatbotWidget = () => {
     const answerEntry = { questionId, answer };
     setPreviousAnswers((prev) => [...prev, answerEntry]);
     setPendingQuestions((prev) => prev.filter((question) => question.id !== questionId));
+    setConfirmationCandidate(null);
     await handleSendMessage(answer);
+  };
+
+  const handleConfirmCandidate = (candidate) => {
+    addMessage(
+      'assistant',
+      `Great! I've pre-filled the tariff calculator with HS code ${candidate.hsCode}. You can adjust the other fields before running the calculation.`
+    );
+    setConfirmationCandidate(null);
+    onHsCodeSelected({
+      hsCode: candidate.hsCode,
+      confidence: candidate.confidence,
+      rationale: candidate.rationale,
+      source: candidate.source,
+    });
+    setIsOpen(false);
   };
 
   const formattedTimestamp = (isoString) => {
@@ -375,6 +411,38 @@ const ChatbotWidget = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              {confirmationCandidate && (
+                <div className="mt-3 bg-green-500/10 border border-green-400/40 text-white rounded-xl p-3 text-xs">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 text-green-300" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm text-green-200">
+                        Suggested HS Code: {confirmationCandidate.hsCode}
+                      </p>
+                      <p className="text-green-100 mt-1 leading-relaxed">
+                        Confidence {(confirmationCandidate.confidence * 100).toFixed(0)}% –{' '}
+                        {confirmationCandidate.rationale}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmCandidate(confirmationCandidate)}
+                          className="px-3 py-1.5 bg-green-500 hover:bg-green-400 text-xs font-medium rounded-full text-black transition-colors"
+                        >
+                          Use this HS code
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmationCandidate(null)}
+                          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-xs font-medium rounded-full transition-colors"
+                        >
+                          Keep looking
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
               {errorMessage && (

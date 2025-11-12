@@ -31,6 +31,7 @@ const App = () => {
     shippingMode: '',
     weight: ''
   });
+  const [chatbotContext, setChatbotContext] = useState(null);
 
   // Check for existing auth on mount
   useEffect(() => {
@@ -98,6 +99,29 @@ const App = () => {
     } else if (name === 'hsCode' && !value) {
       setSelectedProduct(null);
     }
+  };
+
+  const handleChatbotHsSelection = ({ hsCode, confidence, rationale, source }) => {
+    if (!hsCode) {
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      hsCode,
+    }));
+
+    setChatbotContext({
+      hsCode,
+      confidence,
+      rationale,
+      source,
+      timestamp: new Date().toISOString(),
+    });
+
+    fetchProductInfo(hsCode);
+    setCurrentPage('detail');
+    setError(null);
   };
 
   const fetchProductInfo = async (hsCode) => {
@@ -244,6 +268,7 @@ const App = () => {
             isLoading={isLoading}
             error={error}
             selectedProduct={selectedProduct}
+            chatbotContext={chatbotContext}
           />
         )}
 
@@ -263,7 +288,7 @@ const App = () => {
       </div>
 
       {/* HS Code Chatbot Assistant */}
-      <ChatbotWidget />
+      <ChatbotWidget onHsCodeSelected={handleChatbotHsSelection} />
     </div>
   );
 };
