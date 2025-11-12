@@ -6,22 +6,24 @@ import com.cs203.tariffg4t2.dto.chatbot.HsCandidateDTO;
 import com.cs203.tariffg4t2.dto.chatbot.HsResolveRequestDTO;
 import com.cs203.tariffg4t2.dto.chatbot.HsResolveResponseDTO;
 import com.cs203.tariffg4t2.dto.chatbot.NoticeDTO;
+import com.cs203.tariffg4t2.dto.chatbot.PreviousAnswerDTO;
 import com.cs203.tariffg4t2.model.chatbot.HsReference;
 import com.cs203.tariffg4t2.repository.chatbot.HsReferenceRepository;
-import java.util.Arrays;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
@@ -29,11 +31,10 @@ public class HsResolverService {
 
     private static final Logger logger = LoggerFactory.getLogger(HsResolverService.class);
 
-    private static final double PRIMARY_CONFIDENCE = 0.82;
-    private static final double SECONDARY_CONFIDENCE = 0.74;
     private static final double DISAMBIGUATION_THRESHOLD = 0.1;
 
     private final HsReferenceRepository hsReferenceRepository;
+    private final HsChatSessionLogService hsChatSessionLogService;
 
     public HsResolveResponseDTO resolveHsCode(HsResolveRequestDTO request) {
         String sessionId = request.getSessionId() != null
@@ -46,9 +47,11 @@ public class HsResolverService {
 
         logger.debug("Resolving HS code for session={} query={}", sessionId, queryId);
 
-        List<HsCandidateDTO> candidates = buildCandidatesFromReferenceData(request);
+        HsResolveRequestDTO sanitizedRequest = sanitizeRequest(request);
+
+        List<HsCandidateDTO> candidates = buildCandidatesFromReferenceData(sanitizedRequest);
         if (candidates.isEmpty()) {
-            candidates = buildCandidateMockFallback(request);
+            candidates = buildCandidateMockFallback(sanitizedRequest);
         }
         List<DisambiguationQuestionDTO> disambiguationQuestions = buildDisambiguationQuestions(candidates);
         FallbackInfoDTO fallback = buildFallbackInfo();
@@ -56,10 +59,10 @@ public class HsResolverService {
         NoticeDTO notice = NoticeDTO.builder()
                 .message("We may store chat history to improve results.")
                 .privacyPolicyUrl("/privacy")
-                .consentGranted(Boolean.TRUE.equals(request.getConsentLogging()))
+                .consentGranted(Boolean.TRUE.equals(sanitizedRequest.getConsentLogging()))
                 .build();
 
-        return HsResolveResponseDTO.builder()
+        HsResolveResponseDTO response = HsResolveResponseDTO.builder()
                 .queryId(queryId)
                 .sessionId(sessionId)
                 .candidates(candidates)
@@ -67,6 +70,15 @@ public class HsResolverService {
                 .fallback(fallback)
                 .notice(notice)
                 .build();
+
+        hsChatSessionLogService.recordInteraction(
+                Objects.requireNonNull(sessionId, "sessionId"),
+                Boolean.TRUE.equals(sanitizedRequest.getConsentLogging()),
+                sanitizedRequest,
+                response
+        );
+
+        return response;
     }
 
     private List<HsCandidateDTO> buildCandidatesFromReferenceData(HsResolveRequestDTO request) {
@@ -161,8 +173,8 @@ public class HsResolverService {
 
     private Set<String> deriveSearchTokens(HsResolveRequestDTO request) {
         String combined = String.format("%s %s %s",
-                request.getProductName(),
-                request.getDescription(),
+                safe(request.getProductName()),
+                safe(request.getDescription()),
                 request.getAttributes() != null ? String.join(" ", request.getAttributes()) : "");
 
         return Arrays.stream(combined.toLowerCase(Locale.ENGLISH).split("\\W+"))
@@ -170,6 +182,45 @@ public class HsResolverService {
                 .limit(12)
                 .collect(Collectors.toSet());
     }
+
+    private HsResolveRequestDTO sanitizeRequest(HsResolveRequestDTO request) {
+        List<String> sanitizedAttributes = request.getAttributes() == null ? null :
+                request.getAttributes().stream()
+                        .map(attr -> normalize(attr, 60))
+                        .filter(attr -> !attr.isBlank())
+                        .toList();
+
+        List<PreviousAnswerDTO> sanitizedAnswers = request.getPreviousAnswers() == null ? null :
+                request.getPreviousAnswers().stream()
+                        .map(answer -> PreviousAnswerDTO.builder()
+                                .questionId(normalize(answer.getQuestionId(), 64))
+                                .answer(normalize(answer.getAnswer(), 200))
+                                .build())
+                        .toList();
+
+        return HsResolveRequestDTO.builder()
+                .sessionId(request.getSessionId())
+                .queryId(request.getQueryId())
+                .productName(normalize(request.getProductName(), 150))
+                .description(normalize(request.getDescription(), 2000))
+                .attributes(sanitizedAttributes)
+                .previousAnswers(sanitizedAnswers)
+                .consentLogging(request.getConsentLogging())
+                .build();
+    }
+
+    private String safe(String input) {
+        return input == null ? "" : input;
+    }
+
+    private String normalize(String input, int maxLength) {
+        String cleaned = safe(input).replaceAll("[\\r\\n\\t]+", " ").trim();
+        if (cleaned.length() > maxLength) {
+            return cleaned.substring(0, maxLength);
+        }
+        return cleaned;
+    }
+
 
     private static class CandidateScore {
         private final HsReference reference;
