@@ -10,8 +10,8 @@ const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack }) =
   // If no results are available, show a message
   if (!tariffResults) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black py-8 px-4">
-        <div className="max-w-5xl mx-auto">
+      <div className="min-h-screen py-8 px-4">
+        <div className="mx-auto">
           <div className="flex justify-between items-center mb-6">
             <button
               onClick={handleBack}
@@ -40,8 +40,8 @@ const ResultsPage = ({ formData, selectedProduct, tariffResults, handleBack }) =
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black py-8 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen py-8 w-full px-4">
+      <div className="mx-auto">
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={handleBack}
@@ -287,9 +287,9 @@ const TariffResultCard = ({ result, formData, selectedProduct, colours }) => {
               <div className="flex justify-between items-center">
                 <span className={colours.text}>
                   Shipping Cost:
-                  {formData.shippingMode && (
+                  {result.shippingRatePerKg && result.shippingRatePerKg > 0 && (
                     <span className="text-xs ml-1 text-gray-500">
-                      ({formData.shippingMode.toUpperCase()})
+                      (${Number(result.shippingRatePerKg).toFixed(2)}/kg)
                     </span>
                   )}
                 </span>

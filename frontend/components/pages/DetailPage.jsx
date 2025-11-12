@@ -9,7 +9,7 @@ const DetailPage = ({ formData, selectedProduct, handleInputChange, handleSearch
   const colours = getThemeColours();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black py-8 px-4">
+    <div className="min-h-screen py-8 px-4">
       <div className="max-w-2xl mx-auto">
         
         <div className="text-center mb-6">
