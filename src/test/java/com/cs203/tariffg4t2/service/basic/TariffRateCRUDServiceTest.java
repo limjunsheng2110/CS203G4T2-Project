@@ -563,5 +563,145 @@ class TariffRateCRUDServiceTest {
 
         assertEquals(2024, result.getYear()); // Original year preserved
     }
-}
 
+    @Test
+    void createTariffRate_ValidThreeCharacterCountryCode_Success() {
+        validDTO.setImportingCountryCode("USA");
+        validDTO.setExportingCountryCode("CHN");
+        when(countryRepository.existsByCountryCodeIgnoreCase("USA")).thenReturn(true);
+        when(countryRepository.existsByCountryCodeIgnoreCase("CHN")).thenReturn(true);
+        when(tariffRateRepository.save(any(TariffRate.class))).thenReturn(testTariffRate);
+
+        TariffRate result = tariffRateCRUDService.createTariffRate(validDTO);
+
+        assertNotNull(result);
+        verify(tariffRateRepository, times(1)).save(any(TariffRate.class));
+    }
+
+    @Test
+    void createTariffRate_ZeroBaseRate_Success() {
+        validDTO.setBaseRate(BigDecimal.ZERO);
+        when(countryRepository.existsByCountryCodeIgnoreCase("US")).thenReturn(true);
+        when(countryRepository.existsByCountryCodeIgnoreCase("CN")).thenReturn(true);
+        when(tariffRateRepository.save(any(TariffRate.class))).thenReturn(testTariffRate);
+
+        TariffRate result = tariffRateCRUDService.createTariffRate(validDTO);
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void createTariffRate_NullBaseRate_Success() {
+        validDTO.setBaseRate(null);
+        when(countryRepository.existsByCountryCodeIgnoreCase("US")).thenReturn(true);
+        when(countryRepository.existsByCountryCodeIgnoreCase("CN")).thenReturn(true);
+        when(tariffRateRepository.save(any(TariffRate.class))).thenReturn(testTariffRate);
+
+        TariffRate result = tariffRateCRUDService.createTariffRate(validDTO);
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void updateTariffRate_NullImportingCountryCode_SkipsUpdate() {
+        validDTO.setImportingCountryCode(null);
+        when(tariffRateRepository.findById(1L)).thenReturn(Optional.of(testTariffRate));
+        when(countryRepository.existsByCountryCodeIgnoreCase("CN")).thenReturn(true);
+        when(tariffRateRepository.save(any(TariffRate.class))).thenReturn(testTariffRate);
+
+        TariffRate result = tariffRateCRUDService.updateTariffRate(1L, validDTO);
+
+        assertEquals("US", result.getImportingCountryCode()); // Original value preserved
+    }
+
+    @Test
+    void updateTariffRate_EmptyImportingCountryCode_SkipsUpdate() {
+        validDTO.setImportingCountryCode("  ");
+        when(tariffRateRepository.findById(1L)).thenReturn(Optional.of(testTariffRate));
+        when(countryRepository.existsByCountryCodeIgnoreCase("CN")).thenReturn(true);
+        when(tariffRateRepository.save(any(TariffRate.class))).thenReturn(testTariffRate);
+
+        TariffRate result = tariffRateCRUDService.updateTariffRate(1L, validDTO);
+
+        assertEquals("US", result.getImportingCountryCode()); // Original value preserved
+    }
+
+    @Test
+    void updateTariffRate_NullExportingCountryCode_SkipsUpdate() {
+        validDTO.setExportingCountryCode(null);
+        when(tariffRateRepository.findById(1L)).thenReturn(Optional.of(testTariffRate));
+        when(countryRepository.existsByCountryCodeIgnoreCase("US")).thenReturn(true);
+        when(tariffRateRepository.save(any(TariffRate.class))).thenReturn(testTariffRate);
+
+        TariffRate result = tariffRateCRUDService.updateTariffRate(1L, validDTO);
+
+        assertEquals("CN", result.getExportingCountryCode()); // Original value preserved
+    }
+
+    @Test
+    void updateTariffRate_EmptyExportingCountryCode_SkipsUpdate() {
+        validDTO.setExportingCountryCode("   ");
+        when(tariffRateRepository.findById(1L)).thenReturn(Optional.of(testTariffRate));
+        when(countryRepository.existsByCountryCodeIgnoreCase("US")).thenReturn(true);
+        when(tariffRateRepository.save(any(TariffRate.class))).thenReturn(testTariffRate);
+
+        TariffRate result = tariffRateCRUDService.updateTariffRate(1L, validDTO);
+
+        assertEquals("CN", result.getExportingCountryCode()); // Original value preserved
+    }
+
+    @Test
+    void getAllTariffRatesByDetails_MixedYearsWithRequestedYear_SortsCorrectly() {
+        TariffRate rate2022 = new TariffRate();
+        rate2022.setId(3L);
+        rate2022.setYear(2022);
+
+        TariffRate rate2023 = new TariffRate();
+        rate2023.setId(2L);
+        rate2023.setYear(2023);
+
+        TariffRate rate2024 = new TariffRate();
+        rate2024.setId(1L);
+        rate2024.setYear(2024);
+
+        TariffRate rateNoYear = new TariffRate();
+        rateNoYear.setId(4L);
+        rateNoYear.setYear(null);
+
+        List<TariffRate> rates = Arrays.asList(rate2022, rateNoYear, rate2024, rate2023);
+        when(tariffRateRepository.findByHsCodeAndImportingCountryCodeAndExportingCountryCode(
+                "123456", "US", "CN")).thenReturn(rates);
+
+        List<TariffRate> result = tariffRateCRUDService.getAllTariffRatesByDetails("123456", "US", "CN", 2023);
+
+        assertEquals(4, result.size());
+        assertEquals(2023, result.get(0).getYear()); // Requested year first
+        assertEquals(2024, result.get(1).getYear()); // Then most recent
+        assertEquals(2022, result.get(2).getYear()); // Then older
+        assertNull(result.get(3).getYear()); // Null years last
+    }
+
+    @Test
+    void getTariffRateByDetails_OnlyNullYears_ReturnsFirst() {
+        TariffRate rateNoYear1 = new TariffRate();
+        rateNoYear1.setId(1L);
+        rateNoYear1.setYear(null);
+
+        TariffRate rateNoYear2 = new TariffRate();
+        rateNoYear2.setId(2L);
+        rateNoYear2.setYear(null);
+
+        TariffRate rateNoYear3 = new TariffRate();
+        rateNoYear3.setId(3L);
+        rateNoYear3.setYear(null);
+
+        List<TariffRate> rates = Arrays.asList(rateNoYear1, rateNoYear2, rateNoYear3);
+        when(tariffRateRepository.findByHsCodeAndImportingCountryCodeAndExportingCountryCode(
+                "123456", "US", "CN")).thenReturn(rates);
+
+        Optional<TariffRate> result = tariffRateCRUDService.getTariffRateByDetails("123456", "US", "CN");
+
+        assertTrue(result.isPresent());
+        assertNull(result.get().getYear());
+    }
+}
