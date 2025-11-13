@@ -1,37 +1,32 @@
 package com.cs203.tariffg4t2.service.chatbot;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
+import com.cs203.tariffg4t2.dto.chatbot.HsCandidateDTO;
 import com.cs203.tariffg4t2.dto.chatbot.HsResolveRequestDTO;
 import com.cs203.tariffg4t2.dto.chatbot.HsResolveResponseDTO;
-import com.cs203.tariffg4t2.dto.chatbot.PreviousAnswerDTO;
-import com.cs203.tariffg4t2.model.chatbot.HsReference;
-import com.cs203.tariffg4t2.repository.chatbot.HsReferenceRepository;
-import java.util.List;
-import java.util.UUID;
+import com.cs203.tariffg4t2.model.basic.Product;
+import com.cs203.tariffg4t2.repository.basic.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("DataFlowIssue")
-class HsResolverServiceTest {
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class HsResolverServiceTest {
 
     @Mock
-    private HsReferenceRepository hsReferenceRepository;
+    private ProductRepository productRepository;
 
     @Mock
     private HsChatSessionLogService hsChatSessionLogService;
@@ -39,113 +34,237 @@ class HsResolverServiceTest {
     @InjectMocks
     private HsResolverService hsResolverService;
 
-    private HsReference toothbrushReference;
+    private Product chickenProduct;
+    private Product goatProduct;
+    private HsResolveRequestDTO request;
 
     @BeforeEach
     void setUp() {
-        toothbrushReference = HsReference.builder()
-                .hsCode("9603.21.00")
-                .description("Toothbrushes, including dental plate brushes")
-                .keywords("toothbrush,dental,oral care")
-                .build();
+        // Setup test products
+        chickenProduct = new Product();
+        chickenProduct.setHsCode("010511");
+        chickenProduct.setDescription("Live poultry, chickens");
+        chickenProduct.setCategory("Live Animals");
+
+        goatProduct = new Product();
+        goatProduct.setHsCode("010420");
+        goatProduct.setDescription("Live goats");
+        goatProduct.setCategory("Live Animals");
+
+        // Setup test request
+        request = new HsResolveRequestDTO();
+        request.setProductName("chicken");
+        request.setDescription("live chickens for farming");
+        request.setSessionId("test-session");
+        request.setQueryId("test-query");
+        request.setConsentLogging(true);
     }
 
     @Test
-    void resolveHsCode_returnsCandidatesFromReferenceMatches() {
-        HsResolveRequestDTO request = HsResolveRequestDTO.builder()
-                .sessionId("session-123")
-                .queryId(UUID.randomUUID().toString())
-                .productName("Electric Toothbrush")
-                .description("Rechargeable electric toothbrush with multiple brushing modes.")
-                .attributes(List.of("battery powered", "oral care"))
-                .previousAnswers(List.of())
-                .consentLogging(true)
-                .build();
+    void testResolveHsCode_WithMatchingProducts() {
+        // given
+        when(productRepository.searchByToken("chicken")).thenReturn(Arrays.asList(chickenProduct));
+        when(productRepository.searchByToken("live")).thenReturn(Arrays.asList(chickenProduct, goatProduct));
+        when(productRepository.searchByToken("farming")).thenReturn(List.of());
 
-        when(hsReferenceRepository.searchByToken("electric")).thenReturn(List.of(toothbrushReference));
-        when(hsReferenceRepository.searchByToken("toothbrush")).thenReturn(List.of(toothbrushReference));
-        when(hsReferenceRepository.searchByToken("rechargeable")).thenReturn(List.of(toothbrushReference));
-        when(hsReferenceRepository.searchByToken("battery")).thenReturn(List.of(toothbrushReference));
-        when(hsReferenceRepository.searchByToken("powered")).thenReturn(List.of(toothbrushReference));
-        when(hsReferenceRepository.searchByToken("oral")).thenReturn(List.of(toothbrushReference));
-        when(hsReferenceRepository.searchByToken("care")).thenReturn(List.of(toothbrushReference));
-
+        // when
         HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
 
-        assertNotNull(response);
-        assertEquals("session-123", response.getSessionId());
-        assertNotNull(response.getCandidates());
-        assertFalse(response.getCandidates().isEmpty());
-        assertEquals("9603.21.00", response.getCandidates().get(0).getHsCode());
-        assertEquals("REFERENCE", response.getCandidates().get(0).getSource());
-        assertTrue(response.getCandidates().get(0).getConfidence() > 0.5);
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getQueryId()).isEqualTo("test-query");
+        assertThat(response.getSessionId()).isEqualTo("test-session");
+        assertThat(response.getCandidates()).isNotEmpty();
+        assertThat(response.getCandidates()).hasSizeLessThanOrEqualTo(3);
+        
+        HsCandidateDTO topCandidate = response.getCandidates().get(0);
+        assertThat(topCandidate.getHsCode()).isEqualTo("010511");
+        assertThat(topCandidate.getConfidence()).isGreaterThan(0.0);
+        assertThat(topCandidate.getRationale()).isEqualTo("Live poultry, chickens");
+        assertThat(topCandidate.getSource()).isEqualTo("PRODUCT_DATABASE");
 
-        ArgumentCaptor<Boolean> consentCaptor = ArgumentCaptor.forClass(Boolean.class);
-        //noinspection DataFlowIssue
-        verify(hsChatSessionLogService, times(1))
-                .recordInteraction(anyString(), consentCaptor.capture(),
-                        any(HsResolveRequestDTO.class), any(HsResolveResponseDTO.class));
-        Boolean capturedConsent = consentCaptor.getValue();
-        assertNotNull(capturedConsent);
-        assertTrue(capturedConsent);
+        verify(hsChatSessionLogService, times(1)).recordInteraction(
+                eq("test-session"),
+                eq(true),
+                any(HsResolveRequestDTO.class),
+                any(HsResolveResponseDTO.class)
+        );
     }
 
     @Test
-    void resolveHsCode_usesFallbackWhenNoMatches() {
-        HsResolveRequestDTO request = HsResolveRequestDTO.builder()
-                .productName("Unknown gadget")
-                .description("Some description that does not exist in reference")
-                .attributes(List.of("attribute"))
-                .consentLogging(false)
-                .build();
+    void testResolveHsCode_NoMatchingProducts() {
+        // given
+        when(productRepository.searchByToken(anyString())).thenReturn(List.of());
 
-        when(hsReferenceRepository.searchByToken(any())).thenReturn(List.of());
-
+        // when
         HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
 
-        assertNotNull(response);
-        assertNotNull(response.getCandidates());
-        assertEquals("0000.00.00", response.getCandidates().get(0).getHsCode());
-        assertEquals("RULE", response.getCandidates().get(0).getSource());
-
-        verifyNoInteractions(hsChatSessionLogService);
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getCandidates()).isEmpty();
+        assertThat(response.getDisambiguationQuestions()).isEmpty();
+        
+        verify(hsChatSessionLogService, times(1)).recordInteraction(
+                anyString(),
+                eq(true),
+                any(HsResolveRequestDTO.class),
+                any(HsResolveResponseDTO.class)
+        );
     }
 
     @Test
-    void resolveHsCode_sanitizesRequestBeforeLogging() {
-        HsResolveRequestDTO request = HsResolveRequestDTO.builder()
-                .sessionId("session-sanitize")
-                .productName("  <b>Laser</b> Cutter  ")
-                .description("Line1\nLine2\t<script>alert('x')</script>")
-                .attributes(List.of("  industrial  ", "laser  ", "<script>"))
-                .previousAnswers(List.of(
-                        PreviousAnswerDTO.builder().questionId(" power-source ").answer(" AC-100v ").build()))
-                .consentLogging(true)
-                .build();
+    void testResolveHsCode_GeneratesSessionId_WhenNotProvided() {
+        // given
+        request.setSessionId(null);
+        when(productRepository.searchByToken(anyString())).thenReturn(List.of());
 
-        when(hsReferenceRepository.searchByToken(any())).thenReturn(List.of());
+        // when
+        HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
 
-        hsResolverService.resolveHsCode(request);
+        // then
+        assertThat(response.getSessionId()).isNotNull();
+        assertThat(response.getSessionId()).isNotEmpty();
+    }
 
-        ArgumentCaptor<HsResolveRequestDTO> sanitizedRequestCaptor = ArgumentCaptor.forClass(HsResolveRequestDTO.class);
-        ArgumentCaptor<Boolean> consentCaptor = ArgumentCaptor.forClass(Boolean.class);
-        //noinspection DataFlowIssue
-        verify(hsChatSessionLogService, times(1))
-                .recordInteraction(anyString(), consentCaptor.capture(),
-                        sanitizedRequestCaptor.capture(), any(HsResolveResponseDTO.class));
+    @Test
+    void testResolveHsCode_GeneratesQueryId_WhenNotProvided() {
+        // given
+        request.setQueryId(null);
+        when(productRepository.searchByToken(anyString())).thenReturn(List.of());
 
-        Boolean capturedConsent = consentCaptor.getValue();
-        assertNotNull(capturedConsent);
-        assertTrue(capturedConsent);
+        // when
+        HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
 
-        HsResolveRequestDTO sanitized = sanitizedRequestCaptor.getValue();
-        assertEquals("<b>Laser</b> Cutter", sanitized.getProductName());
-        assertEquals("Line1 Line2 <script>alert('x')</script>", sanitized.getDescription());
-        assertEquals(List.of("industrial", "laser", "<script>"), sanitized.getAttributes());
-        assertEquals(List.of(PreviousAnswerDTO.builder()
-                .questionId("power-source")
-                .answer("AC-100v")
-                .build()), sanitized.getPreviousAnswers());
+        // then
+        assertThat(response.getQueryId()).isNotNull();
+        assertThat(response.getQueryId()).isNotEmpty();
+    }
+
+    @Test
+    void testResolveHsCode_LimitsTo3Candidates() {
+        // given
+        Product product1 = new Product();
+        product1.setHsCode("010511");
+        product1.setDescription("Product 1");
+
+        Product product2 = new Product();
+        product2.setHsCode("010512");
+        product2.setDescription("Product 2");
+
+        Product product3 = new Product();
+        product3.setHsCode("010513");
+        product3.setDescription("Product 3");
+
+        Product product4 = new Product();
+        product4.setHsCode("010514");
+        product4.setDescription("Product 4");
+
+        when(productRepository.searchByToken(anyString()))
+                .thenReturn(Arrays.asList(product1, product2, product3, product4));
+
+        // when
+        HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
+
+        // then
+        assertThat(response.getCandidates()).hasSize(3);
+    }
+
+    @Test
+    void testResolveHsCode_RanksByConfidence() {
+        // given
+        Product exactMatch = new Product();
+        exactMatch.setHsCode("010511");
+        exactMatch.setDescription("Live chickens for farming");
+
+        Product partialMatch = new Product();
+        partialMatch.setHsCode("010420");
+        partialMatch.setDescription("Live goats");
+
+        when(productRepository.searchByToken("live")).thenReturn(Arrays.asList(exactMatch, partialMatch));
+        when(productRepository.searchByToken("chickens")).thenReturn(Arrays.asList(exactMatch));
+        when(productRepository.searchByToken("farming")).thenReturn(Arrays.asList(exactMatch));
+
+        // when
+        HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
+
+        // then
+        assertThat(response.getCandidates()).isNotEmpty();
+        HsCandidateDTO firstCandidate = response.getCandidates().get(0);
+        assertThat(firstCandidate.getHsCode()).isEqualTo("010511");
+        
+        if (response.getCandidates().size() > 1) {
+            HsCandidateDTO secondCandidate = response.getCandidates().get(1);
+            assertThat(firstCandidate.getConfidence()).isGreaterThanOrEqualTo(secondCandidate.getConfidence());
+        }
+    }
+
+    @Test
+    void testResolveHsCode_HandlesNullProductName() {
+        // given
+        request.setProductName(null);
+        when(productRepository.searchByToken(anyString())).thenReturn(List.of());
+
+        // when
+        HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getCandidates()).isEmpty();
+    }
+
+    @Test
+    void testResolveHsCode_HandlesEmptyDescription() {
+        // given
+        request.setDescription("");
+        when(productRepository.searchByToken(anyString())).thenReturn(List.of());
+
+        // when
+        HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getCandidates()).isEmpty();
+    }
+
+    @Test
+    void testResolveHsCode_NoDisambiguationQuestions() {
+        // given
+        when(productRepository.searchByToken(anyString())).thenReturn(Arrays.asList(chickenProduct));
+
+        // when
+        HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
+
+        // then
+        assertThat(response.getDisambiguationQuestions()).isEmpty();
+    }
+
+    @Test
+    void testResolveHsCode_NoNotice() {
+        // given
+        when(productRepository.searchByToken(anyString())).thenReturn(Arrays.asList(chickenProduct));
+
+        // when
+        HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
+
+        // then
+        assertThat(response.getNotice()).isNull();
+    }
+
+    @Test
+    void testResolveHsCode_ConsentLoggingFalse() {
+        // given
+        request.setConsentLogging(false);
+        when(productRepository.searchByToken(anyString())).thenReturn(List.of());
+
+        // when
+        HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
+
+        // then
+        verify(hsChatSessionLogService, times(1)).recordInteraction(
+                anyString(),
+                eq(false),
+                any(HsResolveRequestDTO.class),
+                any(HsResolveResponseDTO.class)
+        );
     }
 }
-
