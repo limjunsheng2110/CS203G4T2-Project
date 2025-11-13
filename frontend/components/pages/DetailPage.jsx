@@ -17,7 +17,7 @@ const DetailPage = ({
   theme,
   toggleTheme,
 }) => {
-  const colours = getThemeColours();
+  const colours = getThemeColours(theme);
 
   return (
     <div className="py-8 px-4">
