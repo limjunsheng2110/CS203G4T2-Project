@@ -45,6 +45,17 @@ public class NewsAPIService {
      * @return List of articles (not yet saved to database)
      */
     public List<NewsArticle> fetchTradeNews(int daysBack) throws Exception {
+        return fetchTradeNews(daysBack, null, null);
+    }
+
+    /**
+     * Fetch trade news with optional country filters
+     * @param daysBack Number of days to look back
+     * @param country1 First country name (optional)
+     * @param country2 Second country name (optional)
+     * @return List of articles
+     */
+    public List<NewsArticle> fetchTradeNews(int daysBack, String country1, String country2) throws Exception {
         if (apiKey == null || apiKey.isEmpty()) {
             throw new IllegalStateException("News API key not configured");
         }
@@ -52,19 +63,35 @@ public class NewsAPIService {
         LocalDateTime fromDate = LocalDateTime.now().minusDays(daysBack);
         String fromDateStr = fromDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
         
-        // Build a richer trade-related query to improve relevance
-        String[] keywords = {
-            "trade policy",
-            "trade tariff",
-            "customs duty",
-            "import export",
-            "supply chain"
-        };
-        String query = String.join(" OR ", keywords);
+        // Build query with country-specific terms if provided
+        String query;
+        if (country1 != null && country2 != null) {
+            // Expand country names to include variations
+            String expandedCountry1 = expandCountryName(country1);
+            String expandedCountry2 = expandCountryName(country2);
+
+            // Less strict query - OR between countries, but require trade keywords
+            // This casts a wider net, then we filter on the backend
+            query = String.format("(%s OR %s) AND (trade OR tariff OR import OR export OR customs OR economy OR \"trade war\" OR \"trade deal\" OR \"trade relations\" OR \"trade policy\")",
+                expandedCountry1, expandedCountry2);
+            logger.info("Fetching country-relevant trade news for: {} and {}", country1, country2);
+        } else {
+            // General trade-related query
+            String[] keywords = {
+                "trade policy",
+                "trade tariff",
+                "customs duty",
+                "import export",
+                "supply chain"
+            };
+            query = String.join(" OR ", keywords);
+            logger.info("Fetching general trade news");
+        }
+
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
         
         // News API endpoint: /everything
-        String url = String.format("%s/everything?q=%s&from=%s&sortBy=publishedAt&pageSize=100&apiKey=%s",
+        String url = String.format("%s/everything?q=%s&from=%s&sortBy=publishedAt&pageSize=100&language=en&apiKey=%s",
                                    apiUrl,
                                    encodedQuery,
                                    fromDateStr,
@@ -88,6 +115,56 @@ public class NewsAPIService {
         }
     }
     
+    /**
+     * Expand country name to include common variations
+     * This helps match more articles in the News API
+     */
+    private String expandCountryName(String country) {
+        String upper = country.toUpperCase();
+
+        // Map common abbreviations and variations
+        switch (upper) {
+            case "US":
+            case "USA":
+                return "\"United States\" OR USA OR US OR America OR American";
+            case "CN":
+            case "CHINA":
+                return "China OR Chinese OR PRC";
+            case "UK":
+            case "GB":
+                return "\"United Kingdom\" OR UK OR Britain OR British";
+            case "EU":
+                return "\"European Union\" OR EU OR Europe OR European";
+            case "JP":
+            case "JAPAN":
+                return "Japan OR Japanese";
+            case "KR":
+            case "KOREA":
+                return "\"South Korea\" OR Korea OR Korean";
+            case "IN":
+            case "INDIA":
+                return "India OR Indian";
+            case "MX":
+            case "MEXICO":
+                return "Mexico OR Mexican";
+            case "CA":
+            case "CANADA":
+                return "Canada OR Canadian";
+            case "BR":
+            case "BRAZIL":
+                return "Brazil OR Brazilian";
+            case "DE":
+            case "GERMANY":
+                return "Germany OR German";
+            case "FR":
+            case "FRANCE":
+                return "France OR French";
+            default:
+                // For other countries, return as-is with both full name and code
+                return String.format("%s OR %s", country, upper);
+        }
+    }
+
     /**
      * Parse JSON response from News API
      */
@@ -236,4 +313,3 @@ public class NewsAPIService {
         }
     }
 }
-

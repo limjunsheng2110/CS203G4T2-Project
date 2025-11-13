@@ -123,8 +123,10 @@ const PredictiveAnalysis = ({ importingCountry, exportingCountry, theme }) => {
 
   const formatSentiment = (score) => {
     if (score === null || score === undefined) return 'N/A';
-    const percentage = ((score + 1) / 2 * 100).toFixed(0);
-    return `${percentage}%`;
+    // Show actual score with label instead of percentage
+    const label = getSentimentLabel(score);
+    const scoreStr = score.toFixed(2);
+    return `${scoreStr} (${label})`;
   };
 
   const getSentimentLabel = (score) => {
@@ -504,37 +506,74 @@ const PredictiveAnalysis = ({ importingCountry, exportingCountry, theme }) => {
               <h4 className={`font-semibold ${colours.labelText} mb-4`}>
                 Sentiment Trend (Past 4 Weeks)
               </h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {predictionData.sentimentHistory.map((point, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <span className="text-xs text-gray-600 w-32">
-                      {new Date(point.weekStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(point.weekEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </span>
-                    <div className="flex-1">
-                      <div className="relative bg-gray-200 rounded-full h-6">
-                        <div 
-                          className={`absolute h-6 rounded-full ${
-                            point.averageSentiment > 0 ? 'bg-green-500' : 
-                            point.averageSentiment < 0 ? 'bg-red-500' : 'bg-gray-400'
-                          }`}
-                          style={{ 
-                            width: `${Math.abs(point.averageSentiment) * 100}%`,
-                            left: point.averageSentiment < 0 ? 'auto' : '50%',
-                            right: point.averageSentiment < 0 ? '50%' : 'auto'
-                          }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs font-medium text-gray-700">
-                            {formatSentiment(point.averageSentiment)}
-                          </span>
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs text-gray-600">
+                      <span>
+                        {new Date(point.weekStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(point.weekEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                      <span>{point.articleCount} articles</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {/* Negative side indicator */}
+                      <span className="text-xs text-gray-500 w-12 text-right">-1.0</span>
+
+                      {/* Sentiment bar */}
+                      <div className="flex-1 relative">
+                        {/* Background track with center line */}
+                        <div className="relative bg-gray-200 rounded-full h-8 flex items-center">
+                          {/* Center line */}
+                          <div className="absolute left-1/2 h-full w-0.5 bg-gray-400"></div>
+
+                          {/* Sentiment fill */}
+                          {point.averageSentiment !== 0 && (
+                            <div
+                              className={`absolute h-full rounded-full transition-all ${
+                                point.averageSentiment > 0 ? 'bg-green-500' : 'bg-red-500'
+                              }`}
+                              style={{
+                                width: `${(Math.abs(point.averageSentiment) / 2) * 100}%`,
+                                left: point.averageSentiment > 0 ? '50%' : 'auto',
+                                right: point.averageSentiment < 0 ? '50%' : 'auto'
+                              }}
+                            />
+                          )}
+
+                          {/* Score label */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                              point.averageSentiment > 0.3 ? 'bg-green-600 text-white' :
+                              point.averageSentiment < -0.3 ? 'bg-red-600 text-white' :
+                              'bg-gray-600 text-white'
+                            }`}>
+                              {point.averageSentiment.toFixed(2)} ({getSentimentLabel(point.averageSentiment)})
+                            </span>
+                          </div>
                         </div>
                       </div>
+
+                      {/* Positive side indicator */}
+                      <span className="text-xs text-gray-500 w-12">+1.0</span>
                     </div>
-                    <span className="text-xs text-gray-600 w-16 text-right">
-                      {point.articleCount} articles
-                    </span>
                   </div>
                 ))}
+              </div>
+
+              {/* Legend */}
+              <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-center gap-6 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-500 rounded"></div>
+                  <span className="text-gray-600">Negative (&lt; -0.3)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-400 rounded"></div>
+                  <span className="text-gray-600">Neutral (-0.3 to +0.3)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span className="text-gray-600">Positive (&gt; +0.3)</span>
+                </div>
               </div>
             </div>
           )}
@@ -563,4 +602,3 @@ const PredictiveAnalysis = ({ importingCountry, exportingCountry, theme }) => {
 };
 
 export default PredictiveAnalysis;
-
