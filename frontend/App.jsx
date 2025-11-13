@@ -291,6 +291,8 @@ const App = () => {
             error={error}
             selectedProduct={selectedProduct}
             chatbotContext={chatbotContext}
+            theme={theme}
+            toggleTheme={toggleTheme}
           />
         )}
 

@@ -4,7 +4,6 @@ import { getThemeColours } from '../../utils/themeColours';
 import FormField from '../forms/FormField';
 import CountrySelect from '../forms/CountrySelect';
 import ProductSelect from '../forms/ProductSelect';
-import ThemeToggle from '../common/ThemeToggle';
 
 const DetailPage = ({
   formData,
@@ -15,24 +14,23 @@ const DetailPage = ({
   isLoading,
   error,
   chatbotContext,
+  theme,
+  toggleTheme,
 }) => {
   const colours = getThemeColours();
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="py-8 px-4">
+      <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={onBack}
             disabled={isLoading}
-            className={`px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 font-medium shadow-md hover:shadow-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex items-center gap-2 text-purple-400 hover:text-purple-300 font-medium ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <ArrowLeft size={18} />
-            Back
+            <ArrowLeft size={20} />
+            Back to Home
           </button>
-          {toggleTheme && (
-            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-          )}
         </div>
 
         <div className="text-center mb-6">
