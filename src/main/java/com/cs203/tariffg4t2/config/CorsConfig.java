@@ -11,6 +11,7 @@ import java.util.Arrays;
 @Configuration
 public class CorsConfig {
 
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -20,7 +21,8 @@ public class CorsConfig {
             "http://localhost:*",
             "http://127.0.0.1:*",
             "https://localhost:*",
-            "https://127.0.0.1:*"
+            "https://127.0.0.1:*",
+            "https://*.vercel.app"  // Allow all Vercel deployments
         ));
 
         // Allow all HTTP methods

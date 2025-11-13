@@ -404,39 +404,21 @@ public class CountryService {
                 ? apiResponse.getName().getCommon() : "Unknown";
             String iso3Code = apiResponse.getIso3Code() != null ? apiResponse.getIso3Code() : null;
 
-            return new Country(code, name, iso3Code);
+            Country country = new Country();
+            country.setCountryCode(code);
+            country.setCountryName(name);
+            country.setIso3Code(iso3Code);
+            country.setVatRate(null); // VAT rate will be set separately if available
+            return country;
 
         } catch (Exception e) {
             System.err.println("Error mapping country: " + e.getMessage());
-            return new Country("ERR", "Error Country", null);
-        }
-    }
-
-    private String extractFirstCurrency(Object currencies) {
-        try {
-            if (currencies == null) {
-                return "Unknown";
-            }
-
-            // Handle if currencies is a Map (which it usually is from JSON)
-            if (currencies instanceof Map) {
-                Map<?, ?> currencyMap = (Map<?, ?>) currencies;
-                if (!currencyMap.isEmpty()) {
-                    // Get the first currency code (key)
-                    return currencyMap.keySet().iterator().next().toString();
-                }
-            }
-
-            // Fallback for string representation
-            String currencyStr = currencies.toString();
-            if (currencyStr.contains("=")) {
-                return currencyStr.split("=")[0].replace("{", "").trim();
-            }
-
-            return "Unknown";
-        } catch (Exception e) {
-            System.err.println("Error extracting currency: " + e.getMessage());
-            return "Unknown";
+            Country errorCountry = new Country();
+            errorCountry.setCountryCode("ERR");
+            errorCountry.setCountryName("Error Country");
+            errorCountry.setIso3Code(null);
+            errorCountry.setVatRate(null);
+            return errorCountry;
         }
     }
 

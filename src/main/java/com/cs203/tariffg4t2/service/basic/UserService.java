@@ -1,11 +1,13 @@
 package com.cs203.tariffg4t2.service.basic;
 
 import com.cs203.tariffg4t2.dto.request.UserRequestDTO;
+import com.cs203.tariffg4t2.dto.request.UserUpdateRequestDTO;
 import com.cs203.tariffg4t2.dto.basic.UserDTO;
 import com.cs203.tariffg4t2.model.basic.User;
-import com.cs203.tariffg4t2.repository.UserRepository;
+import com.cs203.tariffg4t2.repository.basic.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Get all users
@@ -82,7 +85,7 @@ public class UserService {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword()); // TODO: Hash password in production
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
 
         User savedUser = userRepository.save(user);
@@ -92,9 +95,9 @@ public class UserService {
     }
 
     /**
-     * Update user
+     * Update user with UserUpdateRequestDTO (password is optional)
      */
-    public UserDTO updateUser(Long id, UserRequestDTO request) {
+    public UserDTO updateUser(Long id, UserUpdateRequestDTO request) {
         log.info("Updating user with id: {}", id);
 
         User user = userRepository.findById(id)
@@ -102,22 +105,26 @@ public class UserService {
 
         // Check if username is being changed and already exists
         if (!user.getUsername().equals(request.getUsername()) &&
-            userRepository.existsByUsername(request.getUsername())) {
+                userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists: " + request.getUsername());
         }
 
         // Check if email is being changed and already exists
         if (!user.getEmail().equals(request.getEmail()) &&
-            userRepository.existsByEmail(request.getEmail())) {
+                userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists: " + request.getEmail());
         }
 
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            user.setPassword(request.getPassword()); // TODO: Hash password in production
+
+        // Only update password if provided (not null and not empty)
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
+
         user.setRole(request.getRole());
+        user.setIsActive(request.getIsActive());
 
         User updatedUser = userRepository.save(user);
         log.info("User updated successfully with id: {}", updatedUser.getId());
@@ -178,3 +185,4 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 }
+

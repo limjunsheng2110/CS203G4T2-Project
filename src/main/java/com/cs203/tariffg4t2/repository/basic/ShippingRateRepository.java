@@ -6,24 +6,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface ShippingRateRepository extends JpaRepository<ShippingRate, Long> {
 
     @Query("SELECT sr FROM ShippingRate sr " +
            "WHERE sr.importingCountry.countryCode = :importingCountryCode " +
-           "AND sr.exportingCountry.countryCode = :exportingCountryCode")
-    Optional<ShippingRate> findByImportingAndExportingCountry(
-            @Param("importingCountryCode") String importingCountryCode,
-            @Param("exportingCountryCode") String exportingCountryCode);
-
-    @Query("SELECT sr.distance FROM ShippingRate sr " +
-            "WHERE sr.importingCountry.countryCode = :importingCountryCode " +
-            "AND sr.exportingCountry.countryCode = :exportingCountryCode")
-    Optional<BigDecimal> findDistanceByImportingAndExportingCountry(
+           "AND sr.exportingCountry.countryCode = :exportingCountryCode " +
+           "ORDER BY sr.id DESC")
+    List<ShippingRate> findByImportingAndExportingCountry(
             @Param("importingCountryCode") String importingCountryCode,
             @Param("exportingCountryCode") String exportingCountryCode);
 

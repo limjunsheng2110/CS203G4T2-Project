@@ -1,6 +1,7 @@
 package com.cs203.tariffg4t2.controller;
 
 import com.cs203.tariffg4t2.dto.request.PredictiveAnalysisRequest;
+import com.cs203.tariffg4t2.dto.response.PredictiveAnalysisDiagnosticsResponse;
 import com.cs203.tariffg4t2.dto.response.PredictiveAnalysisResponse;
 import com.cs203.tariffg4t2.service.basic.PredictiveAnalysisService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -109,6 +110,22 @@ public class PredictiveAnalysisController {
         response.put("url", "https://newsapi.org/");
         response.put("description", "Visit this link to sign up and validate news data sources");
         
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * DEBUG: Test News API connection and fetch
+     */
+    @GetMapping("/debug/diagnostics")
+    @Operation(summary = "DEBUG: Run predictive analysis diagnostics",
+               description = "Returns configuration/data checks to help troubleshoot predictive analysis failures")
+    public ResponseEntity<PredictiveAnalysisDiagnosticsResponse> diagnostics(
+            @RequestParam String importingCountry,
+            @RequestParam String exportingCountry,
+            @RequestParam(defaultValue = "false") boolean testNewsApi) {
+
+        PredictiveAnalysisDiagnosticsResponse response =
+                predictiveAnalysisService.getDiagnostics(importingCountry, exportingCountry, testNewsApi);
         return ResponseEntity.ok(response);
     }
     

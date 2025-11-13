@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -50,13 +52,21 @@ public class NewsAPIService {
         LocalDateTime fromDate = LocalDateTime.now().minusDays(daysBack);
         String fromDateStr = fromDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
         
-        // Simplified query - just use "trade" instead of OR combination
-        String query = "trade";
+        // Build a richer trade-related query to improve relevance
+        String[] keywords = {
+            "trade policy",
+            "trade tariff",
+            "customs duty",
+            "import export",
+            "supply chain"
+        };
+        String query = String.join(" OR ", keywords);
+        String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
         
         // News API endpoint: /everything
-        String url = String.format("%s/everything?q=%s&from=%s&language=en&sortBy=publishedAt&pageSize=100&apiKey=%s",
-                                   apiUrl, 
-                                   query,
+        String url = String.format("%s/everything?q=%s&from=%s&sortBy=publishedAt&pageSize=100&apiKey=%s",
+                                   apiUrl,
+                                   encodedQuery,
                                    fromDateStr,
                                    apiKey);
         
@@ -194,16 +204,35 @@ public class NewsAPIService {
     /**
      * Test API connectivity
      */
-    public boolean testAPIConnection() {
+    public boolean isConfigured() {
+        return apiKey != null && !apiKey.isBlank();
+    }
+
+    public boolean testAPIConnection() throws Exception {
+        if (!isConfigured()) {
+            throw new IllegalStateException("News API key not configured");
+        }
+
+        String url = String.format("%s/top-headlines?country=us&category=business&apiKey=%s",
+                                 apiUrl, apiKey);
+        logger.info("Testing News API connectivity with URL: {}", url.replace(apiKey, "***"));
+
         try {
-            String url = String.format("%s/top-headlines?country=us&category=business&apiKey=%s",
-                                     apiUrl, apiKey);
             String response = restTemplate.getForObject(url, String.class);
             JsonNode root = objectMapper.readTree(response);
-            return "ok".equals(root.get("status").asText());
+            String status = root.has("status") ? root.get("status").asText() : "unknown";
+
+            if (!"ok".equals(status)) {
+                String message = root.has("message") ? root.get("message").asText() : "Unknown error";
+                String code = root.has("code") ? root.get("code").asText() : "unknown";
+                throw new Exception("News API responded with status '" + status + "' (" + code + "): " + message);
+            }
+
+            logger.info("News API connectivity test succeeded");
+            return true;
         } catch (Exception e) {
-            logger.error("News API connection test failed: {}", e.getMessage());
-            return false;
+            logger.error("News API connection test failed: {}", e.getMessage(), e);
+            throw e;
         }
     }
 }

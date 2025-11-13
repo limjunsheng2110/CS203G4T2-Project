@@ -4,9 +4,20 @@ import os
 from flask import Flask
 from flask import request
 from flask import jsonify
-from flask import render_template
+# Remove template rendering for now to fix crashes
+# from flask import render_template
 # Import the function from the new module
-from rates import get_tariff_rates
+try:
+    from rates import get_tariff_rates
+except ImportError:
+    # Fallback if rates module isn't available
+    def get_tariff_rates(import_code, export_code):
+        return {
+            "status": "error",
+            "message": "Scraping module not available",
+            "import_code": import_code,
+            "export_code": export_code
+        }
 
 # ==================================
 # 🌐 FLASK APPLICATION
@@ -14,19 +25,35 @@ from rates import get_tariff_rates
 
 app = Flask(__name__)
 
-# --- Home Route: Renders the input form (index.html) ---
+# --- Health Check Route (for Docker health checks) ---
+@app.route("/health", methods=["GET"])
+def health_check():
+    """Health check endpoint for Docker and load balancer monitoring."""
+    return jsonify({
+        "status": "healthy",
+        "service": "tariff-scraper",
+        "version": "1.0"
+    }), 200
+
+# --- Home Route: Simple JSON response instead of template ---
 @app.route("/", methods=["GET"])
 def home():
-    """Renders the country code input form."""
-    # NOTE: You will need to create a 'templates/index.html' file
-    return render_template("index.html")
+    """Returns API information instead of rendering template."""
+    return jsonify({
+        "service": "Tariff Scraper API",
+        "endpoints": {
+            "health": "/health",
+            "scrape": "/scrape (POST)"
+        },
+        "status": "running"
+    }), 200
 
 # --- Scrape Route: Handles form submission and calls the scraper ---
 @app.route("/scrape", methods=["POST"])
 def scrape():
     # 1. Handle incoming parameters from the form POST request
-    import_code = request.form.get('import_code')
-    export_code = request.form.get('export_code')
+    import_code = request.form.get('import_code') or request.json.get('import_code') if request.json else None
+    export_code = request.form.get('export_code') or request.json.get('export_code') if request.json else None
 
     if not import_code or not export_code:
         return jsonify({
@@ -50,23 +77,13 @@ def scrape():
         print(f"Critical error in /scrape endpoint: {e}")
         return jsonify({
             "status": "error",
-            "message": f"Chapter 1 scraping failed for {import_code} vs {export_code}: {str(e)}"
+            "message": f"Scraping failed: {str(e)}"
         }), 500
 
-# --- Health Route: Check if the service is running ---
-@app.route("/health", methods=["GET"])
-def health():
-    """Health check endpoint for monitoring."""
-    return jsonify({
-        "status": "healthy",
-        "service": "Chapter 1 Tariff Scraper",
-        "timestamp": __import__('time').time()
-    }), 200
+# ==================================
+# 🚀 RUN THE APPLICATION
+# ==================================
 
 if __name__ == "__main__":
-    if not os.environ.get("OPENAI_API_KEY"):
-        print("\n--- WARNING: OPENAI_API_KEY is not set. AI-based scraping will fail! ---")
-
-    print(f"Starting Flask app on port 5001...")
-    # Setting debug=True is useful during development
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port, debug=False)

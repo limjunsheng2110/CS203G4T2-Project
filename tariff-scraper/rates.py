@@ -13,10 +13,15 @@ try:
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     if not openai_api_key:
         print("Warning: OPENAI_API_KEY environment variable not set. OpenAI functions will fail.")
-    client = OpenAI(api_key=openai_api_key)
+        client = None
+    else:
+        client = OpenAI(api_key=openai_api_key)
 except ImportError:
     print("Error: Required 'openai' library is missing. Run: pip install openai")
-    sys.exit(1)
+    client = None
+except Exception as e:
+    print(f"Error initializing OpenAI client: {e}")
+    client = None
 
 
 # ==================================
@@ -31,7 +36,7 @@ def extract_tariff_data_from_url(url: str, import_code: str, export_code: str) -
     print(f"-> Extracting Chapter 1 (HS 01) data from: {url}")
     print(f"-> Expected: {export_code} exporting TO {import_code} importing")
 
-    if not openai_api_key:
+    if not openai_api_key or client is None:
          raise Exception("OpenAI API Key is missing. Cannot perform data extraction.")
 
     try:
@@ -57,11 +62,13 @@ Extract information **only if both conditions are met**:
 
 Use this exact format per entry (one block per product):
 
+
 Exporting Country: {export_code}
 Importing Country: {import_code}
 Product Name: (specific live animal product name)
 HS Code: (must start with "01", e.g., "0101", "0102", "010121")
 Tariff Rate: (must be numeric, e.g., '0.00%', '7.5%', '15.2%')
+Date: (extract the effective date, year, or reporting period if available, e.g., "2024", "2023-12-31", "Jan 2024")
 
 CRITICAL INSTRUCTIONS:
 - Exporting Country must ALWAYS be: {export_code}
@@ -69,6 +76,8 @@ CRITICAL INSTRUCTIONS:
 - Only include entries where HS code starts with "01"
 - Skip all entries that don't have Chapter 1 HS codes
 - Only include entries with valid numeric tariff rates
+- Look for any date, year, or time period information associated with the tariff data
+- If no specific date is found, use the most recent year mentioned on the page
 
 Webpage URL: {url}
 Webpage content:
@@ -145,7 +154,8 @@ def get_tariff_rates(import_code: str, export_code: str) -> Dict:
             "importingCountry": import_code,  # Force correct importing country
             "productName": item.get("Product Name", ""),
             "hsCode": item.get("HS Code", ""),
-            "tariffRate": item.get("Tariff Rate", "")
+            "tariffRate": item.get("Tariff Rate", ""),
+            "date": item.get("Date", "2024")  # Include date with default fallback
         }
         formatted_results.append(formatted_item)
 

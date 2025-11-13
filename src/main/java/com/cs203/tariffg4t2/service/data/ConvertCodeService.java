@@ -1,10 +1,8 @@
 package com.cs203.tariffg4t2.service.data;
 
-import com.cs203.tariffg4t2.service.basic.CountryService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -22,9 +20,6 @@ public class ConvertCodeService {
     private final Map<String, String> codeCache; // Cache for 2-digit to 3-digit conversions
 
     private static final String COUNTRY_API_URL = "https://restcountries.com/v3.1/alpha/";
-
-    @Autowired
-    private CountryService countryService;
 
     public ConvertCodeService() {
         this.restTemplate = new RestTemplate();

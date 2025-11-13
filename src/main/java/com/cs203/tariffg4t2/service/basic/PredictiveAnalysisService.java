@@ -1,6 +1,7 @@
 package com.cs203.tariffg4t2.service.basic;
 
 import com.cs203.tariffg4t2.dto.request.PredictiveAnalysisRequest;
+import com.cs203.tariffg4t2.dto.response.PredictiveAnalysisDiagnosticsResponse;
 import com.cs203.tariffg4t2.dto.response.PredictiveAnalysisResponse;
 import com.cs203.tariffg4t2.model.basic.ExchangeRate;
 import com.cs203.tariffg4t2.model.basic.NewsArticle;
@@ -32,7 +33,6 @@ public class PredictiveAnalysisService {
     
     private final NewsAPIService newsAPIService;
     private final SentimentAnalysisService sentimentAnalysisService;
-    private final ExchangeRateService exchangeRateService;
     private final NewsArticleRepository newsArticleRepository;
     private final ExchangeRateRepository exchangeRateRepository;
     private final CurrencyCodeService currencyCodeService;
@@ -128,6 +128,91 @@ public class PredictiveAnalysisService {
             .dataSource(dataSource)
             .message(message)
             .analysisTimestamp(LocalDateTime.now())
+            .build();
+    }
+    
+    /**
+     * Diagnostics helper to identify common configuration/data issues
+     */
+    public PredictiveAnalysisDiagnosticsResponse getDiagnostics(String importingCountry,
+                                                                String exportingCountry,
+                                                                boolean testNewsApi) {
+        List<String> warnings = new ArrayList<>();
+        List<String> suggestions = new ArrayList<>();
+
+        boolean newsApiKeyPresent = newsAPIService.isConfigured();
+        Boolean newsApiReachable = null;
+        String newsApiMessage;
+
+        if (!newsApiKeyPresent) {
+            newsApiMessage = "News API key (NEWSAPI_API_KEY) is not configured.";
+            warnings.add(newsApiMessage);
+            suggestions.add("Set NEWSAPI_API_KEY in your environment or application properties and restart the backend.");
+        } else if (testNewsApi) {
+            try {
+                newsAPIService.testAPIConnection();
+                newsApiReachable = true;
+                newsApiMessage = "Successfully connected to News API.";
+            } catch (Exception e) {
+                newsApiReachable = false;
+                newsApiMessage = e.getMessage();
+                warnings.add("News API connection test failed: " + e.getMessage());
+                suggestions.add("Verify NEWSAPI_API_KEY value and ensure the backend has internet access.");
+            }
+        } else {
+            newsApiMessage = "Live News API check not executed (set testNewsApi=true to run a live connectivity test).";
+        }
+
+        SentimentAnalysis latestSentiment = sentimentAnalysisService.getLatestSentiment();
+        boolean sentimentAvailable = latestSentiment != null;
+        if (!sentimentAvailable) {
+            warnings.add("No sentiment analysis data is available.");
+            suggestions.add("Enable news analysis or run the debug fetch endpoint to seed sentiment data.");
+        }
+
+        String importingCurrency = resolveCurrencySafe(importingCountry);
+        String exportingCurrency = resolveCurrencySafe(exportingCountry);
+        String currencyResolutionMessage;
+
+        if (importingCurrency == null || exportingCurrency == null) {
+            currencyResolutionMessage = "Unable to resolve currency codes for one or both provided countries.";
+            warnings.add(currencyResolutionMessage);
+            suggestions.add("Ensure importing/exporting countries use ISO-2 or ISO-3 codes supported by CurrencyCodeService.");
+        } else {
+            currencyResolutionMessage = "Resolved currencies: " + exportingCountry + " → " + exportingCurrency
+                    + ", " + importingCountry + " → " + importingCurrency;
+        }
+
+        ExchangeRate latestRate = null;
+        if (importingCurrency != null && exportingCurrency != null) {
+            latestRate = exchangeRateRepository
+                .findLatestByFromCurrencyAndToCurrency(exportingCurrency, importingCurrency)
+                .orElse(null);
+
+            if (latestRate == null) {
+                warnings.add("No exchange rate data found for " + exportingCurrency + " → " + importingCurrency + ".");
+                suggestions.add("Seed exchange rate data or run the exchange rate ingestion job for that currency pair.");
+            }
+        }
+
+        return PredictiveAnalysisDiagnosticsResponse.builder()
+            .newsApiKeyPresent(newsApiKeyPresent)
+            .newsApiReachable(newsApiReachable)
+            .newsApiMessage(newsApiMessage)
+            .sentimentDataAvailable(sentimentAvailable)
+            .latestSentimentTimestamp(latestSentiment != null ? latestSentiment.getUpdatedAt() : null)
+            .latestSentimentScore(latestSentiment != null ? latestSentiment.getAverageSentiment() : null)
+            .sentimentArticlesAnalyzed(latestSentiment != null ? latestSentiment.getArticleCount() : null)
+            .exchangeRateAvailable(latestRate != null)
+            .exchangeRatePair((exportingCurrency != null && importingCurrency != null)
+                ? exportingCurrency + " -> " + importingCurrency : null)
+            .latestExchangeRateDate(latestRate != null ? latestRate.getRateDate() : null)
+            .latestExchangeRate(latestRate != null && latestRate.getRate() != null
+                ? latestRate.getRate().doubleValue() : null)
+            .currencyResolutionMessage(currencyResolutionMessage)
+            .warnings(warnings)
+            .suggestions(suggestions)
+            .generatedAt(LocalDateTime.now())
             .build();
     }
     
@@ -355,6 +440,13 @@ public class PredictiveAnalysisService {
         
         // Additional resolution logic here if needed
         return null;
+    }
+
+    private String resolveCurrencySafe(String country) {
+        if (country == null) {
+            return null;
+        }
+        return resolveCurrency(country);
     }
     
     /**

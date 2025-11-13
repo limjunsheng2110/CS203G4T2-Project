@@ -4,18 +4,17 @@ import com.cs203.tariffg4t2.dto.auth.AuthResponse;
 import com.cs203.tariffg4t2.dto.auth.LoginRequest;
 import com.cs203.tariffg4t2.dto.auth.RegisterRequest;
 import com.cs203.tariffg4t2.model.basic.User;
-import com.cs203.tariffg4t2.repository.UserRepository;
+import com.cs203.tariffg4t2.repository.basic.UserRepository;
 import com.cs203.tariffg4t2.security.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/auth")
@@ -42,7 +41,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest  request) {
 
-        // check if username alreadyt exists
+        // check if username already exists
         if (userRepository.existsByUsername(request.getUsername())) {
             return ResponseEntity.badRequest().body("Error: Username is already taken!");
         }
@@ -88,42 +87,52 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        try {
+            // authenticate user (validates password - throws exception if invalid)
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                        request.getUsername(), 
+                        request.getPassword()
+                    )
+            );
 
-        // authenticate user
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    request.getUsername(), 
-                    request.getPassword()
-                )
-        );
+            // fetch user details
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // fetch user details
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            // generate jwt token
+            String token = jwtService.generateToken(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole().name()
+            );
 
-        // generate jwt token
-        String token = jwtService.generateToken(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole().name()
-        );
+            // build response
+            AuthResponse authResponse = AuthResponse.builder()
+                    .accessToken(token)
+                    .tokenType("Bearer")
+                    .expiresIn(jwtExpirationMs)
+                    .user(AuthResponse.UserInfo.builder()
+                            .id(user.getId())
+                            .username(user.getUsername())
+                            .email(user.getEmail())
+                            .role(user.getRole().name())
+                            .build())
+                    .build();
 
-
-        // build response
-        AuthResponse authResponse = AuthResponse.builder()
-                .accessToken(token)
-                .tokenType("Bearer")
-                .expiresIn(jwtExpirationMs)
-                .user(AuthResponse.UserInfo.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .email(user.getEmail())
-                        .role(user.getRole().name())
-                        .build())
-                .build();
-
-        return ResponseEntity.ok(authResponse);
+            return ResponseEntity.ok(authResponse);
+            
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Invalid credentials");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("User not found");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred during login");
+        }
     }
 
     @GetMapping("/validate")
@@ -135,6 +144,61 @@ public class AuthController {
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String authHeader) {
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid authorization header");
+            }
+
+            String oldToken = authHeader.substring(7);
+            
+            // Extract username from the old token (even if expired)
+            io.jsonwebtoken.Claims claims = jwtService.parseExpiredToken(oldToken);
+            String username = claims.getSubject();
+            
+            if (username == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            }
+
+            // Fetch user details
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Check if user is still active
+            if (!user.getIsActive()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User account is inactive");
+            }
+
+            // Generate new token
+            String newToken = jwtService.generateToken(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole().name()
+            );
+
+            // Build response with new token
+            AuthResponse authResponse = AuthResponse.builder()
+                    .accessToken(newToken)
+                    .tokenType("Bearer")
+                    .expiresIn(jwtExpirationMs)
+                    .user(AuthResponse.UserInfo.builder()
+                            .id(user.getId())
+                            .username(user.getUsername())
+                            .email(user.getEmail())
+                            .role(user.getRole().name())
+                            .build())
+                    .build();
+
+            return ResponseEntity.ok(authResponse);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Failed to refresh token: " + e.getMessage());
+        }
     }
     
 }

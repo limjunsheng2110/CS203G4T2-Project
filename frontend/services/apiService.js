@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Base API configuration
-const API_BASE_URL = '/api';
+// Use environment variable for backend URL, fallback to /api for local development
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -27,15 +28,24 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor for handling common errors
+// Response interceptor for handling auth errors
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
+  async (error) => {
+    // If error is 401 or 403 (token expired/invalid), logout and redirect to login
+    const isAuthError = error.response?.status === 401 || error.response?.status === 403;
+    
+    if (isAuthError) {
+      // Clear auth data
       localStorage.removeItem('authToken');
-      // Could redirect to login page here
+      localStorage.removeItem('user');
+      
+      // Redirect to login page with session expired flag
+      window.location.href = '/?sessionExpired=true';
+      
+      return Promise.reject(error);
     }
+
     return Promise.reject(error);
   }
 );
@@ -84,11 +94,9 @@ export const exchangeRateApi = {
     }
 
     try {
-      const response = await apiClient.get('/exchange-rates/analyze', {
-        params: {
-          importingCountry,
-          exportingCountry
-        }
+      const response = await apiClient.post('/exchange-rates/analyze', {
+        importingCountry,
+        exportingCountry
       });
       return response.data;
     } catch (error) {
@@ -128,7 +136,9 @@ export const tariffApi = {
         exportingCountry: calculationParams.exportCountry,
         hsCode: calculationParams.hsCode,
         productValue: parseFloat(calculationParams.value),
-        shippingMode: calculationParams.shippingMode || null
+        weight: parseFloat(calculationParams.weight),
+        shippingMode: calculationParams.shippingMode || null,
+        year: calculationParams.year ? parseInt(calculationParams.year) : null
       });
       return response.data;
     } catch (error) {

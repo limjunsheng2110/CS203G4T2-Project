@@ -23,6 +23,14 @@ public interface ExchangeRateRepository extends JpaRepository<ExchangeRate, Long
     );
     
     /**
+     * Find all exchange rates for a currency pair
+     */
+    List<ExchangeRate> findByFromCurrencyAndToCurrency(
+        String fromCurrency,
+        String toCurrency
+    );
+
+    /**
      * Find the most recent exchange rate for a currency pair
      */
     @Query("SELECT e FROM ExchangeRate e WHERE e.fromCurrency = :fromCurrency " +
@@ -62,4 +70,3 @@ public interface ExchangeRateRepository extends JpaRepository<ExchangeRate, Long
         @Param("endDate") LocalDate endDate
     );
 }
-
