@@ -18,6 +18,7 @@ const App = () => {
   const [error, setError] = useState(null);
   const [tariffResults, setTariffResults] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [theme, setTheme] = useState('dark');
   const [formData, setFormData] = useState({
     importCountry: '',
     exportCountry: '',
@@ -36,6 +37,11 @@ const App = () => {
     const token = localStorage.getItem('authToken');
     const savedUser = localStorage.getItem('user');
 
+    const savedTheme = localStorage.getItem('appTheme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      setTheme(savedTheme);
+    }
+
     if (token && savedUser) {
       try {
         const userData = JSON.parse(savedUser);
@@ -48,6 +54,10 @@ const App = () => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('appTheme', theme);
+  }, [theme]);
 
   // Check if session expired (from URL query parameter)
   const urlParams = new URLSearchParams(window.location.search);
@@ -201,6 +211,10 @@ const App = () => {
     setCurrentPage('admin');
   };
 
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   // Render authentication pages
   if (!user) {
     if (authPage === 'login') {
@@ -223,7 +237,13 @@ const App = () => {
 
   // Main app content (only shown when authenticated)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-purple-950 to-black">
+    <div
+      className={`min-h-screen ${
+        theme === 'light'
+          ? 'bg-gradient-to-br from-amber-50 via-green-50 to-blue-50'
+          : 'bg-gradient-to-br from-black via-purple-950 to-black'
+      }`}
+    >
       <div className="container mx-auto px-4 py-6">
         {/* User Info Component - shows at top of all pages */}
         <UserInfo user={user} onLogout={handleLogout} onAdminClick={handleAdminClick} />
@@ -231,6 +251,8 @@ const App = () => {
         {currentPage === 'home' && (
           <HomePage 
             onGetStarted={handleGetStarted}
+            theme={theme}
+            toggleTheme={toggleTheme}
           />
         )}
 
@@ -243,6 +265,8 @@ const App = () => {
             isLoading={isLoading}
             error={error}
             selectedProduct={selectedProduct}
+            theme={theme}
+            toggleTheme={toggleTheme}
           />
         )}
 
@@ -252,6 +276,8 @@ const App = () => {
             formData={formData}
             selectedProduct={selectedProduct}
             handleBack={handleBack}
+            theme={theme}
+            toggleTheme={toggleTheme}
           />
         )}
 

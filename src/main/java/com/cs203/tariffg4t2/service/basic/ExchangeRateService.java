@@ -88,6 +88,16 @@ public class ExchangeRateService {
             dataSource = "live_api";
             message = "Exchange rates updated from live API";
             logger.info("Successfully fetched live exchange rates");
+
+            // Also fetch historical data for 6-month trend analysis
+            try {
+                fetchHistoricalRates(exportingCurrency, importingCurrency);
+                message = "Exchange rates and 6-month historical trends updated from live API";
+                logger.info("Successfully fetched historical exchange rates");
+            } catch (Exception histError) {
+                logger.warn("Failed to fetch historical rates: {}", histError.getMessage());
+                message = "Current exchange rate updated from live API. Historical trends from database.";
+            }
         } catch (Exception e) {
             logger.warn("Failed to fetch live rates, using database fallback: {}", e.getMessage());
             message = "Live API unavailable. Using last known stored data from database.";
@@ -238,6 +248,102 @@ public class ExchangeRateService {
         } else {
             throw new RuntimeException("No rates data in API response");
         }
+    }
+
+    /**
+     * Fetch historical exchange rates for the past 6 months from the API
+     * This provides the historical trend data for analysis
+     */
+    @Transactional
+    void fetchHistoricalRates(String fromCurrency, String toCurrency) throws Exception {
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new IllegalStateException("OpenExchangeRates API key not configured");
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = today.minusMonths(ANALYSIS_MONTHS);
+
+        logger.info("Fetching historical rates for {} -> {} from {} to {}",
+                   fromCurrency, toCurrency, startDate, today);
+
+        int dataPointsFetched = 0;
+
+        // Fetch historical data at weekly intervals to reduce API calls
+        for (LocalDate date = startDate; !date.isAfter(today); date = date.plusWeeks(1)) {
+            try {
+                // Check if we already have data for this date
+                Optional<ExchangeRate> existing = exchangeRateRepository
+                    .findByFromCurrencyAndToCurrencyAndRateDate(fromCurrency, toCurrency, date);
+
+                if (existing.isPresent()) {
+                    logger.debug("Historical rate already exists for {}-{} on {}",
+                               fromCurrency, toCurrency, date);
+                    continue;
+                }
+
+                // Fetch historical data for this specific date
+                String dateStr = date.toString(); // Format: YYYY-MM-DD
+                String url = String.format("%s/historical/%s.json?app_id=%s&symbols=%s,%s",
+                                         apiUrl, dateStr, apiKey, fromCurrency, toCurrency);
+
+                logger.debug("Fetching historical rate for date: {}", dateStr);
+
+                String response = restTemplate.getForObject(url, String.class);
+                JsonNode root = objectMapper.readTree(response);
+
+                // Check for API errors
+                if (root.has("error") && root.get("error").asBoolean()) {
+                    String errorMessage = root.has("description") ?
+                        root.get("description").asText() : "Unknown API error";
+                    logger.warn("API error for date {}: {}", dateStr, errorMessage);
+                    continue; // Skip this date and continue with others
+                }
+
+                JsonNode rates = root.get("rates");
+                if (rates != null) {
+                    // Calculate and store the exchange rate for this historical date
+                    BigDecimal crossRate;
+                    if (fromCurrency.equals("USD")) {
+                        if (rates.has(toCurrency)) {
+                            crossRate = BigDecimal.valueOf(rates.get(toCurrency).asDouble());
+                        } else {
+                            logger.warn("Target currency {} not found for date {}", toCurrency, dateStr);
+                            continue;
+                        }
+                    } else if (toCurrency.equals("USD")) {
+                        if (rates.has(fromCurrency)) {
+                            BigDecimal usdToFromRate = BigDecimal.valueOf(rates.get(fromCurrency).asDouble());
+                            crossRate = BigDecimal.ONE.divide(usdToFromRate, 10, RoundingMode.HALF_UP);
+                        } else {
+                            logger.warn("Source currency {} not found for date {}", fromCurrency, dateStr);
+                            continue;
+                        }
+                    } else {
+                        // Cross rate calculation
+                        if (rates.has(fromCurrency) && rates.has(toCurrency)) {
+                            BigDecimal usdToFromRate = BigDecimal.valueOf(rates.get(fromCurrency).asDouble());
+                            BigDecimal usdToToRate = BigDecimal.valueOf(rates.get(toCurrency).asDouble());
+                            crossRate = usdToToRate.divide(usdToFromRate, 10, RoundingMode.HALF_UP);
+                        } else {
+                            logger.warn("Currencies not found in response for date {}", dateStr);
+                            continue;
+                        }
+                    }
+
+                    storeExchangeRate(fromCurrency, toCurrency, crossRate, date);
+                    dataPointsFetched++;
+
+                    // Add a small delay to avoid hitting API rate limits
+                    Thread.sleep(100); // 100ms delay between requests
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to fetch historical rate for date {}: {}", date, e.getMessage());
+                // Continue with other dates even if one fails
+            }
+        }
+
+        logger.info("Successfully fetched {} historical data points for {} -> {}",
+                   dataPointsFetched, fromCurrency, toCurrency);
     }
 
     /**
@@ -449,31 +555,57 @@ public class ExchangeRateService {
      * Generate purchase recommendation based on trend analysis
      */
     private RecommendationResult generateRecommendation(List<ExchangeRate> rates, TrendAnalysisResult trend) {
-        LocalDate recommendedDate = trend.minRateDate;
+        LocalDate today = LocalDate.now();
+        LocalDate recommendedDate;
         String explanation;
         
+        // Get current rate (most recent)
+        ExchangeRate latestRate = rates.get(rates.size() - 1);
+        BigDecimal currentRate = latestRate.getRate();
+
         if ("decreasing".equals(trend.trend)) {
+            // Rate is decreasing - predict it will continue to decrease
+            // Recommend waiting 2-4 weeks for better rates
+            recommendedDate = today.plusWeeks(3);
+
+            double changeRate = calculatePercentageChange(trend.maxRate, currentRate);
             explanation = String.format(
-                "Exchange rate is trending downward (%.2f%% decrease). " +
-                "Consider waiting or purchasing soon. Best rate was %.4f on %s.",
-                calculatePercentageChange(trend.maxRate, trend.averageRate),
-                trend.minRate,
-                trend.minRateDate
+                "Exchange rate is trending downward (%.2f%% decrease over 6 months). " +
+                "The rate is expected to continue decreasing. Recommended action: WAIT until around %s " +
+                "for potentially better rates. Current rate: %.4f, Historical low: %.4f.",
+                changeRate,
+                recommendedDate,
+                currentRate,
+                trend.minRate
             );
         } else if ("increasing".equals(trend.trend)) {
+            // Rate is increasing - recommend buying soon
+            // Suggest within the next week
+            recommendedDate = today.plusDays(3);
+
+            double changeRate = calculatePercentageChange(trend.minRate, currentRate);
             explanation = String.format(
-                "Exchange rate is trending upward (%.2f%% increase). " +
-                "Consider purchasing sooner to avoid higher costs. Best historical rate was %.4f on %s.",
-                calculatePercentageChange(trend.minRate, trend.averageRate),
+                "Exchange rate is trending upward (%.2f%% increase over 6 months). " +
+                "The rate is expected to continue rising. Recommended action: PURCHASE SOON by %s " +
+                "to avoid higher costs. Current rate: %.4f, Historical low: %.4f (on %s).",
+                changeRate,
+                recommendedDate,
+                currentRate,
                 trend.minRate,
                 trend.minRateDate
             );
         } else {
+            // Rate is stable - can purchase anytime in the near future
+            recommendedDate = today.plusWeeks(1);
+
+            double volatility = calculatePercentageChange(trend.minRate, trend.maxRate);
             explanation = String.format(
-                "Exchange rate is relatively stable. " +
-                "Current rate is near the average. Best historical rate was %.4f on %s.",
-                trend.minRate,
-                trend.minRateDate
+                "Exchange rate is relatively stable (%.2f%% volatility over 6 months). " +
+                "No significant trend detected. Recommended action: PURCHASE ANYTIME within the next 1-2 weeks. " +
+                "Current rate: %.4f, 6-month average: %.4f.",
+                volatility,
+                currentRate,
+                trend.averageRate
             );
         }
         
