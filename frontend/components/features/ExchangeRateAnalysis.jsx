@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, Minus, Calendar, DollarSign, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { getThemeColours } from '../../utils/themeColours';
 import apiService from '../../services/apiService';
 
@@ -59,6 +60,28 @@ const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => 
   const formatRate = (rate) => {
     if (!rate) return 'N/A';
     return parseFloat(rate).toFixed(4);
+  };
+
+  // Custom tooltip for the chart
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-gray-800 text-white p-3 rounded-lg shadow-lg border border-gray-600">
+          <p className="text-sm font-medium">{formatDate(payload[0].payload.date)}</p>
+          <p className="text-lg font-bold text-purple-400">
+            {formatRate(payload[0].value)}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Format date for chart axis
+  const formatDateShort = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
@@ -191,37 +214,50 @@ const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => 
             </div>
           </div>
 
-          {/* Simple Historical Chart */}
+          {/* Historical Chart */}
           {analysisData.historicalRates && analysisData.historicalRates.length > 0 && (
-            <div className={`${colours.fieldBg} rounded-lg p-4`}>
-              <h4 className={`font-semibold ${colours.labelText} mb-4`}>
+            <div className={`${colours.fieldBg} rounded-lg p-6`}>
+              <h4 className={`font-semibold ${colours.labelText} mb-4 text-lg`}>
                 6-Month Historical Trend
               </h4>
-              <div className="space-y-2">
-                {analysisData.historicalRates.slice(0, 10).map((point, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <span className="text-xs text-gray-600 w-24">
-                      {formatDate(point.date)}
-                    </span>
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-purple-600 h-2 rounded-full" 
-                        style={{ 
-                          width: `${(point.rate / analysisData.maxRate) * 100}%` 
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium text-gray-700 w-16 text-right">
-                      {formatRate(point.rate)}
-                    </span>
-                  </div>
-                ))}
-                {analysisData.historicalRates.length > 10 && (
-                  <p className="text-xs text-gray-500 text-center mt-2">
-                    Showing 10 of {analysisData.historicalRates.length} data points
-                  </p>
-                )}
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart
+                  data={analysisData.historicalRates}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#9333ea" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#9333ea" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={formatDateShort}
+                    stroke="#9ca3af"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis
+                    domain={['dataMin - 0.0005', 'dataMax + 0.0005']}
+                    tickFormatter={(value) => value.toFixed(4)}
+                    stroke="#9ca3af"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="rate"
+                    stroke="#9333ea"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorRate)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+              <p className="text-xs text-gray-500 text-center mt-4">
+                Showing {analysisData.historicalRates.length} data points over the past 6 months
+              </p>
             </div>
           )}
         </div>
@@ -240,3 +276,4 @@ const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => 
 };
 
 export default ExchangeRateAnalysis;
+

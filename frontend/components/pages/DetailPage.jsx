@@ -4,6 +4,7 @@ import { getThemeColours } from '../../utils/themeColours';
 import FormField from '../forms/FormField';
 import CountrySelect from '../forms/CountrySelect';
 import ProductSelect from '../forms/ProductSelect';
+import ThemeToggle from '../common/ThemeToggle';
 
 const DetailPage = ({
   formData,
@@ -20,7 +21,20 @@ const DetailPage = ({
   return (
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={onBack}
+            disabled={isLoading}
+            className={`px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 font-medium shadow-md hover:shadow-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <ArrowLeft size={18} />
+            Back
+          </button>
+          {toggleTheme && (
+            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+          )}
+        </div>
+
         <div className="text-center mb-6">
           <div className="flex justify-center">
             <img 
@@ -37,11 +51,11 @@ const DetailPage = ({
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-red-600 dark:text-red-400 text-sm font-medium mb-1">Error</p>
-              <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm font-medium mb-1">Error</p>
+              <p className="text-red-600 text-sm">{error}</p>
               {error.includes('timeout') && (
-                <p className="text-red-500 dark:text-red-300 text-xs mt-2">
+                <p className="text-red-500 text-xs mt-2">
                   The tariff calculation is taking longer than expected. This might happen when scraping new data. Please try again.
                 </p>
               )}
@@ -50,12 +64,12 @@ const DetailPage = ({
 
           {/* Loading Message with Progress Indicator */}
           {isLoading && (
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
                 <div>
-                  <p className="text-blue-600 dark:text-blue-400 text-sm font-medium">Calculating Tariffs...</p>
-                  <p className="text-blue-500 dark:text-blue-300 text-xs mt-1">
+                  <p className="text-blue-600 text-sm font-medium">Calculating Tariffs...</p>
+                  <p className="text-blue-500 text-xs mt-1">
                     This may take up to 1 minute if we need to scrape new data from external sources.
                   </p>
                 </div>
@@ -106,8 +120,8 @@ const DetailPage = ({
             {/* Warning if same country selected */}
             {formData.importCountry && formData.exportCountry && 
              formData.importCountry === formData.exportCountry && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-red-600 dark:text-red-400 text-sm font-medium">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-sm font-medium">
                   ⚠️ Import and export countries cannot be the same
                 </p>
               </div>
@@ -177,7 +191,7 @@ const DetailPage = ({
             />
 
             <div>
-              <label className="block text-sm font-medium text-white mb-2">
+              <label className={`block text-sm font-medium ${colours.labelText} mb-2`}>
                 Shipping Mode <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -200,15 +214,7 @@ const DetailPage = ({
             </div>
           </div>
 
-          <div className="flex justify-between mt-8">
-            <button
-              onClick={onBack}
-              disabled={isLoading}
-              className={`px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 font-medium shadow-md hover:shadow-lg ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <ArrowLeft size={18} />
-              Back
-            </button>
+          <div className="flex justify-end mt-8">
             <button
               onClick={handleSearch}
               disabled={isLoading}
@@ -234,3 +240,4 @@ const DetailPage = ({
 };
 
 export default DetailPage;
+

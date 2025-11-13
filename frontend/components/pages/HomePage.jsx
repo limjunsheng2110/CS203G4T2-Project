@@ -1,15 +1,20 @@
 import React from 'react';
 import { ArrowRight, Zap, Shield, Globe, TrendingDown } from 'lucide-react';
 import { getThemeColours } from '../../utils/themeColours';
+import ThemeToggle from '../common/ThemeToggle';
 
-const HomePage = ({ onGetStarted }) => {
-  const colours = getThemeColours();
+const HomePage = ({ onGetStarted, theme = 'dark', toggleTheme }) => {
+  const colours = getThemeColours(theme);
+  const backgroundClass =
+    theme === 'light'
+      ? 'bg-gradient-to-br from-amber-50 via-green-50 to-blue-50'
+      : 'bg-gradient-to-br from-black via-gray-900 to-gray-800';
 
   return (
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-4xl mx-auto">
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <div className="flex justify-center mb-6">
             <img
               src="/TariffNomLogo.png"
@@ -36,7 +41,7 @@ const HomePage = ({ onGetStarted }) => {
 
         {/* Features Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          <div className={`${colours.cardBg} rounded-lg p-6 border ${colours.border} text-center`}>
+          <div className={`${colours.cardBg} rounded-lg p-6 border ${colours.border} text-center transition-colors`}>
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-green-100 rounded-full">
                 <Globe className="text-green-600" size={32} />
@@ -48,7 +53,7 @@ const HomePage = ({ onGetStarted }) => {
             </p>
           </div>
 
-          <div className={`${colours.cardBg} rounded-lg p-6 border ${colours.border} text-center`}>
+          <div className={`${colours.cardBg} rounded-lg p-6 border ${colours.border} text-center transition-colors`}>
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-blue-100 rounded-full">
                 <Zap className="text-blue-600" size={32} />
@@ -60,7 +65,7 @@ const HomePage = ({ onGetStarted }) => {
             </p>
           </div>
 
-          <div className={`${colours.cardBg} rounded-lg p-6 border ${colours.border} text-center`}>
+          <div className={`${colours.cardBg} rounded-lg p-6 border ${colours.border} text-center transition-colors`}>
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-orange-100 rounded-full">
                 <TrendingDown className="text-orange-600" size={32} />
@@ -72,7 +77,7 @@ const HomePage = ({ onGetStarted }) => {
             </p>
           </div>
 
-          <div className={`${colours.cardBg} rounded-lg p-6 border ${colours.border} text-center`}>
+          <div className={`${colours.cardBg} rounded-lg p-6 border ${colours.border} text-center transition-colors`}>
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-purple-100 rounded-full">
                 <Shield className="text-purple-600" size={32} />
@@ -86,7 +91,7 @@ const HomePage = ({ onGetStarted }) => {
         </div>
 
         {/* How It Works Section */}
-        <div className={`${colours.cardBg} rounded-lg p-8 border ${colours.border} mb-16`}>
+        <div className={`${colours.cardBg} rounded-lg p-8 border ${colours.border} mb-16 transition-colors`}>
           <h2 className={`text-3xl font-bold ${colours.text} mb-8 text-center`}>How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">

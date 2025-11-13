@@ -45,7 +45,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_KEY }}
           OPENEXCHANGERATES_API_KEY: ${{ secrets.OPENEXCHANGERATES_API_KEY }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        run: mvn clean package
+        run: mvn clean verify
+
 
       # -----------------------------------------------------------------------
       # 2. SETUP DOCKER FOR MULTI-SERVICE BUILD
