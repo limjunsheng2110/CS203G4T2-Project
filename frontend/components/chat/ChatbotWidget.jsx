@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, Info, Loader2, MessageCircle, Send, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Info, Loader2, MessageCircle, Send, X, Maximize2, Minimize2 } from 'lucide-react';
 import apiService from '../../services/apiService';
 
 const CHAT_WIDGET_STORAGE_KEY = 'chatbot:isOpen';
@@ -14,6 +14,7 @@ const DEFAULT_CONFIDENCE_THRESHOLD = 0.7;
 
 const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [queryId, setQueryId] = useState(null);
@@ -223,30 +224,31 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
         } else if (hsResponse.fallback.manualSearchUrl) {
           addMessage(
             'assistant',
-            `I can’t determine the code yet. You can continue describing the product or check the manual search: ${hsResponse.fallback.manualSearchUrl}`
+            `I can't determine the code yet. You can continue describing the product or check the manual search: ${hsResponse.fallback.manualSearchUrl}`
           );
-        }
-      }
-
-      if (hsResponse.notice) {
-        if (hsResponse.notice.message) {
-          addMessage(
-            'assistant',
-            `${hsResponse.notice.message}${hsResponse.notice.privacyPolicyUrl ? ` More info: ${hsResponse.notice.privacyPolicyUrl}` : ''}`
-          );
-        }
-        if (hsResponse.notice.consentGranted != null) {
-          setConsentLogging(Boolean(hsResponse.notice.consentGranted));
         }
       }
     } catch (error) {
       console.error('Chatbot simulation error:', error);
-      const message = error.message || 'Sorry, I could not process that. Please try again.';
-      setErrorMessage(message);
-      addMessage(
-        'assistant',
-        'Something went wrong while fetching HS code suggestions. Please try again or give more description.'
-      );
+      
+      // Handle validation errors (400 status)
+      if (error.code === 400 || error.response?.status === 400) {
+        const validationMessage = 
+          error.response?.data?.message || 
+          error.message || 
+          'Please provide a valid product description between 10 and 2000 characters.';
+        
+        setErrorMessage(validationMessage);
+        addMessage('assistant', validationMessage);
+      } else {
+        // Handle other errors
+        const message = error.message || 'Sorry, I could not process that. Please try again.';
+        setErrorMessage(message);
+        addMessage(
+          'assistant',
+          'Something went wrong while fetching HS code suggestions. Please try again or give more description.'
+        );
+      }
     } finally {
       setIsTyping(false);
     }
@@ -264,7 +266,14 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
     setPreviousAnswers((prev) => [...prev, answerEntry]);
     setPendingQuestions((prev) => prev.filter((question) => question.id !== questionId));
     setConfirmationCandidate(null);
-    await handleSendMessage(answer);
+    
+    // Find the question text to provide context
+    const question = pendingQuestions.find(q => q.id === questionId);
+    const fullResponse = question 
+      ? `${question.question} Answer: ${answer}` 
+      : answer;
+    
+    await handleSendMessage(fullResponse);
   };
 
   const handleConfirmCandidate = (candidate) => {
@@ -296,8 +305,14 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-x-4 bottom-24 sm:bottom-6 sm:right-6 sm:left-auto z-40 sm:w-96 max-w-full sm:max-w-sm">
-          <div className="bg-gray-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-white/10 flex flex-col h-[34rem] sm:h-[30rem] overflow-hidden">
+        <div className={`fixed z-40 ${
+          isFullscreen 
+            ? 'inset-4' 
+            : 'inset-x-4 bottom-24 sm:bottom-6 sm:right-6 sm:left-auto sm:w-96 max-w-full sm:max-w-sm'
+        }`}>
+          <div className={`bg-gray-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden ${
+            isFullscreen ? 'h-full' : 'h-[34rem] sm:h-[30rem]'
+          }`}>
             <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold tracking-wide">HS Code Assistant</p>
@@ -305,14 +320,24 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
                   Describe your product to receive HS code guidance.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={handleToggle}
-                className="p-1.5 rounded-full hover:bg-white/20 transition-colors"
-                aria-label="Close HS Code Assistant"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="p-1.5 rounded-full hover:bg-white/20 transition-colors"
+                  aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                >
+                  {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleToggle}
+                  className="p-1.5 rounded-full hover:bg-white/20 transition-colors"
+                  aria-label="Close HS Code Assistant"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6 space-y-4">
               {messages.map((message) => (
@@ -347,22 +372,6 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
               <div ref={messagesEndRef} />
             </div>
             <div className="border-t border-white/10 px-4 py-3 bg-black/20">
-              <div className="flex items-center justify-between gap-2 mb-2 text-[11px] text-white/50">
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={consentLogging}
-                    onChange={(e) => setConsentLogging(e.target.checked)}
-                    className="accent-purple-500"
-                  />
-                  <span>
-                    We may store chat history to improve results.{' '}
-                    <a href="/privacy" className="underline text-purple-300">
-                      Privacy policy
-                    </a>
-                  </span>
-                </label>
-              </div>
               <label htmlFor="chatbot-input" className="sr-only">
                 Describe your product for HS code suggestions
               </label>
@@ -445,26 +454,22 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
                   </div>
                 </div>
               )}
-              {errorMessage && (
-                <div className="mt-3 text-xs text-rose-300 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 mt-0.5" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={handleToggle}
-        aria-label={isOpen ? 'Close HS Code assistant' : 'Open HS Code assistant'}
-        aria-expanded={isOpen}
-        className="fixed bottom-6 right-6 z-40 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-2xl p-4 sm:p-5 hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60 transition-transform"
-      >
-        <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7" />
-      </button>
+      {!isOpen && (
+        <button
+          type="button"
+          onClick={handleToggle}
+          aria-label="Open HS Code assistant"
+          aria-expanded={false}
+          className="fixed bottom-6 right-6 z-40 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-2xl p-4 sm:p-5 hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60 transition-transform"
+        >
+          <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7" />
+        </button>
+      )}
     </>
   );
 };

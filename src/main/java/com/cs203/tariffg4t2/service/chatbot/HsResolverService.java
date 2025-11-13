@@ -7,8 +7,8 @@ import com.cs203.tariffg4t2.dto.chatbot.HsResolveRequestDTO;
 import com.cs203.tariffg4t2.dto.chatbot.HsResolveResponseDTO;
 import com.cs203.tariffg4t2.dto.chatbot.NoticeDTO;
 import com.cs203.tariffg4t2.dto.chatbot.PreviousAnswerDTO;
-import com.cs203.tariffg4t2.model.chatbot.HsReference;
-import com.cs203.tariffg4t2.repository.chatbot.HsReferenceRepository;
+import com.cs203.tariffg4t2.model.basic.Product;
+import com.cs203.tariffg4t2.repository.basic.ProductRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,7 +33,7 @@ public class HsResolverService {
 
     private static final double DISAMBIGUATION_THRESHOLD = 0.1;
 
-    private final HsReferenceRepository hsReferenceRepository;
+    private final ProductRepository productRepository;
     private final HsChatSessionLogService hsChatSessionLogService;
 
     public HsResolveResponseDTO resolveHsCode(HsResolveRequestDTO request) {
@@ -50,17 +50,12 @@ public class HsResolverService {
         HsResolveRequestDTO sanitizedRequest = sanitizeRequest(request);
 
         List<HsCandidateDTO> candidates = buildCandidatesFromReferenceData(sanitizedRequest);
-        if (candidates.isEmpty()) {
-            candidates = buildCandidateMockFallback(sanitizedRequest);
-        }
+        // Don't return fallback mock - just return empty list if no matches found
         List<DisambiguationQuestionDTO> disambiguationQuestions = buildDisambiguationQuestions(candidates);
         FallbackInfoDTO fallback = buildFallbackInfo();
 
-        NoticeDTO notice = NoticeDTO.builder()
-                .message("We may store chat history to improve results.")
-                .privacyPolicyUrl("/privacy")
-                .consentGranted(Boolean.TRUE.equals(sanitizedRequest.getConsentLogging()))
-                .build();
+        // No notice needed - remove privacy message
+        NoticeDTO notice = null;
 
         HsResolveResponseDTO response = HsResolveResponseDTO.builder()
                 .queryId(queryId)
@@ -90,10 +85,10 @@ public class HsResolverService {
         Map<String, CandidateScore> scoreMap = new LinkedHashMap<>();
 
         for (String token : tokens) {
-            List<HsReference> matches = hsReferenceRepository.searchByToken(token);
-            for (HsReference reference : matches) {
-                CandidateScore score = scoreMap.computeIfAbsent(reference.getHsCode(), code ->
-                        new CandidateScore(reference));
+            List<Product> matches = productRepository.searchByToken(token);
+            for (Product product : matches) {
+                CandidateScore score = scoreMap.computeIfAbsent(product.getHsCode(), code ->
+                        new CandidateScore(product));
                 score.incrementMatchCount(token);
             }
         }
@@ -111,10 +106,10 @@ public class HsResolverService {
 
         return rankedScores.stream()
                 .map(score -> HsCandidateDTO.builder()
-                        .hsCode(score.getReference().getHsCode())
+                        .hsCode(score.getProduct().getHsCode())
                         .confidence(score.getConfidence())
-                        .rationale(score.getReference().getDescription())
-                        .source("REFERENCE")
+                        .rationale(score.getProduct().getDescription())
+                        .source("PRODUCT_DATABASE")
                         .attributesUsed(score.getMatchedTokens())
                         .build())
                 .toList();
@@ -133,41 +128,16 @@ public class HsResolverService {
     }
 
     private List<DisambiguationQuestionDTO> buildDisambiguationQuestions(List<HsCandidateDTO> candidates) {
-        if (candidates.size() < 2) {
-            return List.of();
-        }
-
-        double topConfidence = candidates.get(0).getConfidence();
-        double secondConfidence = candidates.get(1).getConfidence();
-
-        if (Math.abs(topConfidence - secondConfidence) > DISAMBIGUATION_THRESHOLD) {
-            return List.of();
-        }
-
-        return List.of(
-                DisambiguationQuestionDTO.builder()
-                        .id("power-source")
-                        .question("Does the product operate without an external power supply?")
-                        .options(List.of("Yes", "No", "Not sure"))
-                        .build(),
-                DisambiguationQuestionDTO.builder()
-                        .id("material-primary")
-                        .question("What is the primary casing material?")
-                        .options(List.of("Plastic", "Metal", "Composite", "Other"))
-                        .build()
-        );
+        // Disable disambiguation questions for now - let users refine with natural language
+        // This avoids hardcoded questions that may not be relevant to actual products
+        return List.of();
     }
 
     private FallbackInfoDTO buildFallbackInfo() {
-        FallbackInfoDTO.PreviousHsSelectionDTO previous = FallbackInfoDTO.PreviousHsSelectionDTO.builder()
-                .hsCode("8471.30.01")
-                .confidence(0.78)
-                .timestamp(Instant.now().minusSeconds(3600))
-                .build();
-
+        // Return empty fallback - no fake previous codes or hardcoded URLs
         return FallbackInfoDTO.builder()
-                .lastUsedCodes(List.of(previous))
-                .manualSearchUrl("https://hts.usitc.gov/")
+                .lastUsedCodes(List.of())
+                .manualSearchUrl(null)
                 .build();
     }
 
@@ -223,13 +193,13 @@ public class HsResolverService {
 
 
     private static class CandidateScore {
-        private final HsReference reference;
+        private final Product product;
         private final List<String> matchedTokens = new ArrayList<>();
         private int matchCount = 0;
         private double confidence = 0.0;
 
-        CandidateScore(HsReference reference) {
-            this.reference = reference;
+        CandidateScore(Product product) {
+            this.product = product;
         }
 
         void incrementMatchCount(String token) {
@@ -240,12 +210,12 @@ public class HsResolverService {
         void calculateConfidence(int totalTokens) {
             double base = 0.45;
             double tokenCoverage = totalTokens > 0 ? (double) matchCount / totalTokens : 0;
-            double descriptionLengthFactor = Math.min(0.25, reference.getDescription().length() / 1000.0);
+            double descriptionLengthFactor = Math.min(0.25, product.getDescription().length() / 1000.0);
             this.confidence = Math.min(0.95, base + (tokenCoverage * 0.45) + descriptionLengthFactor);
         }
 
-        public HsReference getReference() {
-            return reference;
+        public Product getProduct() {
+            return product;
         }
 
         public double getConfidence() {

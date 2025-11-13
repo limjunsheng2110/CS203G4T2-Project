@@ -35,7 +35,12 @@ apiClient.interceptors.response.use(
     // If error is 401 or 403 (token expired/invalid), logout and redirect to login
     const isAuthError = error.response?.status === 401 || error.response?.status === 403;
     
-    if (isAuthError) {
+    // Don't redirect to login if it's a validation error (400) from chatbot
+    const isChatbotValidationError = 
+      error.response?.status === 400 && 
+      error.config?.url?.includes('/hs/resolve');
+    
+    if (isAuthError && !isChatbotValidationError) {
       // Clear auth data
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');

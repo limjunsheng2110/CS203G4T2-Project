@@ -18,11 +18,11 @@ public class HsResolveRequestDTO {
     private String queryId;
 
     @NotBlank(message = "Product name is required")
-    @Size(min = 3, max = 150, message = "Product name must be 3-150 characters")
+    @Size(min = 3, max = 150, message = "Product name must be between 3-150 characters")
     private String productName;
 
-    @NotBlank(message = "Description is required")
-    @Size(min = 10, max = 2000, message = "Description must be 10-2000 characters")
+    @NotBlank(message = "Please provide a product description to help identify the HS code")
+    @Size(min = 10, max = 2000, message = "Please describe your product in 10-2000 characters")
     private String description;
 
     private List<@Size(max = 60, message = "Attribute text too long") String> attributes;
