@@ -100,22 +100,21 @@ public class TariffControllerTest {
                 .importingCountry("SG")
                 .exportingCountry("US")
                 .hsCode("010329")
-                .productValue(new BigDecimal("5000.00"))
-                .heads(100)
-                .weight(new BigDecimal("25.00"))
+                .productValue(new BigDecimal("1000.00"))
+                .weight(new BigDecimal("10.00"))
                 .build();
 
         TariffCalculationResultDTO minimalResult = TariffCalculationResultDTO.builder()
                 .importingCountry("SG")
                 .exportingCountry("US")
                 .hsCode("010329")
-                .productValue(new BigDecimal("5000.00"))
-                .customsValue(new BigDecimal("5000.00"))
-                .baseDuty(new BigDecimal("250.00"))
-                .vatOrGst(new BigDecimal("367.50"))
-                .shippingCost(BigDecimal.ZERO)
-                .tariffAmount(new BigDecimal("250.00"))
-                .totalCost(new BigDecimal("5617.50"))
+                .productValue(new BigDecimal("1000.00"))
+                .customsValue(new BigDecimal("1000.00"))
+                .baseDuty(new BigDecimal("50.00"))
+                .vatOrGst(new BigDecimal("73.50"))
+                .shippingCost(new BigDecimal("20.00"))
+                .tariffAmount(new BigDecimal("50.00"))
+                .totalCost(new BigDecimal("1143.50"))
                 .calculationDate(LocalDateTime.now())
                 .build();
 
@@ -127,7 +126,8 @@ public class TariffControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(minimalRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalCost").value(5617.50));
+                .andExpect(jsonPath("$.importingCountry").value("SG"))
+                .andExpect(jsonPath("$.totalCost").value(1143.50));
     }
 
     @Test
@@ -254,5 +254,234 @@ public class TariffControllerTest {
                 .content(objectMapper.writeValueAsString(largeValueRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalCost").exists());
+    }
+
+    @Test
+    void testCalculateTariff_WithInvalidData_ThrowsException() throws Exception {
+        // given
+        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
+                .thenThrow(new IllegalArgumentException("Validation errors: Importing country is required"));
+
+        // when and then
+        mockMvc.perform(post("/api/tariff/calculate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Validation errors: Importing country is required"));
+    }
+
+    @Test
+    void testCalculateTariff_WithNullValues() throws Exception {
+        // given - request with null optional fields
+        TariffCalculationRequestDTO requestWithNulls = TariffCalculationRequestDTO.builder()
+                .importingCountry("SG")
+                .exportingCountry("US")
+                .hsCode("010329")
+                .productValue(new BigDecimal("1000.00"))
+                .weight(new BigDecimal("10.00"))
+                .freight(null)
+                .insurance(null)
+                .heads(null)
+                .build();
+
+        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
+                .thenReturn(mockResult);
+
+        // when and then
+        mockMvc.perform(post("/api/tariff/calculate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestWithNulls)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testCalculateTariffGet_Success() throws Exception {
+        // given
+        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
+                .thenReturn(mockResult);
+
+        // when and then
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/tariff/calculate")
+                .param("importingCountry", "SG")
+                .param("exportingCountry", "US")
+                .param("hsCode", "010329")
+                .param("productValue", "10000.00")
+                .param("weight", "50.00"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.importingCountry").value("SG"))
+                .andExpect(jsonPath("$.exportingCountry").value("US"))
+                .andExpect(jsonPath("$.hsCode").value("010329"));
+    }
+
+    @Test
+    void testCalculateTariffGet_WithInvalidData() throws Exception {
+        // given
+        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
+                .thenThrow(new IllegalArgumentException("Invalid HS code format"));
+
+        // when and then
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/tariff/calculate")
+                .param("importingCountry", "SG")
+                .param("exportingCountry", "US")
+                .param("hsCode", "ABC")
+                .param("productValue", "10000.00")
+                .param("weight", "50.00"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Invalid HS code format"));
+    }
+
+    @Test
+    void testCalculateTariff_WithLargeValues() throws Exception {
+        // given - very large values
+        TariffCalculationRequestDTO largeRequest = TariffCalculationRequestDTO.builder()
+                .importingCountry("SG")
+                .exportingCountry("US")
+                .hsCode("010329")
+                .productValue(new BigDecimal("1000000.00"))
+                .weight(new BigDecimal("5000.00"))
+                .freight(new BigDecimal("10000.00"))
+                .insurance(new BigDecimal("5000.00"))
+                .build();
+
+        TariffCalculationResultDTO largeResult = TariffCalculationResultDTO.builder()
+                .importingCountry("SG")
+                .exportingCountry("US")
+                .hsCode("010329")
+                .productValue(new BigDecimal("1000000.00"))
+                .customsValue(new BigDecimal("1015000.00"))
+                .totalCost(new BigDecimal("1200000.00"))
+                .calculationDate(LocalDateTime.now())
+                .build();
+
+        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
+                .thenReturn(largeResult);
+
+        // when and then
+        mockMvc.perform(post("/api/tariff/calculate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(largeRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalCost").value(1200000.00));
+    }
+
+    @Test
+    void testCalculateTariff_WithDecimalPrecision() throws Exception {
+        // given - values with high decimal precision
+        TariffCalculationRequestDTO precisionRequest = TariffCalculationRequestDTO.builder()
+                .importingCountry("SG")
+                .exportingCountry("US")
+                .hsCode("010329")
+                .productValue(new BigDecimal("1234.56"))
+                .weight(new BigDecimal("12.345"))
+                .build();
+
+        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
+                .thenReturn(mockResult);
+
+        // when and then
+        mockMvc.perform(post("/api/tariff/calculate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(precisionRequest)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testCalculateTariff_WithDifferentCountryPairs() throws Exception {
+        // given - different country combination
+        TariffCalculationRequestDTO differentCountries = TariffCalculationRequestDTO.builder()
+                .importingCountry("US")
+                .exportingCountry("CN")
+                .hsCode("123456")
+                .productValue(new BigDecimal("5000.00"))
+                .weight(new BigDecimal("25.00"))
+                .build();
+
+        TariffCalculationResultDTO differentResult = TariffCalculationResultDTO.builder()
+                .importingCountry("US")
+                .exportingCountry("CN")
+                .hsCode("123456")
+                .totalCost(new BigDecimal("6000.00"))
+                .calculationDate(LocalDateTime.now())
+                .build();
+
+        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
+                .thenReturn(differentResult);
+
+        // when and then
+        mockMvc.perform(post("/api/tariff/calculate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(differentCountries)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.importingCountry").value("US"))
+                .andExpect(jsonPath("$.exportingCountry").value("CN"));
+    }
+
+    @Test
+    void testCalculateTariff_WithYearSpecified() throws Exception {
+        // given - request with specific year
+        TariffCalculationRequestDTO yearRequest = TariffCalculationRequestDTO.builder()
+                .importingCountry("SG")
+                .exportingCountry("US")
+                .hsCode("010329")
+                .productValue(new BigDecimal("1000.00"))
+                .weight(new BigDecimal("10.00"))
+                .year(2024)
+                .build();
+
+        TariffCalculationResultDTO yearResult = TariffCalculationResultDTO.builder()
+                .importingCountry("SG")
+                .exportingCountry("US")
+                .hsCode("010329")
+                .totalCost(new BigDecimal("1200.00"))
+                .year(2024)
+                .calculationDate(LocalDateTime.now())
+                .build();
+
+        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
+                .thenReturn(yearResult);
+
+        // when and then
+        mockMvc.perform(post("/api/tariff/calculate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(yearRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.year").value(2024));
+    }
+
+    @Test
+    void testCalculateTariff_WithShippingMode() throws Exception {
+        // given - request with specific shipping mode
+        TariffCalculationRequestDTO shippingRequest = TariffCalculationRequestDTO.builder()
+                .importingCountry("SG")
+                .exportingCountry("US")
+                .hsCode("010329")
+                .productValue(new BigDecimal("1000.00"))
+                .weight(new BigDecimal("10.00"))
+                .shippingMode("AIR")
+                .build();
+
+        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
+                .thenReturn(mockResult);
+
+        // when and then
+        mockMvc.perform(post("/api/tariff/calculate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(shippingRequest)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testCalculateTariff_ExceptionHandler() throws Exception {
+        // given
+        when(tariffCalculatorService.calculate(any(TariffCalculationRequestDTO.class)))
+                .thenThrow(new IllegalArgumentException("Multiple validation errors"));
+
+        // when and then
+        mockMvc.perform(post("/api/tariff/calculate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType("text/plain;charset=UTF-8"))
+                .andExpect(content().string("Multiple validation errors"));
     }
 }
