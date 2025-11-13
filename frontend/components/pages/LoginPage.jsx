@@ -39,8 +39,20 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister, sessionExpired = false 
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Login failed');
+        let errorText = '';
+
+        try {
+          const data = await response.json();
+          errorText = data?.message || data?.error || JSON.stringify(data);
+        } catch {
+          errorText = await response.text();
+        }
+
+        const statusContext = response.status === 0
+          ? 'Unable to reach the server. Is the backend running?'
+          : `Login failed (${response.status}).`;
+
+        throw new Error(errorText ? `${statusContext} ${errorText}` : statusContext);
       }
 
       const data = await response.json();
@@ -61,7 +73,10 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister, sessionExpired = false 
         token: data.accessToken
       });
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(
+        err.message ||
+        'Login failed. Please verify your credentials and ensure the backend service is running.'
+      );
     } finally {
       setIsLoading(false);
     }

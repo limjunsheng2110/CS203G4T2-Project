@@ -4,7 +4,7 @@ const FormField = ({ label, name, type, value, onChange, placeholder, required, 
   return (
     <div>
       {label && (
-        <label className="block text-sm font-medium text-white mb-2">
+        <label className={`block text-sm font-medium ${colours.labelText} mb-2`}>
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
