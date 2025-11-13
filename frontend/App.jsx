@@ -9,6 +9,7 @@ import RegisterPage from './components/pages/RegisterPage';
 import UserInfo from './components/common/UserInfo';
 import AdminDashboard from './components/pages/AdminDashboard';
 import apiService from './services/apiService';
+import ChatbotWidget from './components/chat/ChatbotWidget';
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('login');
@@ -31,6 +32,7 @@ const App = () => {
     shippingMode: '',
     weight: ''
   });
+  const [chatbotContext, setChatbotContext] = useState(null);
 
   // Check for existing auth on mount
   useEffect(() => {
@@ -107,6 +109,29 @@ const App = () => {
     } else if (name === 'hsCode' && !value) {
       setSelectedProduct(null);
     }
+  };
+
+  const handleChatbotHsSelection = ({ hsCode, confidence, rationale, source }) => {
+    if (!hsCode) {
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      hsCode,
+    }));
+
+    setChatbotContext({
+      hsCode,
+      confidence,
+      rationale,
+      source,
+      timestamp: new Date().toISOString(),
+    });
+
+    fetchProductInfo(hsCode);
+    setCurrentPage('detail');
+    setError(null);
   };
 
   const fetchProductInfo = async (hsCode) => {
@@ -265,6 +290,7 @@ const App = () => {
             isLoading={isLoading}
             error={error}
             selectedProduct={selectedProduct}
+            chatbotContext={chatbotContext}
             theme={theme}
             toggleTheme={toggleTheme}
           />
@@ -286,6 +312,9 @@ const App = () => {
           <AdminDashboard onBack={handleBackToHome} />
         )}
       </div>
+
+      {/* HS Code Chatbot Assistant */}
+      <ChatbotWidget onHsCodeSelected={handleChatbotHsSelection} />
     </div>
   );
 };

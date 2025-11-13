@@ -24,17 +24,13 @@ const ResultsPage = ({
         <ArrowLeft size={20} />
         Back to Search
       </button>
-
-      {toggleTheme && (
-        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-      )}
     </div>
   );
 
   // If no results are available, show a message
   if (!tariffResults) {
     return (
-      <div className={`min-h-screen ${colours.resultBg} py-8 px-4`}>
+      <div className="py-8 px-4">
         <div className="max-w-5xl mx-auto">
           {renderHeader()}
 
@@ -56,7 +52,7 @@ const ResultsPage = ({
   }
 
   return (
-    <div className={`min-h-screen ${colours.resultBg} py-8 px-4`}>
+    <div className="py-8 px-4">
       <div className="max-w-5xl mx-auto">
         {renderHeader()}
 
