@@ -32,7 +32,7 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
       id: 'intro',
       role: 'assistant',
       content:
-        '👋 Welcome! I can help suggest HS codes for your product. Tell me what you are importing or exporting, including details like material, use, and any special characteristics.',
+        'Welcome to TariffNom! I\'m here to help you calculate tariffs. Ask me anything about:\n\n• How to fill out the transaction form\n• What each field means\n• Tips for getting accurate results\n• Understanding your tariff calculation\n\nWhat would you like to know?',
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -149,87 +149,67 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
     setErrorMessage('');
 
     try {
-      const hsResponse = await apiService.chatbot.resolveHsCode({
-        queryId,
-        productName: trimmed.length > 60 ? trimmed.slice(0, 60) : trimmed,
-        description: trimmed,
-        attributes: [],
-        previousAnswers,
-        sessionId,
-        consentLogging,
-      });
+      // Check if this is a tutorial question or HS code search
+      const tutorialResponse = getHelpResponse(trimmed.toLowerCase());
+      
+      if (tutorialResponse) {
+        // Tutorial question detected - provide local response
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate thinking
+        addMessage('assistant', tutorialResponse);
+      } else {
+        // No tutorial match - treat as HS code search
+        const hsResponse = await apiService.chatbot.resolveHsCode({
+          queryId,
+          productName: trimmed.length > 60 ? trimmed.slice(0, 60) : trimmed,
+          description: trimmed,
+          attributes: [],
+          previousAnswers,
+          sessionId,
+          consentLogging,
+        });
 
-      if (!sessionId && hsResponse.sessionId) {
-        setSessionId(hsResponse.sessionId);
-      }
-      if (hsResponse.queryId) {
-        setQueryId(hsResponse.queryId);
-      }
+        if (!sessionId && hsResponse.sessionId) {
+          setSessionId(hsResponse.sessionId);
+        }
+        if (hsResponse.queryId) {
+          setQueryId(hsResponse.queryId);
+        }
 
-      if (hsResponse.candidates && hsResponse.candidates.length > 0) {
-        const formattedCandidates = hsResponse.candidates
-          .map(
-            (candidate, index) =>
-              `${index + 1}. ${candidate.hsCode} (confidence ${(candidate.confidence * 100).toFixed(
-                0
-              )}%)\n   ${candidate.rationale}`
-          )
-          .join('\n\n');
+        if (hsResponse.candidates && hsResponse.candidates.length > 0) {
+          const formattedCandidates = hsResponse.candidates
+            .map(
+              (candidate, index) =>
+                `${index + 1}. **${candidate.hsCode}** - ${candidate.rationale}`
+            )
+            .join('\n\n');
 
-        addMessage(
-          'assistant',
-          `Here are the HS code suggestions based on your description:\n\n${formattedCandidates}`
-        );
+          addMessage(
+            'assistant',
+            `Here are the matching products from our database:\n\n${formattedCandidates}`
+          );
 
-        const primaryCandidate = hsResponse.candidates[0];
-        if (
-          primaryCandidate &&
-          primaryCandidate.confidence >= DEFAULT_CONFIDENCE_THRESHOLD &&
-          (!hsResponse.disambiguationQuestions || hsResponse.disambiguationQuestions.length === 0)
-        ) {
-          setConfirmationCandidate(primaryCandidate);
+          const primaryCandidate = hsResponse.candidates[0];
+          if (primaryCandidate && primaryCandidate.confidence >= DEFAULT_CONFIDENCE_THRESHOLD) {
+            setConfirmationCandidate(primaryCandidate);
+          } else {
+            setConfirmationCandidate(null);
+          }
         } else {
+          addMessage(
+            'assistant',
+            "I couldn't find any matching products. Try:\n• Using different keywords\n• Being more specific about the product\n• Asking a tutorial question like 'What is an HS code?'"
+          );
           setConfirmationCandidate(null);
         }
-      } else {
-        addMessage(
-          'assistant',
-          "I wasn't able to find a confident HS code match yet. Could you share more details about materials, function, or target market?"
-        );
-        setConfirmationCandidate(null);
-      }
 
-      if (hsResponse.disambiguationQuestions && hsResponse.disambiguationQuestions.length > 0) {
-        setPendingQuestions(hsResponse.disambiguationQuestions);
-        const questionText = hsResponse.disambiguationQuestions
-          .map((q) => `• ${q.question}`)
-          .join('\n');
-        addMessage(
-          'assistant',
-          `I need a bit more detail to narrow this down:\n${questionText}\n\nPlease select an option below.`
-        );
-      } else {
-        setPendingQuestions([]);
-      }
-
-      if (hsResponse.fallback) {
-        if (hsResponse.fallback.lastUsedCodes && hsResponse.fallback.lastUsedCodes.length > 0) {
-          const fallbackList = hsResponse.fallback.lastUsedCodes
-            .map((item) => `${item.hsCode} (from ${new Date(item.timestamp).toLocaleString()})`)
-            .join('\n');
-          addMessage(
-            'assistant',
-            `Previous HS codes you used:\n${fallbackList}\n\nNeed more help? ${hsResponse.fallback.manualSearchUrl}`
-          );
-        } else if (hsResponse.fallback.manualSearchUrl) {
-          addMessage(
-            'assistant',
-            `I can't determine the code yet. You can continue describing the product or check the manual search: ${hsResponse.fallback.manualSearchUrl}`
-          );
+        if (hsResponse.disambiguationQuestions && hsResponse.disambiguationQuestions.length > 0) {
+          setPendingQuestions(hsResponse.disambiguationQuestions);
+        } else {
+          setPendingQuestions([]);
         }
       }
     } catch (error) {
-      console.error('Chatbot simulation error:', error);
+      console.error('Chatbot error:', error);
       
       // Handle validation errors (400 status)
       if (error.code === 400 || error.response?.status === 400) {
@@ -246,12 +226,71 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
         setErrorMessage(message);
         addMessage(
           'assistant',
-          'Something went wrong while fetching HS code suggestions. Please try again or give more description.'
+          'Something went wrong. Please try again or ask a tutorial question!'
         );
       }
     } finally {
       setIsTyping(false);
     }
+  };
+
+  const getHelpResponse = (query) => {
+    // Import/Export Country
+    if (query.includes('import') && query.includes('country') || query.includes('destination')) {
+      return '**Import Country**: This is where your goods are being shipped TO (the destination).\n\nSelect the country that will receive the goods. This determines which tariffs and taxes apply.';
+    }
+    
+    if (query.includes('export') && query.includes('country') || query.includes('origin')) {
+      return '**Export Country**: This is where your goods are coming FROM (the origin).\n\nSelect the country sending the goods. This can affect tariff rates if there\'s a trade agreement between countries.';
+    }
+
+    // HS Code
+    if (query.includes('hs code') || query.includes('product code') || query.includes('harmonized')) {
+      return '**HS Code** (Harmonized System Code): A 6-digit code that classifies your product internationally.\n\n**How to find it:**\n• Search by product name in our dropdown\n• Visit https://www.trade.gov/harmonized-system-hs-codes\n• Search "HS code for [your product]"\n\n**Example:** Live goats = 010420';
+    }
+
+    // Total Value
+    if (query.includes('total value') || query.includes('product value') || query.includes('price')) {
+      return '**Total Value (USD)**: The total price of your shipment in US Dollars.\n\n**Important:**\n• Must be greater than $0\n• Enter the invoice value\n• Include product cost only (shipping calculated separately)';
+    }
+
+    // Weight
+    if (query.includes('weight') || query.includes('kg') || query.includes('kilogram')) {
+      return '**Weight (kg)**: Total weight of your shipment in kilograms.\n\n**Why we need this:**\n• Calculates shipping costs\n• Some duties are weight-based\n• Must be greater than 0';
+    }
+
+    // Year
+    if (query.includes('year') || query.includes('tariff year') || query.includes('when')) {
+      return '**Year**: The year for tariff rate calculation (optional).\n\n**Notes:**\n• Tariff rates change over time\n• Leave blank to use current rates\n• Choose 2022-2025 for historical comparison';
+    }
+
+    // Shipping Mode
+    if (query.includes('shipping') || query.includes('air') || query.includes('sea')) {
+      return '**Shipping Mode**: How your goods will be transported.\n\n**Options:**\n• **Air** - Faster but more expensive ($/kg higher)\n• **Sea** - Slower but cheaper for bulk shipments\n\nShipping costs are calculated automatically based on weight and mode.';
+    }
+
+    // General calculation
+    if (query.includes('calculate') || query.includes('how to') || query.includes('use')) {
+      return '**How to Calculate Tariffs:**\n\n1. Select **Import Country** (destination)\n2. Select **Export Country** (origin)\n3. Choose **Product (HS Code)** from dropdown\n4. Enter **Total Value** in USD\n5. Enter **Weight** in kg\n6. Select **Shipping Mode** (Air/Sea)\n7. (Optional) Choose **Year**\n8. Click **Search Tariffs**\n\nYou\'ll see the total cost breakdown including duties, taxes, and shipping!';
+    }
+
+    // Results explanation
+    if (query.includes('result') || query.includes('understand') || query.includes('breakdown')) {
+      return '**Understanding Your Results:**\n\n• **Total Cost** - Everything you\'ll pay\n• **Total Tariffs** - Import duties + VAT/GST\n• **Product Value** - Your original invoice amount\n• **Tariff Rate** - % charged on your goods\n• **Customs Value** - Base for calculating duties\n• **Shipping Cost** - Based on weight and mode\n\nThe breakdown shows exactly where your money goes!';
+    }
+
+    // VAT/GST
+    if (query.includes('vat') || query.includes('gst') || query.includes('tax')) {
+      return '**VAT/GST**: Value Added Tax or Goods & Services Tax.\n\n**What it is:**\n• Additional tax charged by importing country\n• Calculated on (Product Value + Duties + Shipping)\n• Varies by country (e.g., UK: 20%, Singapore: 9%)\n\nThis is automatically included in your total cost!';
+    }
+
+    // Trade agreements
+    if (query.includes('trade agreement') || query.includes('fta') || query.includes('rate')) {
+      return '**Trade Agreements**: Some countries have agreements that reduce tariffs.\n\n**How it works:**\n• If countries have an FTA, you may pay 0% tariff\n• Otherwise, you pay the MFN (Most Favored Nation) rate\n• We automatically detect and apply the best rate\n\n**Example:** Singapore-China FTA means 0% on many goods!';
+    }
+
+    // Default response
+    return null; // Return null if no tutorial question detected - will trigger HS code search
   };
 
   const handleKeyDown = (event) => {
@@ -279,14 +318,13 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
   const handleConfirmCandidate = (candidate) => {
     addMessage(
       'assistant',
-      `Great! I've pre-filled the tariff calculator with HS code ${candidate.hsCode}. You can adjust the other fields before running the calculation.`
+      `I'll use **${candidate.hsCode} - ${candidate.rationale}** for your calculation!`
     );
     setConfirmationCandidate(null);
     onHsCodeSelected({
       hsCode: candidate.hsCode,
       confidence: candidate.confidence,
-      rationale: candidate.rationale,
-      source: candidate.source,
+      description: candidate.rationale,
     });
     setIsOpen(false);
   };
