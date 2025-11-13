@@ -4,7 +4,6 @@ import com.cs203.tariffg4t2.model.basic.NewsArticle;
 import com.cs203.tariffg4t2.model.basic.SentimentAnalysis;
 import com.cs203.tariffg4t2.repository.basic.NewsArticleRepository;
 import com.cs203.tariffg4t2.repository.basic.SentimentAnalysisRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

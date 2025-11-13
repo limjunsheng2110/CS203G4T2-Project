@@ -37,9 +37,6 @@ class ScrapingControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockitoBean
     private WebScrapingService webScrapingService;
 

@@ -260,6 +260,7 @@ public class HsResolverServiceTest {
         HsResolveResponseDTO response = hsResolverService.resolveHsCode(request);
 
         // then
+        assertThat(response).isNotNull();
         verify(hsChatSessionLogService, times(1)).recordInteraction(
                 anyString(),
                 eq(false),
