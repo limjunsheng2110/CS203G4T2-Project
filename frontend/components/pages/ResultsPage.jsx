@@ -296,9 +296,13 @@ const TariffResultCard = ({ result, formData, selectedProduct, theme, colours })
               <div className="flex justify-between items-center">
                 <span className={colours.text}>
                   VAT/GST:
-                  {result.vatRate && result.vatRate > 0 && (
+                  {result.vatRate && result.vatRate > 0 ? (
                     <span className="text-xs ml-1 text-green-600">
                       ({Number(result.vatRate).toFixed(2)}%)
+                    </span>
+                  ) : (
+                    <span className="text-xs ml-1 text-gray-500">
+                      (0%)
                     </span>
                   )}
                 </span>
@@ -310,9 +314,13 @@ const TariffResultCard = ({ result, formData, selectedProduct, theme, colours })
               <div className="flex justify-between items-center">
                 <span className={colours.text}>
                   Shipping Cost:
-                  {result.shippingRatePerKg && result.shippingRatePerKg > 0 && (
+                  {result.shippingRatePerKg && result.shippingRatePerKg > 0 ? (
                     <span className="text-xs ml-1 text-gray-500">
                       (${Number(result.shippingRatePerKg).toFixed(2)}/kg)
+                    </span>
+                  ) : (
+                    <span className="text-xs ml-1 text-gray-500">
+                      ($0.00/kg)
                     </span>
                   )}
                 </span>
