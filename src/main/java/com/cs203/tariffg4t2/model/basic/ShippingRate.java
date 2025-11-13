@@ -33,5 +33,7 @@ public class ShippingRate {
     @Column(name = "sea_rate", precision = 10, scale = 2)
     private BigDecimal seaRate;
 
+
+
 }
 
