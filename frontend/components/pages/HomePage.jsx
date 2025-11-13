@@ -11,13 +11,8 @@ const HomePage = ({ onGetStarted, theme = 'dark', toggleTheme }) => {
       : 'bg-gradient-to-br from-black via-gray-900 to-gray-800';
 
   return (
-    <div className={`min-h-screen ${backgroundClass} py-8 px-4 transition-colors`}>
-      <div className="max-w-4xl w-full mx-auto">
-        <div className="flex justify-end mb-6">
-          {toggleTheme && (
-            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-          )}
-        </div>
+    <div className="min-h-screen py-8 px-4">
+      <div className="max-w-4xl mx-auto">
 
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6">

@@ -35,7 +35,12 @@ apiClient.interceptors.response.use(
     // If error is 401 or 403 (token expired/invalid), logout and redirect to login
     const isAuthError = error.response?.status === 401 || error.response?.status === 403;
     
-    if (isAuthError) {
+    // Don't redirect to login if it's a validation error (400) from chatbot
+    const isChatbotValidationError = 
+      error.response?.status === 400 && 
+      error.config?.url?.includes('/hs/resolve');
+    
+    if (isAuthError && !isChatbotValidationError) {
       // Clear auth data
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
@@ -211,6 +216,29 @@ export const productApi = {
   }
 };
 
+// Chatbot / HS Resolver endpoints
+export const chatbotApi = {
+  /**
+   * Resolve HS code suggestions for a given product description
+   * @param {Object} payload - HS resolver request payload
+   * @returns {Promise} Promise resolving to HS resolver response
+   */
+  resolveHsCode: async (payload) => {
+    try {
+      const response = await apiClient.post('/hs/resolve', payload);
+      return response.data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.details ||
+        error.response?.data?.message ||
+        'Unable to resolve HS code at the moment';
+      const customError = new Error(errorMessage);
+      customError.code = error.response?.status;
+      throw customError;
+    }
+  }
+};
+
 // Scraping API endpoints
 export const scrapingApi = {
   /**
@@ -308,6 +336,7 @@ const apiService = {
   scraping: scrapingApi,
   searchHistory: searchHistoryApi,
   auth: authApi,
+  chatbot: chatbotApi,
 };
 
 export default apiService;

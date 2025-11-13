@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, ArrowLeft } from 'lucide-react';
+import { Search, ArrowLeft, Info } from 'lucide-react';
 import { getThemeColours } from '../../utils/themeColours';
 import FormField from '../forms/FormField';
 import CountrySelect from '../forms/CountrySelect';
@@ -14,13 +14,12 @@ const DetailPage = ({
   onBack,
   isLoading,
   error,
-  theme = 'dark',
-  toggleTheme
+  chatbotContext,
 }) => {
-  const colours = getThemeColours(theme);
+  const colours = getThemeColours();
 
   return (
-    <div className={`min-h-screen ${colours.resultBg} py-8 px-4 transition-colors`}>
+    <div className="min-h-screen py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <button
@@ -96,6 +95,27 @@ const DetailPage = ({
               required={true}
               colours={colours}
             />
+
+            {/* Chatbot context notice */}
+            {chatbotContext && chatbotContext.hsCode === formData.hsCode && (
+              <div className="p-3 bg-purple-500/10 border border-purple-400/40 rounded-lg text-sm text-white">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 mt-0.5 text-purple-200" />
+                  <div>
+                    <p className="font-semibold text-purple-100">
+                      HS code {chatbotContext.hsCode} suggested by assistant
+                      {chatbotContext.confidence != null &&
+                        ` (confidence ${(chatbotContext.confidence * 100).toFixed(0)}%)`}
+                    </p>
+                    {chatbotContext.rationale && (
+                      <p className="text-xs text-purple-100 mt-1 leading-relaxed">
+                        {chatbotContext.rationale}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Warning if same country selected */}
             {formData.importCountry && formData.exportCountry && 
