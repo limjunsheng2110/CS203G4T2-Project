@@ -9,7 +9,6 @@ import com.cs203.tariffg4t2.dto.chatbot.NoticeDTO;
 import com.cs203.tariffg4t2.dto.chatbot.PreviousAnswerDTO;
 import com.cs203.tariffg4t2.model.basic.Product;
 import com.cs203.tariffg4t2.repository.basic.ProductRepository;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,8 +29,6 @@ import org.slf4j.LoggerFactory;
 public class HsResolverService {
 
     private static final Logger logger = LoggerFactory.getLogger(HsResolverService.class);
-
-    private static final double DISAMBIGUATION_THRESHOLD = 0.1;
 
     private final ProductRepository productRepository;
     private final HsChatSessionLogService hsChatSessionLogService;
@@ -113,18 +110,6 @@ public class HsResolverService {
                         .attributesUsed(score.getMatchedTokens())
                         .build())
                 .toList();
-    }
-
-    private List<HsCandidateDTO> buildCandidateMockFallback(HsResolveRequestDTO request) {
-        List<String> attributes = request.getAttributes() != null ? request.getAttributes() : List.of();
-
-        return List.of(HsCandidateDTO.builder()
-                .hsCode("0000.00.00")
-                .confidence(0.55)
-                .rationale("Insufficient data to provide a specific HS code — please provide more details.")
-                .source("RULE")
-                .attributesUsed(attributes)
-                .build());
     }
 
     private List<DisambiguationQuestionDTO> buildDisambiguationQuestions(List<HsCandidateDTO> candidates) {
