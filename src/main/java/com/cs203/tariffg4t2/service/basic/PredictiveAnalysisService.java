@@ -99,8 +99,7 @@ public class PredictiveAnalysisService {
 
             } catch (Exception e) {
                 logger.error("Failed to fetch live news: {}", e.getMessage(), e);
-                message = String.format("Live News API unavailable: %s. Using last stored sentiment data from database.",
-                    e.getMessage());
+                message = "Historical data fetched from database.";
                 liveNewsAvailable = false;
             }
         }

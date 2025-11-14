@@ -155,7 +155,7 @@ class PredictiveAnalysisServiceTest {
         assertNotNull(response);
         assertFalse(response.isLiveNewsAvailable());
         assertEquals("fallback_database", response.getDataSource());
-        assertTrue(response.getMessage().contains("News API key is not configured"));
+        assertTrue(response.getMessage().contains("Historical data fetched from database"));
     }
 
     @Test
@@ -471,4 +471,3 @@ class PredictiveAnalysisServiceTest {
         return history;
     }
 }
-

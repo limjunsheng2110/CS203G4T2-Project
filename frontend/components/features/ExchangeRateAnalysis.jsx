@@ -112,24 +112,24 @@ const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => 
       {analysisData && (
         <div className="space-y-6">
           {/* Data Source Status */}
-          <div className={`${analysisData.liveDataAvailable ? 'bg-green-900/30 border-green-500' : 'bg-yellow-900/30 border-yellow-500'} border rounded-lg p-4 flex items-start gap-3`}>
+          <div className={`${analysisData.liveDataAvailable ? 'bg-green-900/30 border-green-500' : 'bg-blue-900/30 border-blue-500'} border rounded-lg p-4 flex items-start gap-3`}>
             {analysisData.liveDataAvailable ? (
               <CheckCircle className="text-green-400 flex-shrink-0 mt-0.5" size={20} />
             ) : (
-              <AlertCircle className="text-yellow-400 flex-shrink-0 mt-0.5" size={20} />
+              <AlertCircle className="text-blue-400 flex-shrink-0 mt-0.5" size={20} />
             )}
             <div>
-              <p className={`${analysisData.liveDataAvailable ? 'text-green-300' : 'text-yellow-300'} font-medium`}>
-                {analysisData.liveDataAvailable ? 'Live Data' : 'Fallback Data'}
+              <p className={`${analysisData.liveDataAvailable ? 'text-green-300' : 'text-blue-300'} font-medium`}>
+                {analysisData.liveDataAvailable ? 'Live Data' : 'Historical Data'}
               </p>
-              <p className={`${analysisData.liveDataAvailable ? 'text-green-200' : 'text-yellow-200'} text-sm`}>
+              <p className={`${analysisData.liveDataAvailable ? 'text-green-200' : 'text-blue-200'} text-sm`}>
                 {analysisData.message}
               </p>
               <a 
                 href="https://openexchangerates.org/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className={`${analysisData.liveDataAvailable ? 'text-green-400 hover:text-green-300' : 'text-yellow-400 hover:text-yellow-300'} text-sm inline-flex items-center gap-1 mt-1`}
+                className={`${analysisData.liveDataAvailable ? 'text-green-400 hover:text-green-300' : 'text-blue-400 hover:text-blue-300'} text-sm inline-flex items-center gap-1 mt-1`}
               >
                 Validate on OpenExchangeRates <ExternalLink size={14} />
               </a>
@@ -276,4 +276,3 @@ const ExchangeRateAnalysis = ({ importingCountry, exportingCountry, theme }) => 
 };
 
 export default ExchangeRateAnalysis;
-

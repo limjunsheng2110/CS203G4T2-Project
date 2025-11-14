@@ -129,13 +129,11 @@ public class AuthController {
         } catch (BadCredentialsException e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Invalid credentials");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(errorResponse);
         } catch (RuntimeException e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "User not found");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(errorResponse);
+                    .body("User not found");
         } catch (Exception e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "An error occurred during login");
