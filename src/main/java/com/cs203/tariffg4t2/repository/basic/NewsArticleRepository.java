@@ -66,5 +66,25 @@ public interface NewsArticleRepository extends JpaRepository<NewsArticle, Long> 
      * Delete old articles (cleanup)
      */
     void deleteByPublishedAtBefore(LocalDateTime date);
+    
+    /**
+     * RAG: Find similar articles using cosine similarity on embeddings
+     * Returns top K most similar articles based on semantic meaning
+     * Uses PostgreSQL pgvector extension for efficient vector search
+     * 
+     * @param queryEmbedding The query embedding in vector format '[0.1, 0.2, ...]'
+     * @param limit Maximum number of results to return
+     */
+    @Query(value = """
+        SELECT *, 1 - (embedding <=> CAST(:queryEmbedding AS vector)) AS similarity
+        FROM news_article
+        WHERE embedding IS NOT NULL
+        ORDER BY embedding <=> CAST(:queryEmbedding AS vector)
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<NewsArticle> findSimilarArticles(
+        @Param("queryEmbedding") String queryEmbedding,
+        @Param("limit") int limit
+    );
 }
 

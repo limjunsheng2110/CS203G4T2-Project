@@ -9,6 +9,7 @@ import com.cs203.tariffg4t2.model.basic.SentimentAnalysis;
 import com.cs203.tariffg4t2.repository.basic.ExchangeRateRepository;
 import com.cs203.tariffg4t2.repository.basic.NewsArticleRepository;
 import com.cs203.tariffg4t2.service.data.CurrencyCodeService;
+import com.cs203.tariffg4t2.service.data.EmbeddingService;
 import com.cs203.tariffg4t2.service.data.NewsAPIService;
 import com.cs203.tariffg4t2.service.data.SentimentAnalysisService;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +47,9 @@ class PredictiveAnalysisServiceTest {
 
     @Mock
     private CurrencyCodeService currencyCodeService;
+
+    @Mock
+    private EmbeddingService embeddingService;
 
     @InjectMocks
     private PredictiveAnalysisService predictiveAnalysisService;

@@ -26,6 +26,9 @@ class NewsAPIServiceTest {
     private NewsArticleRepository newsArticleRepository;
 
     @Mock
+    private EmbeddingService embeddingService;
+
+    @Mock
     private RestTemplate restTemplate;
 
     @InjectMocks
@@ -40,6 +43,10 @@ class NewsAPIServiceTest {
         ReflectionTestUtils.setField(newsAPIService, "apiUrl", mockApiUrl);
         ReflectionTestUtils.setField(newsAPIService, "restTemplate", restTemplate);
         ReflectionTestUtils.setField(newsAPIService, "objectMapper", new ObjectMapper());
+        
+        // Mock embedding service to be unconfigured by default (prevents embedding generation in tests)
+        // Use lenient() to avoid UnnecessaryStubbingException in tests that don't call this
+        lenient().when(embeddingService.isConfigured()).thenReturn(false);
     }
 
     @Test

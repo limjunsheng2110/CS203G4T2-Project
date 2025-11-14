@@ -56,7 +56,8 @@ class NewsArticleTest {
             0.8,
             "keywords",
             "US",
-            now
+            now,
+            "[0.1, 0.2, 0.3]"  // embedding field
         );
 
         assertEquals(1L, article.getId());
@@ -69,6 +70,7 @@ class NewsArticleTest {
         assertEquals("keywords", article.getKeywords());
         assertEquals("US", article.getCountryCode());
         assertEquals(now, article.getCreatedAt());
+        assertEquals("[0.1, 0.2, 0.3]", article.getEmbedding());
     }
 
     @Test

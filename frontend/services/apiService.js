@@ -219,7 +219,27 @@ export const productApi = {
 // Chatbot / HS Resolver endpoints
 export const chatbotApi = {
   /**
-   * Resolve HS code suggestions for a given product description
+   * Send message to RAG-enabled conversational chatbot
+   * @param {Object} payload - Chat message payload { message, sessionId, consentLogging }
+   * @returns {Promise} Promise resolving to chat response
+   */
+  sendMessage: async (payload) => {
+    try {
+      const response = await apiClient.post('/chat/message', payload);
+      return response.data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.details ||
+        'Unable to process your message at the moment';
+      const customError = new Error(errorMessage);
+      customError.code = error.response?.status;
+      throw customError;
+    }
+  },
+
+  /**
+   * Resolve HS code suggestions for a given product description (legacy keyword-based)
    * @param {Object} payload - HS resolver request payload
    * @returns {Promise} Promise resolving to HS resolver response
    */

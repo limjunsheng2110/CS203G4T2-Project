@@ -30,6 +30,7 @@ public class NewsAPIService {
     };
     
     private final NewsArticleRepository newsArticleRepository;
+    private final EmbeddingService embeddingService;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -200,6 +201,7 @@ public class NewsAPIService {
             
             int parsedCount = 0;
             int duplicateCount = 0;
+            int embeddingCount = 0;
             
             for (JsonNode articleNode : articlesNode) {
                 try {
@@ -207,6 +209,25 @@ public class NewsAPIService {
                     
                     // Avoid duplicates
                     if (article.getUrl() != null && !newsArticleRepository.existsByUrl(article.getUrl())) {
+                        // Generate embedding for RAG semantic search
+                        if (embeddingService.isConfigured()) {
+                            try {
+                                String contentToEmbed = article.getTitle() + " " + 
+                                    (article.getDescription() != null ? article.getDescription() : "");
+                                
+                                float[] embedding = embeddingService.generateEmbedding(contentToEmbed);
+                                String vectorString = embeddingService.embeddingToVectorString(embedding);
+                                article.setEmbedding(vectorString);
+                                embeddingCount++;
+                                
+                                logger.debug("Generated embedding for article: {}", article.getTitle());
+                            } catch (Exception e) {
+                                logger.warn("Failed to generate embedding for article '{}': {}", 
+                                    article.getTitle(), e.getMessage());
+                                // Continue without embedding - article will still be saved
+                            }
+                        }
+                        
                         articles.add(article);
                         parsedCount++;
                     } else {
@@ -217,7 +238,8 @@ public class NewsAPIService {
                 }
             }
             
-            logger.info("Successfully parsed {} new articles ({} duplicates skipped)", parsedCount, duplicateCount);
+            logger.info("Successfully parsed {} new articles ({} duplicates skipped, {} embeddings generated)", 
+                parsedCount, duplicateCount, embeddingCount);
             return articles;
             
         } catch (Exception e) {
