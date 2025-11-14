@@ -59,12 +59,32 @@ public class PredictiveAnalysisService {
         
         if (Boolean.TRUE.equals(request.getEnableNewsAnalysis())) {
             try {
-                // Fetch latest news
-                List<NewsArticle> newArticles = newsAPIService.fetchTradeNews(7);  // Last 7 days
-                
-                // Analyze sentiment
+                // Check if News API is configured
+                if (!newsAPIService.isConfigured()) {
+                    throw new Exception("News API key is not configured. Please set NEWSAPI_API_KEY environment variable.");
+                }
+
+                // Fetch latest news with country-specific search
+                // Using 30 days (News API free tier limit)
+                List<NewsArticle> newArticles = newsAPIService.fetchTradeNews(
+                    30,  // Changed from 90 to 30 days (News API free tier limit)
+                    request.getImportingCountry(),
+                    request.getExportingCountry()
+                );
+
+                logger.info("Fetched {} articles from News API for {} and {}",
+                    newArticles.size(), request.getImportingCountry(), request.getExportingCountry());
+
+                // Check if we got any articles
+                if (newArticles.isEmpty()) {
+                    throw new Exception("News API returned 0 articles. Please try again later or check your API key.");
+                }
+
+                logger.info("Using all {} fetched articles for sentiment analysis", newArticles.size());
+
+                // Analyze sentiment on ALL articles (no strict filtering)
                 sentimentAnalysisService.processArticleSentiments(newArticles);
-                
+
                 // Calculate weekly aggregate
                 LocalDate weekEnd = LocalDate.now();
                 LocalDate weekStart = weekEnd.minusDays(6);
@@ -72,12 +92,15 @@ public class PredictiveAnalysisService {
                 
                 liveNewsAvailable = true;
                 dataSource = "live_api";
-                message = "News sentiment updated from live News API";
-                logger.info("Successfully fetched and analyzed {} news articles", newArticles.size());
-                
+                message = String.format("News sentiment updated from live News API - analyzed %d trade articles from past 30 days",
+                    newArticles.size());
+                logger.info("Successfully fetched and analyzed {} news articles",
+                    newArticles.size());
+
             } catch (Exception e) {
-                logger.warn("Failed to fetch live news, using database fallback: {}", e.getMessage());
-                message = "Live News API unavailable. Using last stored sentiment data from database.";
+                logger.error("Failed to fetch live news: {}", e.getMessage(), e);
+                message = String.format("Live News API unavailable: %s. Using last stored sentiment data from database.",
+                    e.getMessage());
                 liveNewsAvailable = false;
             }
         }
@@ -105,11 +128,16 @@ public class PredictiveAnalysisService {
         // Step 5: Generate prediction using combined analysis
         PredictionResult prediction = generatePrediction(currentSentiment, latestRate, sentimentHistory);
         
-        // Step 6: Get supporting news headlines
+        // Step 6: Get supporting news headlines filtered by country relevance
         List<NewsArticle> recentArticles = newsArticleRepository
             .findRecentArticles(LocalDateTime.now().minusDays(7));
-        List<PredictiveAnalysisResponse.NewsHeadline> headlines = getSupportingHeadlines(recentArticles, 2);
-        
+        List<PredictiveAnalysisResponse.NewsHeadline> headlines = getSupportingHeadlines(
+            recentArticles,
+            request.getImportingCountry(),
+            request.getExportingCountry(),
+            5
+        );
+
         // Step 7: Build response
         return PredictiveAnalysisResponse.builder()
             .importingCountry(request.getImportingCountry())
@@ -302,8 +330,8 @@ public class PredictiveAnalysisService {
             rationale = buildHoldRationale(sentimentScore, sentimentTrend, volatility);
         }
         
-        logger.info("Prediction: {} (confidence: {:.2f})", recommendation, confidence);
-        
+        logger.info("Prediction: {} (confidence: {})", recommendation, confidence);
+
         return new PredictionResult(recommendation, confidence, rationale);
     }
     
@@ -394,14 +422,37 @@ public class PredictiveAnalysisService {
     }
     
     /**
-     * Get supporting news headlines
+     * Get supporting news headlines filtered by country relevance
      */
     private List<PredictiveAnalysisResponse.NewsHeadline> getSupportingHeadlines(
-            List<NewsArticle> articles, int count) {
-        
-        return articles.stream()
+            List<NewsArticle> articles, String country1, String country2, int count) {
+
+        // Filter articles that mention either country in title or description
+        List<NewsArticle> relevantArticles = articles.stream()
+            .filter(article -> {
+                String content = (article.getTitle() + " " +
+                                 (article.getDescription() != null ? article.getDescription() : ""))
+                                 .toLowerCase();
+                return content.contains(country1.toLowerCase()) ||
+                       content.contains(country2.toLowerCase());
+            })
             .sorted(Comparator.comparing(NewsArticle::getPublishedAt).reversed())
             .limit(count)
+            .collect(Collectors.toList());
+
+        // If no country-specific articles found, return most recent general articles
+        if (relevantArticles.isEmpty()) {
+            logger.warn("No country-specific headlines found for {} and {}, returning recent general articles",
+                       country1, country2);
+            relevantArticles = articles.stream()
+                .sorted(Comparator.comparing(NewsArticle::getPublishedAt).reversed())
+                .limit(count)
+                .collect(Collectors.toList());
+        }
+
+        logger.info("Found {} relevant headlines for {} and {}", relevantArticles.size(), country1, country2);
+
+        return relevantArticles.stream()
             .map(article -> PredictiveAnalysisResponse.NewsHeadline.builder()
                 .title(article.getTitle())
                 .source(article.getSource())
@@ -449,6 +500,32 @@ public class PredictiveAnalysisService {
         return resolveCurrency(country);
     }
     
+    /**
+     * Filter articles to only include those that mention BOTH countries
+     * This ensures sentiment is calculated only from relevant news
+     */
+    private List<NewsArticle> filterArticlesByCountries(List<NewsArticle> articles, String country1, String country2) {
+        return articles.stream()
+            .filter(article -> {
+                String content = ((article.getTitle() != null ? article.getTitle() : "") + " " +
+                                 (article.getDescription() != null ? article.getDescription() : ""))
+                                 .toLowerCase();
+
+                // Check if BOTH countries are mentioned
+                boolean mentionsCountry1 = content.contains(country1.toLowerCase());
+                boolean mentionsCountry2 = content.contains(country2.toLowerCase());
+
+                if (mentionsCountry1 && mentionsCountry2) {
+                    logger.debug("Article '{}' mentions both {} and {}",
+                        article.getTitle() != null ? article.getTitle().substring(0, Math.min(50, article.getTitle().length())) : "N/A",
+                        country1, country2);
+                    return true;
+                }
+                return false;
+            })
+            .collect(Collectors.toList());
+    }
+
     /**
      * DEBUG: Manually fetch news to test API connection
      */
@@ -500,4 +577,3 @@ public class PredictiveAnalysisService {
         }
     }
 }
-

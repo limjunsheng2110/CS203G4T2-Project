@@ -46,6 +46,8 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints - no authentication required
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
 
@@ -57,9 +59,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/countries/**").permitAll()
                 .requestMatchers("/api/exchange-rates/**").permitAll()
                 .requestMatchers("/api/products/**").permitAll()
-
-                // Swagger/OpenAPI endpoints
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                 // USER role - can access tariff calculation endpoints (both USER and ADMIN)
                 .requestMatchers("/api/tariff/**").hasAnyRole("USER", "ADMIN")
