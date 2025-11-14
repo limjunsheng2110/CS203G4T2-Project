@@ -231,7 +231,8 @@ public class AuthControllerTest {
         mockMvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validLoginRequest)))
-                .andExpect(status().isForbidden()); // Changed from isUnauthorized() to isForbidden()
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("Invalid credentials"));
     }
 
     @Test
@@ -247,7 +248,7 @@ public class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validLoginRequest)))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$").value("User not found"));
+                .andExpect(jsonPath("$.error").value("User not found"));
     }
 
     @Test
