@@ -468,6 +468,6 @@ class PredictiveAnalysisServiceTest {
         assertNotNull(response);
         assertFalse(response.isLiveNewsAvailable());
         assertNotNull(response.getMessage());
-        assertTrue(response.getMessage().contains("unavailable"));
+        assertTrue(response.getMessage().contains("Historical data fetched from database"));
     }
 }
