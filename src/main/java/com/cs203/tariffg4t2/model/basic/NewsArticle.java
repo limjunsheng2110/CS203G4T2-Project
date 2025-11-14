@@ -44,6 +44,9 @@ public class NewsArticle {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
+    @Column(name = "embedding", columnDefinition = "vector(1536)")
+    private String embedding;  // Stored as PostgreSQL vector for RAG semantic search
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

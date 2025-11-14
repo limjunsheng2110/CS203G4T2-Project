@@ -32,7 +32,7 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
       id: 'intro',
       role: 'assistant',
       content:
-        'Welcome to TariffNom! I\'m here to help you calculate tariffs. Ask me anything about:\n\n• How to fill out the transaction form\n• What each field means\n• Tips for getting accurate results\n• Understanding your tariff calculation\n\nWhat would you like to know?',
+        'Welcome to TariffNom! I\'m your AI-powered tariff assistant. I can help you with:\n\n• Understanding HS codes and how to find them\n• Explaining tariff calculations and costs\n• Answering questions about trade, VAT/GST, and FTAs\n• Providing guidance on using the platform\n\nAsk me anything about international trade and tariffs!',
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -149,63 +149,35 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
     setErrorMessage('');
 
     try {
-      // Check if this is a tutorial question or HS code search
-      const tutorialResponse = getHelpResponse(trimmed.toLowerCase());
-      
-      if (tutorialResponse) {
-        // Tutorial question detected - provide local response
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate thinking
-        addMessage('assistant', tutorialResponse);
-      } else {
-        // No tutorial match - treat as HS code search
-        const hsResponse = await apiService.chatbot.resolveHsCode({
-          queryId,
-          productName: trimmed.length > 60 ? trimmed.slice(0, 60) : trimmed,
-          description: trimmed,
-          attributes: [],
-          previousAnswers,
-          sessionId,
-          consentLogging,
-        });
+      // Call new RAG chatbot API
+      const chatResponse = await apiService.chatbot.sendMessage({
+        message: trimmed,
+        sessionId,
+        consentLogging,
+      });
 
-        if (!sessionId && hsResponse.sessionId) {
-          setSessionId(hsResponse.sessionId);
-        }
-        if (hsResponse.queryId) {
-          setQueryId(hsResponse.queryId);
-        }
+      // Update session ID if new
+      if (!sessionId && chatResponse.sessionId) {
+        setSessionId(chatResponse.sessionId);
+      }
 
-        if (hsResponse.candidates && hsResponse.candidates.length > 0) {
-          const formattedCandidates = hsResponse.candidates
-            .map(
-              (candidate, index) =>
-                `${index + 1}. **${candidate.hsCode}** - ${candidate.rationale}`
-            )
-            .join('\n\n');
+      // Add AI response
+      if (chatResponse.message) {
+        addMessage('assistant', chatResponse.message);
+      }
 
-          addMessage(
-            'assistant',
-            `Here are the matching products from our database:\n\n${formattedCandidates}`
-          );
-
-          const primaryCandidate = hsResponse.candidates[0];
-          if (primaryCandidate && primaryCandidate.confidence >= DEFAULT_CONFIDENCE_THRESHOLD) {
-            setConfirmationCandidate(primaryCandidate);
-          } else {
-            setConfirmationCandidate(null);
-          }
-        } else {
-          addMessage(
-            'assistant',
-            "I couldn't find any matching products. Try:\n• Using different keywords\n• Being more specific about the product\n• Asking a tutorial question like 'What is an HS code?'"
-          );
-          setConfirmationCandidate(null);
-        }
-
-        if (hsResponse.disambiguationQuestions && hsResponse.disambiguationQuestions.length > 0) {
-          setPendingQuestions(hsResponse.disambiguationQuestions);
-        } else {
-          setPendingQuestions([]);
+      // If HS code mentioned in response, try to extract it for confirmation
+      const hsCodeMatch = chatResponse.message.match(/\b(\d{4,10})\b/);
+      if (hsCodeMatch) {
+        const extractedCode = hsCodeMatch[1];
+        // Optional: Set confirmation candidate if valid HS code detected
+        // This is a simple heuristic - you may want to enhance this
+        if (extractedCode.length >= 6) {
+          setConfirmationCandidate({
+            hsCode: extractedCode,
+            confidence: 0.8,
+            rationale: 'Mentioned in AI response',
+          });
         }
       }
     } catch (error) {
@@ -216,7 +188,7 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
         const validationMessage = 
           error.response?.data?.message || 
           error.message || 
-          'Please provide a valid product description between 10 and 2000 characters.';
+          'Please provide a valid question.';
         
         setErrorMessage(validationMessage);
         addMessage('assistant', validationMessage);
@@ -226,7 +198,7 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
         setErrorMessage(message);
         addMessage(
           'assistant',
-          'Something went wrong. Please try again or ask a tutorial question!'
+          'Something went wrong. Please try again later!'
         );
       }
     } finally {
@@ -353,9 +325,9 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
           }`}>
             <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold tracking-wide">HS Code Assistant</p>
+                <p className="text-sm font-semibold tracking-wide">TariffNom AI Assistant</p>
                 <p className="text-xs text-white/80">
-                  Describe your product to receive HS code guidance.
+                  Ask me anything about tariffs, HS codes, and trade.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -411,7 +383,7 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
             </div>
             <div className="border-t border-white/10 px-4 py-3 bg-black/20">
               <label htmlFor="chatbot-input" className="sr-only">
-                Describe your product for HS code suggestions
+                Ask a question about tariffs or trade
               </label>
               <div className="flex items-end gap-2">
                 <textarea
@@ -420,7 +392,7 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                   rows={1}
-                  placeholder="Describe your product (material, function, usage)…"
+                  placeholder="Ask about HS codes, tariffs, trade agreements…"
                   className="flex-1 resize-none rounded-xl bg-white/5 border border-white/10 focus:ring-2 focus:ring-purple-400/60 focus:outline-none px-3 py-2 text-sm text-white placeholder:text-white/40"
                   maxLength={500}
                   disabled={isTyping}
@@ -501,7 +473,7 @@ const ChatbotWidget = ({ onHsCodeSelected = () => {} }) => {
         <button
           type="button"
           onClick={handleToggle}
-          aria-label="Open HS Code assistant"
+          aria-label="Open TariffNom AI assistant"
           aria-expanded={false}
           className="fixed bottom-6 right-6 z-40 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-2xl p-4 sm:p-5 hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-400/60 transition-transform"
         >

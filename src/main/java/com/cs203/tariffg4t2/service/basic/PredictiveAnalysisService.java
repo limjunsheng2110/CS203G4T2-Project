@@ -9,6 +9,7 @@ import com.cs203.tariffg4t2.model.basic.SentimentAnalysis;
 import com.cs203.tariffg4t2.repository.basic.ExchangeRateRepository;
 import com.cs203.tariffg4t2.repository.basic.NewsArticleRepository;
 import com.cs203.tariffg4t2.service.data.CurrencyCodeService;
+import com.cs203.tariffg4t2.service.data.EmbeddingService;
 import com.cs203.tariffg4t2.service.data.NewsAPIService;
 import com.cs203.tariffg4t2.service.data.SentimentAnalysisService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class PredictiveAnalysisService {
     private final NewsArticleRepository newsArticleRepository;
     private final ExchangeRateRepository exchangeRateRepository;
     private final CurrencyCodeService currencyCodeService;
+    private final EmbeddingService embeddingService;
     
     /**
      * Main method: Analyze news sentiment and exchange rates to provide trading recommendation
@@ -422,12 +424,23 @@ public class PredictiveAnalysisService {
     }
     
     /**
-     * Get supporting news headlines filtered by country relevance
+     * Get supporting news headlines using RAG (Retrieval Augmented Generation)
+     * Uses semantic similarity search instead of keyword matching for better relevance
      */
     private List<PredictiveAnalysisResponse.NewsHeadline> getSupportingHeadlines(
             List<NewsArticle> articles, String country1, String country2, int count) {
 
-        // Filter articles that mention either country in title or description
+        // Try RAG semantic search if embedding service is configured
+        if (embeddingService.isConfigured()) {
+            try {
+                return getSupportingHeadlinesRAG(country1, country2, count);
+            } catch (Exception e) {
+                logger.warn("RAG semantic search failed, falling back to keyword matching: {}", e.getMessage());
+                // Fall through to keyword matching
+            }
+        }
+        
+        // Fallback: Keyword-based filtering (original implementation)
         List<NewsArticle> relevantArticles = articles.stream()
             .filter(article -> {
                 String content = (article.getTitle() + " " +
@@ -450,9 +463,50 @@ public class PredictiveAnalysisService {
                 .collect(Collectors.toList());
         }
 
-        logger.info("Found {} relevant headlines for {} and {}", relevantArticles.size(), country1, country2);
+        logger.info("Found {} relevant headlines for {} and {} (keyword matching)", 
+            relevantArticles.size(), country1, country2);
 
         return relevantArticles.stream()
+            .map(article -> PredictiveAnalysisResponse.NewsHeadline.builder()
+                .title(article.getTitle())
+                .source(article.getSource())
+                .publishedAt(article.getPublishedAt())
+                .sentimentScore(article.getSentimentScore())
+                .url(article.getUrl())
+                .build())
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * RAG-based headline retrieval using semantic similarity search
+     * Finds articles semantically related to the trade context between two countries
+     */
+    private List<PredictiveAnalysisResponse.NewsHeadline> getSupportingHeadlinesRAG(
+            String country1, String country2, int count) throws Exception {
+        
+        // Create a semantic query describing what we're looking for
+        String query = String.format(
+            "Trade news and economic relations between %s and %s, " +
+            "including tariffs, imports, exports, bilateral agreements, " +
+            "supply chain, economic policy, and trade tensions",
+            country1, country2
+        );
+        
+        logger.info("Performing RAG semantic search for: {} <-> {}", country1, country2);
+        
+        // Generate embedding for the query
+        float[] queryEmbedding = embeddingService.generateEmbedding(query);
+        String vectorString = embeddingService.embeddingToVectorString(queryEmbedding);
+        
+        // Find semantically similar articles using pgvector
+        List<NewsArticle> similarArticles = newsArticleRepository
+            .findSimilarArticles(vectorString, count);
+        
+        logger.info("RAG found {} semantically similar articles for {} <-> {}", 
+            similarArticles.size(), country1, country2);
+        
+        // Convert to headlines
+        return similarArticles.stream()
             .map(article -> PredictiveAnalysisResponse.NewsHeadline.builder()
                 .title(article.getTitle())
                 .source(article.getSource())
