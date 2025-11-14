@@ -16,6 +16,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -124,14 +127,20 @@ public class AuthController {
             return ResponseEntity.ok(authResponse);
             
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Invalid credentials");
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Invalid credentials");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(errorResponse);
         } catch (RuntimeException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "User not found");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("User not found");
+                    .body(errorResponse);
         } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "An error occurred during login");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An error occurred during login");
+                    .body(errorResponse);
         }
     }
 

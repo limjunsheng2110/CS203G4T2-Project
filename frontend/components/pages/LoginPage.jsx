@@ -43,16 +43,27 @@ const LoginPage = ({ onLoginSuccess, onSwitchToRegister, sessionExpired = false 
 
         try {
           const data = await response.json();
-          errorText = data?.message || data?.error || JSON.stringify(data);
+          errorText = data?.message || data?.error || '';
         } catch {
-          errorText = await response.text();
+          // If parsing fails, try to get plain text
+          try {
+            errorText = await response.text();
+          } catch {
+            errorText = '';
+          }
         }
 
+        // For authentication failures (401/403), show generic message for security
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Invalid credentials');
+        }
+
+        // For other errors, show the backend message or a generic error
         const statusContext = response.status === 0
           ? 'Unable to reach the server. Is the backend running?'
           : `Login failed (${response.status}).`;
 
-        throw new Error(errorText ? `${statusContext} ${errorText}` : statusContext);
+        throw new Error(errorText || statusContext);
       }
 
       const data = await response.json();
