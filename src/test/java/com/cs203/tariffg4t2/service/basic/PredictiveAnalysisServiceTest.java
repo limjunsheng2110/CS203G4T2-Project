@@ -464,7 +464,7 @@ class PredictiveAnalysisServiceTest {
         when(newsArticleRepository.findRecentArticles(any(LocalDateTime.class)))
                 .thenReturn(newsArticles);
 
-        
+
         // When
         PredictiveAnalysisResponse response = predictiveAnalysisService.analyzePrediction(request);
 
@@ -472,6 +472,6 @@ class PredictiveAnalysisServiceTest {
         assertNotNull(response);
         assertFalse(response.isLiveNewsAvailable());
         assertNotNull(response.getMessage());
-        assertTrue(response.getMessage().contains("unavailable"));
+        assertTrue(response.getMessage().contains("Historical data fetched from database"));
     }
 }

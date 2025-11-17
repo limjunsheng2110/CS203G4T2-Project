@@ -350,24 +350,24 @@ const PredictiveAnalysis = ({ importingCountry, exportingCountry, theme }) => {
       {predictionData && (
         <div className="space-y-6">
           {/* Data Source Status */}
-          <div className={`${predictionData.liveNewsAvailable ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'} border rounded-lg p-4 flex items-start gap-3`}>
+          <div className={`${predictionData.liveNewsAvailable ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'} border rounded-lg p-4 flex items-start gap-3`}>
             {predictionData.liveNewsAvailable ? (
               <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
             ) : (
-              <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
+              <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
             )}
             <div className="flex-1">
-              <p className={`${predictionData.liveNewsAvailable ? 'text-green-800' : 'text-yellow-800'} font-medium`}>
-                {predictionData.liveNewsAvailable ? 'Live News Data' : 'Fallback Data'}
+              <p className={`${predictionData.liveNewsAvailable ? 'text-green-800' : 'text-blue-800'} font-medium`}>
+                {predictionData.liveNewsAvailable ? 'Live News Data' : 'Historical Data'}
               </p>
-              <p className={`${predictionData.liveNewsAvailable ? 'text-green-700' : 'text-yellow-700'} text-sm`}>
+              <p className={`${predictionData.liveNewsAvailable ? 'text-green-700' : 'text-blue-700'} text-sm`}>
                 {predictionData.message}
               </p>
               <a 
                 href="https://newsapi.org/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className={`${predictionData.liveNewsAvailable ? 'text-green-600 hover:text-green-800' : 'text-yellow-600 hover:text-yellow-800'} text-sm inline-flex items-center gap-1 mt-1`}
+                className={`${predictionData.liveNewsAvailable ? 'text-green-600 hover:text-green-800' : 'text-blue-600 hover:text-blue-800'} text-sm inline-flex items-center gap-1 mt-1`}
               >
                 Verify on NewsAPI.org <ExternalLink size={14} />
               </a>
